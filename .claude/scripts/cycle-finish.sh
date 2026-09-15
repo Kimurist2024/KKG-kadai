@@ -30,7 +30,15 @@ COMMIT
 git push -q -u origin "$BRANCH"
 
 echo "== 3. PR 作成 =="
-PR="$(gh pr view "$BRANCH" --json url -q .url 2>/dev/null || true)"
+EXISTING="$(gh pr view "$BRANCH" --json url,baseRefName,state -q '.state+" "+.baseRefName+" "+.url' 2>/dev/null || true)"
+PR=""
+if [ -n "$EXISTING" ]; then
+  read -r PR_STATE PR_BASE PR_URL <<<"$EXISTING"
+  # 別の宛先 (特に main) の PR を無検証で再利用してマージしない
+  [ "$PR_BASE" = "$BASE" ] || { echo "既存 PR のマージ先が $PR_BASE です ($BASE ではありません): $PR_URL"; echo "この PR は使いません。閉じるかマージ先を変更してください"; exit 1; }
+  [ "$PR_STATE" = "OPEN" ] || { echo "既存 PR が $PR_STATE です: $PR_URL"; exit 1; }
+  PR="$PR_URL"
+fi
 if [ -z "$PR" ]; then
   PR="$(gh pr create --base "$BASE" --head "$BRANCH" --title "$SUBJECT" \
         --body "## 受入条件
@@ -53,7 +61,7 @@ gh pr comment "$BRANCH" --body "## Codex レビュー結果
 
 \`\`\`
 $REVIEW
-\`\`\`" >/dev/null 2>&1 || echo "(PR へのコメント投稿に失敗しましたが処理は続行します)"
+\`\`\`" >/dev/null || { echo "レビュー結果を PR に記録できませんでした。記録なしでマージしません"; exit 1; }
 [ "$RC" -eq 0 ] || { echo "レビューが BLOCK です。修正して再実行してください。マージしません"; exit 1; }
 
 echo "== 5. マージ ($BASE) =="
