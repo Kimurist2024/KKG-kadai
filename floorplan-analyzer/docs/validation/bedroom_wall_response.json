@@ -1,0 +1,323 @@
+{
+  "image": {
+    "width": 1224,
+    "height": 1584,
+    "mime_type": "image/png",
+    "has_image": true
+  },
+  "timestamp": null,
+  "settings": {
+    "ceiling_height_m": 2.4,
+    "door_height_m": 2.0,
+    "scale_px": 1.0,
+    "scale_m": 0.010676007005253941,
+    "tolerance_px": 10.0,
+    "meters_per_px": 0.010676007005253941
+  },
+  "summary": {
+    "room_count": 1,
+    "wall_count": 4,
+    "door_count": 1,
+    "total_floor_area_m2": 8.021710098055154,
+    "total_wall_area_m2": 25.90853380035026
+  },
+  "rooms": [
+    {
+      "id": 1,
+      "name": "Bedroom 2",
+      "room_name": "Bedroom 2",
+      "color": "#3b82f6",
+      "vertices": [
+        {
+          "x": 360.0,
+          "y": 300.0
+        },
+        {
+          "x": 666.0,
+          "y": 300.0
+        },
+        {
+          "x": 666.0,
+          "y": 530.0
+        },
+        {
+          "x": 360.0,
+          "y": 530.0
+        }
+      ],
+      "floor_area_px2": 70380.0,
+      "floor_area_m2": 8.021710098055154,
+      "perimeter_px": 1072.0,
+      "perimeter_m": 11.444679509632225,
+      "source_area_px2": null,
+      "source_perimeter_px": null,
+      "wall_length_m": 11.444679509632223,
+      "opening_length_m": 0.0,
+      "door_length_m": 0.7793485113835377,
+      "door_count": 1,
+      "wall_area_gross_m2": 27.467230823117333,
+      "door_area_m2": 1.5586970227670753,
+      "wall_area_m2": 25.90853380035026,
+      "edges": [
+        {
+          "index": 0,
+          "start": {
+            "x": 360.0,
+            "y": 300.0
+          },
+          "end": {
+            "x": 666.0,
+            "y": 300.0
+          },
+          "length_px": 306.0,
+          "length_m": 3.2668581436077058,
+          "wall_intervals": [
+            {
+              "start_px": 0.0,
+              "end_px": 306.0,
+              "start": {
+                "x": 360.0,
+                "y": 300.0
+              },
+              "end": {
+                "x": 666.0,
+                "y": 300.0
+              },
+              "length_px": 306.0,
+              "length_m": 3.2668581436077058,
+              "ids": [
+                10
+              ]
+            }
+          ],
+          "opening_intervals": [],
+          "door_intervals": [],
+          "wall_length_m": 3.2668581436077058,
+          "opening_length_m": 0.0,
+          "door_length_m": 0.0,
+          "wall_area_gross_m2": 7.8404595446584935,
+          "door_area_m2": 0.0,
+          "wall_area_m2": 7.8404595446584935
+        },
+        {
+          "index": 1,
+          "start": {
+            "x": 666.0,
+            "y": 300.0
+          },
+          "end": {
+            "x": 666.0,
+            "y": 530.0
+          },
+          "length_px": 230.0,
+          "length_m": 2.4554816112084064,
+          "wall_intervals": [
+            {
+              "start_px": 0.0,
+              "end_px": 230.0,
+              "start": {
+                "x": 666.0,
+                "y": 300.0
+              },
+              "end": {
+                "x": 666.0,
+                "y": 530.0
+              },
+              "length_px": 230.0,
+              "length_m": 2.4554816112084064,
+              "ids": [
+                11
+              ]
+            }
+          ],
+          "opening_intervals": [],
+          "door_intervals": [],
+          "wall_length_m": 2.4554816112084064,
+          "opening_length_m": 0.0,
+          "door_length_m": 0.0,
+          "wall_area_gross_m2": 5.893155866900175,
+          "door_area_m2": 0.0,
+          "wall_area_m2": 5.893155866900175
+        },
+        {
+          "index": 2,
+          "start": {
+            "x": 666.0,
+            "y": 530.0
+          },
+          "end": {
+            "x": 360.0,
+            "y": 530.0
+          },
+          "length_px": 306.0,
+          "length_m": 3.2668581436077058,
+          "wall_intervals": [
+            {
+              "start_px": 0.0,
+              "end_px": 306.0,
+              "start": {
+                "x": 666.0,
+                "y": 530.0
+              },
+              "end": {
+                "x": 360.0,
+                "y": 530.0
+              },
+              "length_px": 306.0,
+              "length_m": 3.2668581436077058,
+              "ids": [
+                12
+              ]
+            }
+          ],
+          "opening_intervals": [],
+          "door_intervals": [
+            {
+              "start_px": 13.0,
+              "end_px": 86.0,
+              "start": {
+                "x": 653.0,
+                "y": 530.0
+              },
+              "end": {
+                "x": 580.0,
+                "y": 530.0
+              },
+              "length_px": 73.0,
+              "length_m": 0.7793485113835377,
+              "ids": [
+                20
+              ]
+            }
+          ],
+          "wall_length_m": 3.2668581436077058,
+          "opening_length_m": 0.0,
+          "door_length_m": 0.7793485113835377,
+          "wall_area_gross_m2": 7.8404595446584935,
+          "door_area_m2": 1.5586970227670753,
+          "wall_area_m2": 6.281762521891418
+        },
+        {
+          "index": 3,
+          "start": {
+            "x": 360.0,
+            "y": 530.0
+          },
+          "end": {
+            "x": 360.0,
+            "y": 300.0
+          },
+          "length_px": 230.0,
+          "length_m": 2.4554816112084064,
+          "wall_intervals": [
+            {
+              "start_px": 0.0,
+              "end_px": 230.0,
+              "start": {
+                "x": 360.0,
+                "y": 530.0
+              },
+              "end": {
+                "x": 360.0,
+                "y": 300.0
+              },
+              "length_px": 230.0,
+              "length_m": 2.4554816112084064,
+              "ids": [
+                13
+              ]
+            }
+          ],
+          "opening_intervals": [],
+          "door_intervals": [],
+          "wall_length_m": 2.4554816112084064,
+          "opening_length_m": 0.0,
+          "door_length_m": 0.0,
+          "wall_area_gross_m2": 5.893155866900175,
+          "door_area_m2": 0.0,
+          "wall_area_m2": 5.893155866900175
+        }
+      ]
+    }
+  ],
+  "walls": [
+    {
+      "id": 10,
+      "kind": "wall",
+      "start": {
+        "x": 360.0,
+        "y": 300.0
+      },
+      "end": {
+        "x": 666.0,
+        "y": 300.0
+      },
+      "length_px": 306.0,
+      "length_m": 3.2668581436077058,
+      "color": "#dc2626"
+    },
+    {
+      "id": 11,
+      "kind": "wall",
+      "start": {
+        "x": 666.0,
+        "y": 300.0
+      },
+      "end": {
+        "x": 666.0,
+        "y": 530.0
+      },
+      "length_px": 230.0,
+      "length_m": 2.4554816112084064,
+      "color": "#dc2626"
+    },
+    {
+      "id": 12,
+      "kind": "wall",
+      "start": {
+        "x": 666.0,
+        "y": 530.0
+      },
+      "end": {
+        "x": 360.0,
+        "y": 530.0
+      },
+      "length_px": 306.0,
+      "length_m": 3.2668581436077058,
+      "color": "#dc2626"
+    },
+    {
+      "id": 13,
+      "kind": "wall",
+      "start": {
+        "x": 360.0,
+        "y": 530.0
+      },
+      "end": {
+        "x": 360.0,
+        "y": 300.0
+      },
+      "length_px": 230.0,
+      "length_m": 2.4554816112084064,
+      "color": "#dc2626"
+    }
+  ],
+  "doors": [
+    {
+      "id": 20,
+      "kind": "door",
+      "start": {
+        "x": 580.0,
+        "y": 530.0
+      },
+      "end": {
+        "x": 653.0,
+        "y": 530.0
+      },
+      "length_px": 73.0,
+      "length_m": 0.7793485113835377,
+      "color": "#16a34a"
+    }
+  ],
+  "warnings": []
+}

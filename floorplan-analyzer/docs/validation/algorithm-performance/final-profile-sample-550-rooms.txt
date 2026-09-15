@@ -1,0 +1,43 @@
+         1207661 function calls (1207111 primitive calls) in 0.360 seconds
+
+   Ordered by: cumulative time
+   List reduced from 180 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.361    0.361 performance.py:124(<lambda>)
+        1    0.000    0.000    0.361    0.361 analyzer.py:417(analyze_uncached)
+        1    0.005    0.005    0.361    0.361 analyzer.py:280(_analyze_core)
+      550    0.005    0.000    0.255    0.000 analyzer.py:188(analyze_room)
+     2500    0.014    0.000    0.240    0.000 analyzer.py:131(analyze_edge)
+     5000    0.010    0.000    0.117    0.000 spatial.py:16(near)
+    23152    0.021    0.000    0.100    0.000 decorators.py:62(wrapped)
+     6100    0.004    0.000    0.081    0.000 polygon.py:221(__new__)
+     5000    0.002    0.000    0.068    0.000 geo.py:48(box)
+    27703    0.005    0.000    0.048    0.000 main.py:253(__init__)
+     6100    0.008    0.000    0.047    0.000 polygon.py:62(__new__)
+     3600    0.006    0.000    0.046    0.000 analyzer.py:76(_interval_out)
+    27703    0.043    0.000    0.043    0.000 {method 'validate_python' of 'pydantic_core._pydantic_core.SchemaValidator' objects}
+     2500    0.001    0.000    0.040    0.000 analyzer.py:176(<listcomp>)
+      550    0.001    0.000    0.027    0.000 topology.py:7(room_polygon)
+     5550    0.005    0.000    0.026    0.000 strtree.py:106(query)
+     2500    0.004    0.000    0.025    0.000 analyzer.py:90(wall_intervals_on_edge)
+     6100    0.010    0.000    0.020    0.000 creation.py:176(polygons)
+        1    0.000    0.000    0.015    0.015 ops.py:129(unary_union)
+        1    0.015    0.015    0.015    0.015 set_operations.py:337(union_all)
+     5000    0.010    0.000    0.015    0.000 geometry.py:57(project_segments_onto_edge)
+     5000    0.006    0.000    0.014    0.000 geometry.py:130(clip_intervals)
+     5550    0.006    0.000    0.014    0.000 _shape_base_impl.py:508(expand_dims)
+    17500    0.007    0.000    0.012    0.000 geometry.py:102(merge_intervals)
+     6100    0.003    0.000    0.012    0.000 polygon.py:93(<listcomp>)
+      450    0.001    0.000    0.012    0.000 topology.py:33(polygon_regions)
+     2500    0.002    0.000    0.012    0.000 geometry.py:155(complement_intervals)
+    12200    0.005    0.000    0.011    0.000 numerictypes.py:470(issubdtype)
+    25000    0.006    0.000    0.010    0.000 polygon.py:87(_coords)
+    36650    0.008    0.000    0.009    0.000 {built-in method builtins.sorted}
+12452/11902    0.003    0.000    0.009    0.000 {built-in method builtins.sum}
+     1100    0.000    0.000    0.008    0.000 base.py:651(is_valid)
+    40801    0.005    0.000    0.008    0.000 {built-in method builtins.max}
+     6100    0.007    0.000    0.007    0.000 creation.py:124(linearrings)
+      650    0.000    0.000    0.007    0.000 base.py:593(intersection)
+
+

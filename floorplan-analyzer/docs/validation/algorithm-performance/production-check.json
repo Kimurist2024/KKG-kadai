@@ -1,0 +1,94 @@
+{
+  "timestamp_utc": "2026-09-14T15:05:20.457429+00:00",
+  "url": "https://floorplan-analyzer-taupe.vercel.app",
+  "deployment": "dpl_7UhsuKcGq8gsvLQXRLwe4psNDnNy",
+  "note": "Cross-environment comparison: local Python3.9, production3.12. Numeric tolerance abs1e-10 rel1e-12; actual differences recorded.",
+  "checks": [
+    {
+      "path": "/",
+      "status": 200
+    },
+    {
+      "path": "/api/health",
+      "status": 200
+    },
+    {
+      "fixture": "sample",
+      "settings": "default",
+      "input_sha256": "948c0d72b1665bead8224e03908daf4c70e6adf0c16fa854dbdeae8c36277b77",
+      "status": 200,
+      "numeric_fields": 1705,
+      "different_numeric_fields": 26,
+      "max_absolute_difference": 5.684341886080802e-14,
+      "max_relative_difference": 4.006957940974008e-14,
+      "max_difference_path": "$.rooms[0].edges[7].length_px"
+    },
+    {
+      "fixture": "sample",
+      "settings": "height",
+      "input_sha256": "948c0d72b1665bead8224e03908daf4c70e6adf0c16fa854dbdeae8c36277b77",
+      "status": 200,
+      "numeric_fields": 1705,
+      "different_numeric_fields": 26,
+      "max_absolute_difference": 5.684341886080802e-14,
+      "max_relative_difference": 4.006957940974008e-14,
+      "max_difference_path": "$.rooms[0].edges[7].length_px"
+    },
+    {
+      "fixture": "sample",
+      "settings": "scale",
+      "input_sha256": "948c0d72b1665bead8224e03908daf4c70e6adf0c16fa854dbdeae8c36277b77",
+      "status": 200,
+      "numeric_fields": 1705,
+      "different_numeric_fields": 19,
+      "max_absolute_difference": 5.684341886080802e-14,
+      "max_relative_difference": 3.9247129158379344e-16,
+      "max_difference_path": "$.rooms[0].edges[7].length_px"
+    },
+    {
+      "fixture": "holes-door-gap-demo",
+      "settings": "default",
+      "input_sha256": "6db63868ae4ceeecc6da84c1157557dc439a502c985c9147d8c28ff6753c2843",
+      "status": 200,
+      "numeric_fields": 349,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    },
+    {
+      "fixture": "holes-door-gap-demo",
+      "settings": "height",
+      "input_sha256": "6db63868ae4ceeecc6da84c1157557dc439a502c985c9147d8c28ff6753c2843",
+      "status": 200,
+      "numeric_fields": 349,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    },
+    {
+      "fixture": "holes-door-gap-demo",
+      "settings": "scale",
+      "input_sha256": "6db63868ae4ceeecc6da84c1157557dc439a502c985c9147d8c28ff6753c2843",
+      "status": 200,
+      "numeric_fields": 349,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  ],
+  "source_sha256": {
+    "__init__.py": "f0cd3f1de44b134e6f0b63f65f2174f50f4cb3975f13c0bf09746c0d31896520",
+    "ai.py": "d1b05864527d5f8115c912ada04764fb283f25f922421cedd9a858be25fb1334",
+    "ai_schemas.py": "c7c8f941d09d108d4d57bdbf7b3a8022a90c97d634df597d5aeb5d828e9d788d",
+    "analysis_cache.py": "dd474c01a0405d2eb0b550231a130c726ea7ce79f57f431b5036a0e21565c4a7",
+    "analyzer.py": "873afd910f0c7fb2fd2fd8c48fcb3901b9b177e2b7608d6883e9e3396920c34b",
+    "geometry.py": "0267cfab4bf5bbf6180da02c74f0ff5c120ecf07f92e602ec59d06534d094af0",
+    "main.py": "5c097e59fc88c164934c9929a9b2d8150d69985c1490176d39a6c0c951d6e719",
+    "schemas.py": "f73a5ff22a83ea8ce9700525fdcc990c025e64f9cc60bb101f8d0098d9d991c9",
+    "spatial.py": "297a6e7c35a1fbe80ecfd4d8acc6c1c8614ffd20a5eee7eaff409ece98cad882",
+    "topology.py": "0cb11122de6cf7ad8da8352e219e30eb0d2ad74af8fcaf5bae883a3a8cfccc1b"
+  }
+}

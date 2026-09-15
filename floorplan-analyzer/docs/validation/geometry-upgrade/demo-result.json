@@ -1,0 +1,775 @@
+{
+  "overlaps": [
+    {
+      "room_ids": [
+        1,
+        2
+      ],
+      "area_m2": 0.08,
+      "regions": [
+        {
+          "vertices": [
+            {
+              "x": 80.0,
+              "y": 0.0
+            },
+            {
+              "x": 80.0,
+              "y": 40.0
+            },
+            {
+              "x": 100.0,
+              "y": 40.0
+            },
+            {
+              "x": 100.0,
+              "y": 0.0
+            }
+          ],
+          "holes": []
+        }
+      ]
+    }
+  ],
+  "image": {
+    "width": 150,
+    "height": 120,
+    "mime_type": null,
+    "has_image": false
+  },
+  "timestamp": null,
+  "settings": {
+    "ceiling_height_m": 2.4,
+    "door_height_m": 2.0,
+    "scale_px": 100.0,
+    "scale_m": 1.0,
+    "tolerance_px": 1.0,
+    "meters_per_px": 0.01
+  },
+  "summary": {
+    "union_floor_area_m2": 1.04,
+    "overlap_floor_area_m2": 0.07999999999999985,
+    "room_count": 2,
+    "wall_count": 2,
+    "door_count": 1,
+    "total_floor_area_m2": 1.1199999999999999,
+    "total_wall_area_m2": 2.08
+  },
+  "rooms": [
+    {
+      "holes": [
+        [
+          {
+            "x": 20.0,
+            "y": 20.0
+          },
+          {
+            "x": 40.0,
+            "y": 20.0
+          },
+          {
+            "x": 40.0,
+            "y": 40.0
+          },
+          {
+            "x": 20.0,
+            "y": 40.0
+          }
+        ]
+      ],
+      "label_point": {
+        "x": 50.0,
+        "y": 70.0
+      },
+      "id": 1,
+      "name": "Room A",
+      "room_name": "Room A",
+      "color": "#60a5fa",
+      "vertices": [
+        {
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "x": 100.0,
+          "y": 0.0
+        },
+        {
+          "x": 100.0,
+          "y": 100.0
+        },
+        {
+          "x": 0.0,
+          "y": 100.0
+        }
+      ],
+      "floor_area_px2": 9600.0,
+      "floor_area_m2": 0.96,
+      "perimeter_px": 480.0,
+      "perimeter_m": 4.8,
+      "source_area_px2": null,
+      "source_perimeter_px": null,
+      "wall_length_m": 1.0,
+      "opening_length_m": 3.8000000000000007,
+      "door_length_m": 0.4,
+      "door_count": 1,
+      "wall_area_gross_m2": 2.4,
+      "door_area_m2": 0.8,
+      "wall_area_m2": 1.5999999999999999,
+      "edges": [
+        {
+          "boundary_kind": "outer",
+          "inferred_wall_intervals": [
+            {
+              "start_px": 30.0,
+              "end_px": 70.0,
+              "start": {
+                "x": 30.0,
+                "y": 0.0
+              },
+              "end": {
+                "x": 70.0,
+                "y": 0.0
+              },
+              "length_px": 40.0,
+              "length_m": 0.4,
+              "ids": [
+                20
+              ]
+            }
+          ],
+          "index": 0,
+          "start": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "end": {
+            "x": 100.0,
+            "y": 0.0
+          },
+          "length_px": 100.0,
+          "length_m": 1.0,
+          "wall_intervals": [
+            {
+              "start_px": 0.0,
+              "end_px": 100.0,
+              "start": {
+                "x": 0.0,
+                "y": 0.0
+              },
+              "end": {
+                "x": 100.0,
+                "y": 0.0
+              },
+              "length_px": 100.0,
+              "length_m": 1.0,
+              "ids": [
+                10,
+                11
+              ]
+            }
+          ],
+          "opening_intervals": [],
+          "door_intervals": [
+            {
+              "start_px": 30.0,
+              "end_px": 70.0,
+              "start": {
+                "x": 30.0,
+                "y": 0.0
+              },
+              "end": {
+                "x": 70.0,
+                "y": 0.0
+              },
+              "length_px": 40.0,
+              "length_m": 0.4,
+              "ids": [
+                20
+              ]
+            }
+          ],
+          "wall_length_m": 1.0,
+          "opening_length_m": 0.0,
+          "door_length_m": 0.4,
+          "wall_area_gross_m2": 2.4,
+          "door_area_m2": 0.8,
+          "wall_area_m2": 1.5999999999999999
+        },
+        {
+          "boundary_kind": "outer",
+          "inferred_wall_intervals": [],
+          "index": 1,
+          "start": {
+            "x": 100.0,
+            "y": 0.0
+          },
+          "end": {
+            "x": 100.0,
+            "y": 100.0
+          },
+          "length_px": 100.0,
+          "length_m": 1.0,
+          "wall_intervals": [],
+          "opening_intervals": [
+            {
+              "start_px": 0.0,
+              "end_px": 100.0,
+              "start": {
+                "x": 100.0,
+                "y": 0.0
+              },
+              "end": {
+                "x": 100.0,
+                "y": 100.0
+              },
+              "length_px": 100.0,
+              "length_m": 1.0,
+              "ids": []
+            }
+          ],
+          "door_intervals": [],
+          "wall_length_m": 0.0,
+          "opening_length_m": 1.0,
+          "door_length_m": 0.0,
+          "wall_area_gross_m2": 0.0,
+          "door_area_m2": 0.0,
+          "wall_area_m2": 0.0
+        },
+        {
+          "boundary_kind": "outer",
+          "inferred_wall_intervals": [],
+          "index": 2,
+          "start": {
+            "x": 100.0,
+            "y": 100.0
+          },
+          "end": {
+            "x": 0.0,
+            "y": 100.0
+          },
+          "length_px": 100.0,
+          "length_m": 1.0,
+          "wall_intervals": [],
+          "opening_intervals": [
+            {
+              "start_px": 0.0,
+              "end_px": 100.0,
+              "start": {
+                "x": 100.0,
+                "y": 100.0
+              },
+              "end": {
+                "x": 0.0,
+                "y": 100.0
+              },
+              "length_px": 100.0,
+              "length_m": 1.0,
+              "ids": []
+            }
+          ],
+          "door_intervals": [],
+          "wall_length_m": 0.0,
+          "opening_length_m": 1.0,
+          "door_length_m": 0.0,
+          "wall_area_gross_m2": 0.0,
+          "door_area_m2": 0.0,
+          "wall_area_m2": 0.0
+        },
+        {
+          "boundary_kind": "outer",
+          "inferred_wall_intervals": [],
+          "index": 3,
+          "start": {
+            "x": 0.0,
+            "y": 100.0
+          },
+          "end": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "length_px": 100.0,
+          "length_m": 1.0,
+          "wall_intervals": [],
+          "opening_intervals": [
+            {
+              "start_px": 0.0,
+              "end_px": 100.0,
+              "start": {
+                "x": 0.0,
+                "y": 100.0
+              },
+              "end": {
+                "x": 0.0,
+                "y": 0.0
+              },
+              "length_px": 100.0,
+              "length_m": 1.0,
+              "ids": []
+            }
+          ],
+          "door_intervals": [],
+          "wall_length_m": 0.0,
+          "opening_length_m": 1.0,
+          "door_length_m": 0.0,
+          "wall_area_gross_m2": 0.0,
+          "door_area_m2": 0.0,
+          "wall_area_m2": 0.0
+        },
+        {
+          "boundary_kind": "hole",
+          "inferred_wall_intervals": [],
+          "index": 4,
+          "start": {
+            "x": 20.0,
+            "y": 20.0
+          },
+          "end": {
+            "x": 40.0,
+            "y": 20.0
+          },
+          "length_px": 20.0,
+          "length_m": 0.2,
+          "wall_intervals": [],
+          "opening_intervals": [
+            {
+              "start_px": 0.0,
+              "end_px": 20.0,
+              "start": {
+                "x": 20.0,
+                "y": 20.0
+              },
+              "end": {
+                "x": 40.0,
+                "y": 20.0
+              },
+              "length_px": 20.0,
+              "length_m": 0.2,
+              "ids": []
+            }
+          ],
+          "door_intervals": [],
+          "wall_length_m": 0.0,
+          "opening_length_m": 0.2,
+          "door_length_m": 0.0,
+          "wall_area_gross_m2": 0.0,
+          "door_area_m2": 0.0,
+          "wall_area_m2": 0.0
+        },
+        {
+          "boundary_kind": "hole",
+          "inferred_wall_intervals": [],
+          "index": 5,
+          "start": {
+            "x": 40.0,
+            "y": 20.0
+          },
+          "end": {
+            "x": 40.0,
+            "y": 40.0
+          },
+          "length_px": 20.0,
+          "length_m": 0.2,
+          "wall_intervals": [],
+          "opening_intervals": [
+            {
+              "start_px": 0.0,
+              "end_px": 20.0,
+              "start": {
+                "x": 40.0,
+                "y": 20.0
+              },
+              "end": {
+                "x": 40.0,
+                "y": 40.0
+              },
+              "length_px": 20.0,
+              "length_m": 0.2,
+              "ids": []
+            }
+          ],
+          "door_intervals": [],
+          "wall_length_m": 0.0,
+          "opening_length_m": 0.2,
+          "door_length_m": 0.0,
+          "wall_area_gross_m2": 0.0,
+          "door_area_m2": 0.0,
+          "wall_area_m2": 0.0
+        },
+        {
+          "boundary_kind": "hole",
+          "inferred_wall_intervals": [],
+          "index": 6,
+          "start": {
+            "x": 40.0,
+            "y": 40.0
+          },
+          "end": {
+            "x": 20.0,
+            "y": 40.0
+          },
+          "length_px": 20.0,
+          "length_m": 0.2,
+          "wall_intervals": [],
+          "opening_intervals": [
+            {
+              "start_px": 0.0,
+              "end_px": 20.0,
+              "start": {
+                "x": 40.0,
+                "y": 40.0
+              },
+              "end": {
+                "x": 20.0,
+                "y": 40.0
+              },
+              "length_px": 20.0,
+              "length_m": 0.2,
+              "ids": []
+            }
+          ],
+          "door_intervals": [],
+          "wall_length_m": 0.0,
+          "opening_length_m": 0.2,
+          "door_length_m": 0.0,
+          "wall_area_gross_m2": 0.0,
+          "door_area_m2": 0.0,
+          "wall_area_m2": 0.0
+        },
+        {
+          "boundary_kind": "hole",
+          "inferred_wall_intervals": [],
+          "index": 7,
+          "start": {
+            "x": 20.0,
+            "y": 40.0
+          },
+          "end": {
+            "x": 20.0,
+            "y": 20.0
+          },
+          "length_px": 20.0,
+          "length_m": 0.2,
+          "wall_intervals": [],
+          "opening_intervals": [
+            {
+              "start_px": 0.0,
+              "end_px": 20.0,
+              "start": {
+                "x": 20.0,
+                "y": 40.0
+              },
+              "end": {
+                "x": 20.0,
+                "y": 20.0
+              },
+              "length_px": 20.0,
+              "length_m": 0.2,
+              "ids": []
+            }
+          ],
+          "door_intervals": [],
+          "wall_length_m": 0.0,
+          "opening_length_m": 0.2,
+          "door_length_m": 0.0,
+          "wall_area_gross_m2": 0.0,
+          "door_area_m2": 0.0,
+          "wall_area_m2": 0.0
+        }
+      ]
+    },
+    {
+      "holes": [],
+      "label_point": {
+        "x": 100.0,
+        "y": 20.0
+      },
+      "id": 2,
+      "name": "Room B",
+      "room_name": "Room B",
+      "color": "#4ade80",
+      "vertices": [
+        {
+          "x": 80.0,
+          "y": 0.0
+        },
+        {
+          "x": 120.0,
+          "y": 0.0
+        },
+        {
+          "x": 120.0,
+          "y": 40.0
+        },
+        {
+          "x": 80.0,
+          "y": 40.0
+        }
+      ],
+      "floor_area_px2": 1600.0,
+      "floor_area_m2": 0.16,
+      "perimeter_px": 160.0,
+      "perimeter_m": 1.6,
+      "source_area_px2": null,
+      "source_perimeter_px": null,
+      "wall_length_m": 0.2,
+      "opening_length_m": 1.4,
+      "door_length_m": 0.0,
+      "door_count": 0,
+      "wall_area_gross_m2": 0.48,
+      "door_area_m2": 0.0,
+      "wall_area_m2": 0.48,
+      "edges": [
+        {
+          "boundary_kind": "outer",
+          "inferred_wall_intervals": [],
+          "index": 0,
+          "start": {
+            "x": 80.0,
+            "y": 0.0
+          },
+          "end": {
+            "x": 120.0,
+            "y": 0.0
+          },
+          "length_px": 40.0,
+          "length_m": 0.4,
+          "wall_intervals": [
+            {
+              "start_px": 0.0,
+              "end_px": 20.0,
+              "start": {
+                "x": 80.0,
+                "y": 0.0
+              },
+              "end": {
+                "x": 100.0,
+                "y": 0.0
+              },
+              "length_px": 20.0,
+              "length_m": 0.2,
+              "ids": [
+                11
+              ]
+            }
+          ],
+          "opening_intervals": [
+            {
+              "start_px": 20.0,
+              "end_px": 40.0,
+              "start": {
+                "x": 100.0,
+                "y": 0.0
+              },
+              "end": {
+                "x": 120.0,
+                "y": 0.0
+              },
+              "length_px": 20.0,
+              "length_m": 0.2,
+              "ids": []
+            }
+          ],
+          "door_intervals": [],
+          "wall_length_m": 0.2,
+          "opening_length_m": 0.2,
+          "door_length_m": 0.0,
+          "wall_area_gross_m2": 0.48,
+          "door_area_m2": 0.0,
+          "wall_area_m2": 0.48
+        },
+        {
+          "boundary_kind": "outer",
+          "inferred_wall_intervals": [],
+          "index": 1,
+          "start": {
+            "x": 120.0,
+            "y": 0.0
+          },
+          "end": {
+            "x": 120.0,
+            "y": 40.0
+          },
+          "length_px": 40.0,
+          "length_m": 0.4,
+          "wall_intervals": [],
+          "opening_intervals": [
+            {
+              "start_px": 0.0,
+              "end_px": 40.0,
+              "start": {
+                "x": 120.0,
+                "y": 0.0
+              },
+              "end": {
+                "x": 120.0,
+                "y": 40.0
+              },
+              "length_px": 40.0,
+              "length_m": 0.4,
+              "ids": []
+            }
+          ],
+          "door_intervals": [],
+          "wall_length_m": 0.0,
+          "opening_length_m": 0.4,
+          "door_length_m": 0.0,
+          "wall_area_gross_m2": 0.0,
+          "door_area_m2": 0.0,
+          "wall_area_m2": 0.0
+        },
+        {
+          "boundary_kind": "outer",
+          "inferred_wall_intervals": [],
+          "index": 2,
+          "start": {
+            "x": 120.0,
+            "y": 40.0
+          },
+          "end": {
+            "x": 80.0,
+            "y": 40.0
+          },
+          "length_px": 40.0,
+          "length_m": 0.4,
+          "wall_intervals": [],
+          "opening_intervals": [
+            {
+              "start_px": 0.0,
+              "end_px": 40.0,
+              "start": {
+                "x": 120.0,
+                "y": 40.0
+              },
+              "end": {
+                "x": 80.0,
+                "y": 40.0
+              },
+              "length_px": 40.0,
+              "length_m": 0.4,
+              "ids": []
+            }
+          ],
+          "door_intervals": [],
+          "wall_length_m": 0.0,
+          "opening_length_m": 0.4,
+          "door_length_m": 0.0,
+          "wall_area_gross_m2": 0.0,
+          "door_area_m2": 0.0,
+          "wall_area_m2": 0.0
+        },
+        {
+          "boundary_kind": "outer",
+          "inferred_wall_intervals": [],
+          "index": 3,
+          "start": {
+            "x": 80.0,
+            "y": 40.0
+          },
+          "end": {
+            "x": 80.0,
+            "y": 0.0
+          },
+          "length_px": 40.0,
+          "length_m": 0.4,
+          "wall_intervals": [],
+          "opening_intervals": [
+            {
+              "start_px": 0.0,
+              "end_px": 40.0,
+              "start": {
+                "x": 80.0,
+                "y": 40.0
+              },
+              "end": {
+                "x": 80.0,
+                "y": 0.0
+              },
+              "length_px": 40.0,
+              "length_m": 0.4,
+              "ids": []
+            }
+          ],
+          "door_intervals": [],
+          "wall_length_m": 0.0,
+          "opening_length_m": 0.4,
+          "door_length_m": 0.0,
+          "wall_area_gross_m2": 0.0,
+          "door_area_m2": 0.0,
+          "wall_area_m2": 0.0
+        }
+      ]
+    }
+  ],
+  "walls": [
+    {
+      "id": 10,
+      "kind": "wall",
+      "start": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "end": {
+        "x": 30.0,
+        "y": 0.0
+      },
+      "length_px": 30.0,
+      "length_m": 0.3,
+      "color": "#FF0000"
+    },
+    {
+      "id": 11,
+      "kind": "wall",
+      "start": {
+        "x": 70.0,
+        "y": 0.0
+      },
+      "end": {
+        "x": 100.0,
+        "y": 0.0
+      },
+      "length_px": 30.0,
+      "length_m": 0.3,
+      "color": "#FF0000"
+    }
+  ],
+  "doors": [
+    {
+      "id": 20,
+      "kind": "door",
+      "start": {
+        "x": 30.0,
+        "y": 0.0
+      },
+      "end": {
+        "x": 70.0,
+        "y": 0.0
+      },
+      "length_px": 40.0,
+      "length_m": 0.4,
+      "color": "#FF0000"
+    }
+  ],
+  "warnings": [
+    {
+      "code": "inferred_door_wall",
+      "message": "部屋 'Room A': 両側の壁とドア線から扉開口の壁区間を補完し、扉上部を計上しました。位置と高さを確認してください。",
+      "contour_id": 1
+    },
+    {
+      "code": "low_wall_coverage",
+      "message": "部屋 'Room B': 輪郭のうち壁として検出された長さが 12.5% です（確認目安 20% 未満）。開放空間でなければ、壁データの欠落・位置ずれ・許容誤差を確認してください。",
+      "contour_id": 2
+    },
+    {
+      "code": "room_overlap",
+      "message": "部屋 'Room A' と 'Room B' の床領域が 0.0800 m² 重複しています。部屋別面積は自動で削減していません。",
+      "contour_id": 1
+    },
+    {
+      "code": "room_overlap",
+      "message": "部屋 'Room B' と 'Room A' の床領域が 0.0800 m² 重複しています。部屋別面積は自動で削減していません。",
+      "contour_id": 2
+    }
+  ]
+}

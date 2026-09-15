@@ -1,0 +1,50 @@
+[
+  {
+    "dataset": "ur",
+    "http_status": 200,
+    "matches_testclient_response": true,
+    "summary": {
+      "room_count": 8,
+      "wall_count": 0,
+      "door_count": 0,
+      "total_floor_area_m2": 325.84158524141105,
+      "total_wall_area_m2": 0.0
+    }
+  },
+  {
+    "dataset": "mini",
+    "http_status": 200,
+    "matches_testclient_response": true,
+    "summary": {
+      "room_count": 3,
+      "wall_count": 0,
+      "door_count": 0,
+      "total_floor_area_m2": 22.335755367797304,
+      "total_wall_area_m2": 0.0
+    }
+  },
+  {
+    "dataset": "bedroom_wall",
+    "http_status": 200,
+    "matches_testclient_response": true,
+    "summary": {
+      "room_count": 1,
+      "wall_count": 4,
+      "door_count": 1,
+      "total_floor_area_m2": 8.021710098055154,
+      "total_wall_area_m2": 25.90853380035026
+    }
+  },
+  {
+    "dataset": "bedroom_door_gap",
+    "http_status": 200,
+    "matches_testclient_response": true,
+    "summary": {
+      "room_count": 1,
+      "wall_count": 5,
+      "door_count": 1,
+      "total_floor_area_m2": 8.021710098055154,
+      "total_wall_area_m2": 25.59679439579685
+    }
+  }
+]

@@ -1,0 +1,1463 @@
+{
+  "metadata": {
+    "timestamp_utc": "2026-09-14T15:04:07.610693+00:00",
+    "app_sha256": {
+      "__init__.py": "f0cd3f1de44b134e6f0b63f65f2174f50f4cb3975f13c0bf09746c0d31896520",
+      "ai.py": "d1b05864527d5f8115c912ada04764fb283f25f922421cedd9a858be25fb1334",
+      "ai_schemas.py": "c7c8f941d09d108d4d57bdbf7b3a8022a90c97d634df597d5aeb5d828e9d788d",
+      "analysis_cache.py": "dd474c01a0405d2eb0b550231a130c726ea7ce79f57f431b5036a0e21565c4a7",
+      "analyzer.py": "873afd910f0c7fb2fd2fd8c48fcb3901b9b177e2b7608d6883e9e3396920c34b",
+      "geometry.py": "0267cfab4bf5bbf6180da02c74f0ff5c120ecf07f92e602ec59d06534d094af0",
+      "main.py": "5c097e59fc88c164934c9929a9b2d8150d69985c1490176d39a6c0c951d6e719",
+      "schemas.py": "f73a5ff22a83ea8ce9700525fdcc990c025e64f9cc60bb101f8d0098d9d991c9",
+      "spatial.py": "297a6e7c35a1fbe80ecfd4d8acc6c1c8614ffd20a5eee7eaff409ece98cad882",
+      "topology.py": "0cb11122de6cf7ad8da8352e219e30eb0d2ad74af8fcaf5bae883a3a8cfccc1b"
+    },
+    "python": "3.9.6 (default, Apr 30 2025, 02:07:17) \n[Clang 17.0.0 (clang-1700.0.13.5)]",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "processor": "arm",
+    "machine": "arm64",
+    "shapely": "2.0.7",
+    "geos": "3.11.4",
+    "pydantic": "2.13.5",
+    "baseline_sha256": {
+      "__init__.py": "f0cd3f1de44b134e6f0b63f65f2174f50f4cb3975f13c0bf09746c0d31896520",
+      "analyzer.py": "ac194057aeeb48d737ab7fbcb5e576357a830df1af46189ed0de6802b5167954",
+      "geometry.py": "d5e098de46a65d29f8f51a806544b16e1a446e39c17ccfd5bf5d2171cfb51ea5",
+      "schemas.py": "f73a5ff22a83ea8ce9700525fdcc990c025e64f9cc60bb101f8d0098d9d991c9",
+      "topology.py": "0cb11122de6cf7ad8da8352e219e30eb0d2ad74af8fcaf5bae883a3a8cfccc1b"
+    }
+  },
+  "phase": "final",
+  "cases": [
+    {
+      "fixture": "sample",
+      "input_sha256": "97d89f1a877e706812e58183bf07e638e2e9d5ddc9322ca3d46fac4e44fb0a71",
+      "baseline": {
+        "count": 30,
+        "median_ms": 2.9995415000000003,
+        "p95_ms": 3.314625,
+        "raw_ms": [
+          3.213708,
+          3.12675,
+          3.314625,
+          3.071375,
+          3.067083,
+          3.050083,
+          3.020083,
+          3.047375,
+          3.151,
+          3.009459,
+          2.997208,
+          2.997208,
+          3.001875,
+          3.016958,
+          3.013958,
+          6.364375,
+          3.004875,
+          2.984084,
+          2.992917,
+          2.972041,
+          2.953792,
+          2.934125,
+          2.961959,
+          2.938792,
+          2.951541,
+          2.930375,
+          2.932416,
+          2.988791,
+          2.931417,
+          2.946291
+        ]
+      },
+      "equivalence": [
+        {
+          "settings": "default",
+          "cold": {
+            "numeric_fields": 1705,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          },
+          "warm": {
+            "numeric_fields": 1705,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          }
+        },
+        {
+          "settings": "height",
+          "cold": {
+            "numeric_fields": 1705,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          },
+          "warm": {
+            "numeric_fields": 1705,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          }
+        },
+        {
+          "settings": "scale",
+          "cold": {
+            "numeric_fields": 1705,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          },
+          "warm": {
+            "numeric_fields": 1705,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          }
+        },
+        {
+          "settings": "zero-tolerance",
+          "cold": {
+            "numeric_fields": 1529,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          },
+          "warm": {
+            "numeric_fields": 1529,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          }
+        },
+        {
+          "settings": "tolerance",
+          "cold": {
+            "numeric_fields": 1697,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          },
+          "warm": {
+            "numeric_fields": 1697,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          }
+        }
+      ],
+      "stage1-equivalence": {
+        "numeric_fields": 1705,
+        "different_numeric_fields": 0,
+        "max_absolute_difference": 0.0,
+        "max_relative_difference": 0.0,
+        "max_difference_path": null
+      },
+      "stage1": {
+        "count": 30,
+        "median_ms": 2.8244585,
+        "p95_ms": 3.261209,
+        "raw_ms": [
+          3.223917,
+          3.07025,
+          2.988959,
+          2.90525,
+          2.836292,
+          2.831667,
+          2.828334,
+          2.872083,
+          2.822416,
+          2.785458,
+          2.827333,
+          2.809792,
+          2.826,
+          2.813584,
+          2.822917,
+          2.808625,
+          2.821875,
+          2.810875,
+          2.811084,
+          2.813041,
+          2.7925,
+          2.805834,
+          2.786542,
+          2.790208,
+          2.788292,
+          3.401833,
+          2.924416,
+          2.87775,
+          3.261209,
+          2.985916
+        ]
+      },
+      "stage2-equivalence": {
+        "numeric_fields": 1705,
+        "different_numeric_fields": 0,
+        "max_absolute_difference": 0.0,
+        "max_relative_difference": 0.0,
+        "max_difference_path": null
+      },
+      "stage2": {
+        "count": 30,
+        "median_ms": 2.840396,
+        "p95_ms": 3.176792,
+        "raw_ms": [
+          3.176792,
+          2.975708,
+          2.946583,
+          2.900458,
+          2.955041,
+          2.956125,
+          2.859625,
+          2.836875,
+          2.840792,
+          2.808417,
+          2.835208,
+          2.84,
+          2.796334,
+          2.810834,
+          2.782208,
+          2.794333,
+          2.836833,
+          2.773375,
+          2.788583,
+          2.791666,
+          3.082459,
+          2.889916,
+          2.920333,
+          2.864834,
+          2.837459,
+          2.8345,
+          2.842625,
+          2.834584,
+          2.872209,
+          6.362542
+        ]
+      },
+      "stage3-equivalence": {
+        "numeric_fields": 1705,
+        "different_numeric_fields": 0,
+        "max_absolute_difference": 0.0,
+        "max_relative_difference": 0.0,
+        "max_difference_path": null
+      },
+      "stage3": {
+        "count": 30,
+        "median_ms": 2.9063125000000003,
+        "p95_ms": 2.992042,
+        "raw_ms": [
+          2.992042,
+          2.95625,
+          2.934,
+          2.93275,
+          2.947917,
+          2.955416,
+          2.929,
+          2.935833,
+          2.914375,
+          2.918416,
+          2.874958,
+          2.9215,
+          2.88225,
+          2.881958,
+          2.894917,
+          2.968041,
+          2.902542,
+          2.915666,
+          2.910083,
+          2.890917,
+          2.869458,
+          3.051791,
+          2.735084,
+          2.79825,
+          2.7895,
+          2.796917,
+          2.766458,
+          2.805208,
+          2.864792,
+          2.8185
+        ]
+      },
+      "uncached": {
+        "count": 30,
+        "median_ms": 2.8222915,
+        "p95_ms": 2.924375,
+        "raw_ms": [
+          2.877875,
+          2.8405,
+          2.924375,
+          2.821708,
+          2.867541,
+          2.9665,
+          2.750458,
+          2.793042,
+          2.798208,
+          2.839333,
+          2.745208,
+          2.84225,
+          2.836375,
+          2.801375,
+          2.847042,
+          2.870583,
+          2.81825,
+          2.836708,
+          2.788917,
+          2.801209,
+          2.783333,
+          2.797958,
+          2.801334,
+          2.843917,
+          2.75125,
+          2.807375,
+          2.864791,
+          2.822875,
+          2.802417,
+          2.844708
+        ]
+      },
+      "cold": {
+        "count": 30,
+        "median_ms": 4.152146,
+        "p95_ms": 6.911041,
+        "raw_ms": [
+          7.445125,
+          4.202458,
+          4.197208,
+          4.14325,
+          4.265041,
+          4.114667,
+          4.179041,
+          4.144833,
+          4.202917,
+          4.164709,
+          4.124875,
+          4.127625,
+          4.123625,
+          4.133708,
+          4.18375,
+          4.13275,
+          4.254042,
+          4.1735,
+          4.157042,
+          4.1805,
+          4.114625,
+          4.1435,
+          4.123167,
+          4.139459,
+          4.103667,
+          4.128583,
+          6.911041,
+          4.283542,
+          4.266083,
+          4.14725
+        ]
+      },
+      "baseline-height": {
+        "count": 30,
+        "median_ms": 2.8876245000000003,
+        "p95_ms": 2.948208,
+        "raw_ms": [
+          2.948208,
+          2.883083,
+          2.878083,
+          2.944834,
+          2.824958,
+          2.865041,
+          2.875167,
+          2.909583,
+          2.858583,
+          2.876791,
+          2.905167,
+          2.868667,
+          2.945708,
+          2.912083,
+          2.891792,
+          2.858958,
+          2.887541,
+          2.887708,
+          2.825042,
+          2.860792,
+          2.88225,
+          2.898583,
+          2.875583,
+          2.861167,
+          3.094625,
+          2.9205,
+          2.906,
+          2.925208,
+          2.888208,
+          2.893
+        ]
+      },
+      "warm-height": {
+        "count": 30,
+        "median_ms": 0.840354,
+        "p95_ms": 0.909875,
+        "raw_ms": [
+          0.909875,
+          0.849625,
+          0.859208,
+          0.856166,
+          0.838667,
+          0.840083,
+          0.846083,
+          0.835209,
+          0.8505,
+          0.848584,
+          0.829875,
+          0.826083,
+          4.116083,
+          0.858875,
+          0.8405,
+          0.871625,
+          0.828917,
+          0.837833,
+          0.866083,
+          0.827208,
+          0.833375,
+          0.866416,
+          0.826083,
+          0.827625,
+          0.874791,
+          0.823875,
+          0.822875,
+          0.879,
+          0.840208,
+          0.829375
+        ]
+      },
+      "baseline-scale": {
+        "count": 30,
+        "median_ms": 2.8945415,
+        "p95_ms": 3.828792,
+        "raw_ms": [
+          3.103334,
+          2.95825,
+          2.923417,
+          2.908208,
+          2.906792,
+          2.886584,
+          2.884709,
+          2.885417,
+          2.881875,
+          2.940125,
+          2.881542,
+          2.880583,
+          2.892542,
+          2.880666,
+          2.870625,
+          2.871833,
+          2.877833,
+          2.874875,
+          2.878291,
+          2.893458,
+          2.895625,
+          2.942708,
+          3.087625,
+          2.956958,
+          2.952125,
+          3.828792,
+          3.880625,
+          2.993334,
+          2.987792,
+          2.890541
+        ]
+      },
+      "warm-scale": {
+        "count": 30,
+        "median_ms": 0.8429165000000001,
+        "p95_ms": 0.892667,
+        "raw_ms": [
+          0.907083,
+          0.860833,
+          0.892667,
+          0.839917,
+          0.856042,
+          0.872958,
+          0.827042,
+          0.840333,
+          0.875875,
+          0.833292,
+          0.835333,
+          0.891208,
+          0.833167,
+          0.845833,
+          0.875666,
+          0.827667,
+          0.828708,
+          0.878417,
+          0.822792,
+          0.826875,
+          0.875333,
+          0.830667,
+          0.824417,
+          0.890625,
+          0.82225,
+          0.8255,
+          0.876417,
+          0.8455,
+          0.831459,
+          0.879625
+        ]
+      }
+    },
+    {
+      "fixture": "holes-door-gap-demo",
+      "input_sha256": "3d78ad2a242429e933d76aea1d40be79f4780ec13d0491f77685932832e316d5",
+      "baseline": {
+        "count": 30,
+        "median_ms": 0.4307705,
+        "p95_ms": 0.456083,
+        "raw_ms": [
+          0.452417,
+          0.451,
+          0.471959,
+          0.446416,
+          0.435375,
+          0.434334,
+          0.430542,
+          0.437375,
+          0.440042,
+          0.43175,
+          0.427583,
+          0.429375,
+          0.430375,
+          0.43075,
+          0.438167,
+          0.429416,
+          0.428667,
+          0.427833,
+          0.429167,
+          0.429917,
+          0.438916,
+          0.427084,
+          0.436083,
+          0.429917,
+          0.430791,
+          0.456083,
+          0.438292,
+          0.427834,
+          0.427583,
+          0.427
+        ]
+      },
+      "equivalence": [
+        {
+          "settings": "default",
+          "cold": {
+            "numeric_fields": 349,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          },
+          "warm": {
+            "numeric_fields": 349,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          }
+        },
+        {
+          "settings": "height",
+          "cold": {
+            "numeric_fields": 349,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          },
+          "warm": {
+            "numeric_fields": 349,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          }
+        },
+        {
+          "settings": "scale",
+          "cold": {
+            "numeric_fields": 349,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          },
+          "warm": {
+            "numeric_fields": 349,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          }
+        },
+        {
+          "settings": "zero-tolerance",
+          "cold": {
+            "numeric_fields": 349,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          },
+          "warm": {
+            "numeric_fields": 349,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          }
+        },
+        {
+          "settings": "tolerance",
+          "cold": {
+            "numeric_fields": 349,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          },
+          "warm": {
+            "numeric_fields": 349,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          }
+        }
+      ],
+      "stage1-equivalence": {
+        "numeric_fields": 349,
+        "different_numeric_fields": 0,
+        "max_absolute_difference": 0.0,
+        "max_relative_difference": 0.0,
+        "max_difference_path": null
+      },
+      "stage1": {
+        "count": 30,
+        "median_ms": 0.42404149999999996,
+        "p95_ms": 0.434375,
+        "raw_ms": [
+          0.433125,
+          0.427792,
+          0.425208,
+          0.445084,
+          0.421875,
+          0.42375,
+          0.423834,
+          0.421917,
+          0.422875,
+          0.432375,
+          0.422709,
+          0.431209,
+          0.422292,
+          0.424458,
+          0.42375,
+          0.434375,
+          0.424375,
+          0.4235,
+          0.430042,
+          0.424208,
+          0.423458,
+          0.424625,
+          0.432666,
+          0.4235,
+          0.422625,
+          0.423875,
+          0.424291,
+          0.422958,
+          0.431875,
+          0.423792
+        ]
+      },
+      "stage2-equivalence": {
+        "numeric_fields": 349,
+        "different_numeric_fields": 0,
+        "max_absolute_difference": 0.0,
+        "max_relative_difference": 0.0,
+        "max_difference_path": null
+      },
+      "stage2": {
+        "count": 30,
+        "median_ms": 0.4347915,
+        "p95_ms": 0.456208,
+        "raw_ms": [
+          0.442875,
+          0.445917,
+          0.434958,
+          0.456208,
+          0.445708,
+          0.433708,
+          0.46,
+          0.45175,
+          0.434666,
+          0.434083,
+          0.433375,
+          0.434292,
+          0.433209,
+          0.445041,
+          0.431792,
+          0.433167,
+          0.432542,
+          0.432125,
+          0.436125,
+          0.444125,
+          0.434083,
+          0.435417,
+          0.434917,
+          0.448167,
+          0.444541,
+          0.446042,
+          0.433541,
+          0.434167,
+          0.434542,
+          0.434458
+        ]
+      },
+      "stage3-equivalence": {
+        "numeric_fields": 349,
+        "different_numeric_fields": 0,
+        "max_absolute_difference": 0.0,
+        "max_relative_difference": 0.0,
+        "max_difference_path": null
+      },
+      "stage3": {
+        "count": 30,
+        "median_ms": 0.439125,
+        "p95_ms": 0.485292,
+        "raw_ms": [
+          0.446792,
+          0.441917,
+          0.439,
+          0.43925,
+          0.446209,
+          0.439958,
+          0.438125,
+          0.437959,
+          0.437875,
+          0.439792,
+          0.443709,
+          0.446708,
+          0.438333,
+          0.438917,
+          0.485292,
+          0.4445,
+          0.484917,
+          0.504416,
+          0.442458,
+          0.420833,
+          0.415208,
+          0.427083,
+          0.435584,
+          0.413166,
+          0.421959,
+          0.425084,
+          0.425125,
+          0.427458,
+          0.447458,
+          0.441292
+        ]
+      },
+      "uncached": {
+        "count": 30,
+        "median_ms": 0.4317295,
+        "p95_ms": 0.444292,
+        "raw_ms": [
+          0.435833,
+          0.427708,
+          0.431834,
+          0.432875,
+          0.432541,
+          0.441666,
+          0.455584,
+          0.440417,
+          0.395958,
+          0.39375,
+          0.398541,
+          0.436666,
+          0.415958,
+          0.420958,
+          0.426792,
+          0.427458,
+          0.420584,
+          0.435833,
+          0.426541,
+          0.431292,
+          0.432416,
+          0.428084,
+          0.431625,
+          0.433125,
+          0.438417,
+          0.431417,
+          0.444292,
+          0.433625,
+          0.432042,
+          0.42925
+        ]
+      },
+      "cold": {
+        "count": 30,
+        "median_ms": 0.6531875,
+        "p95_ms": 0.694542,
+        "raw_ms": [
+          0.694542,
+          0.66775,
+          0.658292,
+          0.65825,
+          0.659792,
+          0.653916,
+          0.652459,
+          0.651625,
+          0.658416,
+          0.672,
+          0.65025,
+          0.690083,
+          0.667333,
+          0.649125,
+          0.648084,
+          0.705791,
+          0.648667,
+          0.644167,
+          0.649333,
+          0.648958,
+          0.664334,
+          0.645959,
+          0.663875,
+          0.648208,
+          0.657292,
+          0.64875,
+          0.646125,
+          0.647208,
+          0.66025,
+          0.647875
+        ]
+      },
+      "baseline-height": {
+        "count": 30,
+        "median_ms": 0.4306875,
+        "p95_ms": 0.4715,
+        "raw_ms": [
+          0.478625,
+          0.431292,
+          0.421167,
+          0.418333,
+          0.408667,
+          0.421292,
+          0.425291,
+          0.424334,
+          0.428583,
+          0.430083,
+          0.434334,
+          0.436042,
+          0.43375,
+          0.4285,
+          0.428583,
+          0.426334,
+          0.439333,
+          0.446833,
+          0.436292,
+          0.441792,
+          0.435083,
+          0.433709,
+          0.447125,
+          0.4715,
+          0.440125,
+          0.420125,
+          0.388584,
+          0.398708,
+          0.438042,
+          0.417333
+        ]
+      },
+      "warm-height": {
+        "count": 30,
+        "median_ms": 0.140167,
+        "p95_ms": 0.149792,
+        "raw_ms": [
+          0.172375,
+          0.149584,
+          0.147209,
+          0.143666,
+          0.142959,
+          0.141584,
+          0.141875,
+          0.140541,
+          0.143333,
+          0.147208,
+          0.139917,
+          0.140167,
+          0.139292,
+          0.138833,
+          0.140167,
+          0.140625,
+          0.140084,
+          0.139875,
+          0.138458,
+          0.139,
+          0.139583,
+          0.149792,
+          0.13875,
+          0.139,
+          0.140042,
+          0.13925,
+          0.138917,
+          0.141667,
+          0.145375,
+          0.138833
+        ]
+      },
+      "baseline-scale": {
+        "count": 30,
+        "median_ms": 0.4280205,
+        "p95_ms": 0.442209,
+        "raw_ms": [
+          0.442209,
+          0.430084,
+          0.42875,
+          0.428625,
+          0.426333,
+          0.437292,
+          0.425375,
+          0.427125,
+          0.427208,
+          0.426875,
+          0.426542,
+          0.436583,
+          0.427833,
+          0.427,
+          0.432958,
+          0.426875,
+          0.43425,
+          0.439625,
+          0.438291,
+          0.433208,
+          0.425958,
+          0.425042,
+          0.434917,
+          0.424583,
+          0.436833,
+          0.428208,
+          0.4275,
+          0.424667,
+          0.4275,
+          0.448083
+        ]
+      },
+      "warm-scale": {
+        "count": 30,
+        "median_ms": 0.1395205,
+        "p95_ms": 0.150208,
+        "raw_ms": [
+          0.151875,
+          0.145375,
+          0.142292,
+          0.141291,
+          0.140375,
+          0.140083,
+          0.138041,
+          0.140625,
+          0.143625,
+          0.139167,
+          0.138083,
+          0.139166,
+          0.138,
+          0.138875,
+          0.141666,
+          0.1445,
+          0.13775,
+          0.13925,
+          0.137709,
+          0.138583,
+          0.139208,
+          0.139708,
+          0.139333,
+          0.138375,
+          0.1375,
+          0.137958,
+          0.141625,
+          0.149334,
+          0.148333,
+          0.150208
+        ]
+      }
+    },
+    {
+      "fixture": "sample-110-rooms",
+      "input_sha256": "74d1b02bec5e4daeb38fe4e8bf46c07cd1f89b026be0ada4862bf915edaaca45",
+      "baseline": {
+        "count": 5,
+        "median_ms": 86.602333,
+        "p95_ms": 94.186292,
+        "raw_ms": [
+          86.295292,
+          86.602333,
+          94.186292,
+          90.976167,
+          86.538417
+        ]
+      },
+      "equivalence": [
+        {
+          "settings": "default",
+          "cold": {
+            "numeric_fields": 16960,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          },
+          "warm": {
+            "numeric_fields": 16960,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          }
+        },
+        {
+          "settings": "height",
+          "cold": {
+            "numeric_fields": 16960,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          },
+          "warm": {
+            "numeric_fields": 16960,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          }
+        },
+        {
+          "settings": "scale",
+          "cold": {
+            "numeric_fields": 16960,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          },
+          "warm": {
+            "numeric_fields": 16960,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          }
+        },
+        {
+          "settings": "zero-tolerance",
+          "cold": {
+            "numeric_fields": 15200,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          },
+          "warm": {
+            "numeric_fields": 15200,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          }
+        },
+        {
+          "settings": "tolerance",
+          "cold": {
+            "numeric_fields": 16880,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          },
+          "warm": {
+            "numeric_fields": 16880,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          }
+        }
+      ],
+      "stage1-equivalence": {
+        "numeric_fields": 16960,
+        "different_numeric_fields": 0,
+        "max_absolute_difference": 0.0,
+        "max_relative_difference": 0.0,
+        "max_difference_path": null
+      },
+      "stage1": {
+        "count": 5,
+        "median_ms": 75.17075,
+        "p95_ms": 81.536958,
+        "raw_ms": [
+          81.536958,
+          75.908667,
+          75.17075,
+          74.969666,
+          74.966458
+        ]
+      },
+      "stage2-equivalence": {
+        "numeric_fields": 16960,
+        "different_numeric_fields": 0,
+        "max_absolute_difference": 0.0,
+        "max_relative_difference": 0.0,
+        "max_difference_path": null
+      },
+      "stage2": {
+        "count": 5,
+        "median_ms": 76.198292,
+        "p95_ms": 86.339959,
+        "raw_ms": [
+          86.339959,
+          81.728667,
+          75.207209,
+          75.143708,
+          76.198292
+        ]
+      },
+      "stage3-equivalence": {
+        "numeric_fields": 16960,
+        "different_numeric_fields": 0,
+        "max_absolute_difference": 0.0,
+        "max_relative_difference": 0.0,
+        "max_difference_path": null
+      },
+      "stage3": {
+        "count": 5,
+        "median_ms": 40.605459,
+        "p95_ms": 46.88125,
+        "raw_ms": [
+          40.552084,
+          40.605459,
+          46.88125,
+          40.365375,
+          41.319875
+        ]
+      },
+      "uncached": {
+        "count": 5,
+        "median_ms": 41.537541,
+        "p95_ms": 47.8265,
+        "raw_ms": [
+          41.537541,
+          42.46575,
+          47.8265,
+          41.227667,
+          41.254958
+        ]
+      },
+      "cold": {
+        "count": 5,
+        "median_ms": 61.845083,
+        "p95_ms": 62.843083,
+        "raw_ms": [
+          62.048083,
+          55.517958,
+          61.845083,
+          55.83475,
+          62.843083
+        ]
+      },
+      "baseline-height": {
+        "count": 5,
+        "median_ms": 86.002542,
+        "p95_ms": 93.062,
+        "raw_ms": [
+          86.002542,
+          85.73525,
+          85.890958,
+          93.062,
+          86.94725
+        ]
+      },
+      "warm-height": {
+        "count": 5,
+        "median_ms": 9.555709,
+        "p95_ms": 16.909375,
+        "raw_ms": [
+          15.445334,
+          9.000791,
+          9.0105,
+          16.909375,
+          9.555709
+        ]
+      },
+      "baseline-scale": {
+        "count": 5,
+        "median_ms": 87.725208,
+        "p95_ms": 91.897,
+        "raw_ms": [
+          91.459,
+          87.725208,
+          91.897,
+          85.866167,
+          86.965875
+        ]
+      },
+      "warm-scale": {
+        "count": 5,
+        "median_ms": 8.984708,
+        "p95_ms": 14.580917,
+        "raw_ms": [
+          9.316375,
+          8.807167,
+          14.580917,
+          8.853667,
+          8.984708
+        ]
+      }
+    },
+    {
+      "fixture": "sample-550-rooms",
+      "input_sha256": "a2d6d75e6c400b99652a15180e7bdb257d2b4d8f9219dc9c0efde70c65ce5f72",
+      "baseline": {
+        "count": 5,
+        "median_ms": 1627.138167,
+        "p95_ms": 1678.502542,
+        "raw_ms": [
+          1627.138167,
+          1678.502542,
+          1611.961875,
+          1607.406833,
+          1638.381666
+        ]
+      },
+      "equivalence": [
+        {
+          "settings": "default",
+          "cold": {
+            "numeric_fields": 84760,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          },
+          "warm": {
+            "numeric_fields": 84760,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          }
+        },
+        {
+          "settings": "height",
+          "cold": {
+            "numeric_fields": 84760,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          },
+          "warm": {
+            "numeric_fields": 84760,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          }
+        },
+        {
+          "settings": "scale",
+          "cold": {
+            "numeric_fields": 84760,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          },
+          "warm": {
+            "numeric_fields": 84760,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          }
+        },
+        {
+          "settings": "zero-tolerance",
+          "cold": {
+            "numeric_fields": 75960,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          },
+          "warm": {
+            "numeric_fields": 75960,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          }
+        },
+        {
+          "settings": "tolerance",
+          "cold": {
+            "numeric_fields": 84360,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          },
+          "warm": {
+            "numeric_fields": 84360,
+            "different_numeric_fields": 0,
+            "max_absolute_difference": 0.0,
+            "max_relative_difference": 0.0,
+            "max_difference_path": null
+          }
+        }
+      ],
+      "stage1-equivalence": {
+        "numeric_fields": 84760,
+        "different_numeric_fields": 0,
+        "max_absolute_difference": 0.0,
+        "max_relative_difference": 0.0,
+        "max_difference_path": null
+      },
+      "stage1": {
+        "count": 5,
+        "median_ms": 1460.150167,
+        "p95_ms": 1503.59125,
+        "raw_ms": [
+          1379.21025,
+          1378.630459,
+          1503.59125,
+          1460.150167,
+          1494.418375
+        ]
+      },
+      "stage2-equivalence": {
+        "numeric_fields": 84760,
+        "different_numeric_fields": 0,
+        "max_absolute_difference": 0.0,
+        "max_relative_difference": 0.0,
+        "max_difference_path": null
+      },
+      "stage2": {
+        "count": 5,
+        "median_ms": 1443.394584,
+        "p95_ms": 1777.601333,
+        "raw_ms": [
+          1777.601333,
+          1392.968459,
+          1470.218458,
+          1443.394584,
+          1419.780459
+        ]
+      },
+      "stage3-equivalence": {
+        "numeric_fields": 84760,
+        "different_numeric_fields": 0,
+        "max_absolute_difference": 0.0,
+        "max_relative_difference": 0.0,
+        "max_difference_path": null
+      },
+      "stage3": {
+        "count": 5,
+        "median_ms": 233.735834,
+        "p95_ms": 259.998,
+        "raw_ms": [
+          229.176542,
+          227.021125,
+          259.998,
+          237.641917,
+          233.735834
+        ]
+      },
+      "uncached": {
+        "count": 5,
+        "median_ms": 231.864959,
+        "p95_ms": 256.094708,
+        "raw_ms": [
+          235.662708,
+          231.453875,
+          231.864959,
+          227.902875,
+          256.094708
+        ]
+      },
+      "cold": {
+        "count": 5,
+        "median_ms": 371.615167,
+        "p95_ms": 384.792958,
+        "raw_ms": [
+          348.276667,
+          352.059292,
+          384.792958,
+          379.585958,
+          371.615167
+        ]
+      },
+      "baseline-height": {
+        "count": 5,
+        "median_ms": 1631.990917,
+        "p95_ms": 1652.379042,
+        "raw_ms": [
+          1631.990917,
+          1652.379042,
+          1621.55825,
+          1635.690291,
+          1622.687208
+        ]
+      },
+      "warm-height": {
+        "count": 5,
+        "median_ms": 99.502917,
+        "p95_ms": 108.990459,
+        "raw_ms": [
+          108.990459,
+          76.1,
+          99.502917,
+          71.61725,
+          108.566167
+        ]
+      },
+      "baseline-scale": {
+        "count": 5,
+        "median_ms": 1618.234625,
+        "p95_ms": 1699.750125,
+        "raw_ms": [
+          1617.434083,
+          1627.197917,
+          1699.750125,
+          1614.795625,
+          1618.234625
+        ]
+      },
+      "warm-scale": {
+        "count": 5,
+        "median_ms": 117.560459,
+        "p95_ms": 125.817167,
+        "raw_ms": [
+          82.911333,
+          125.200167,
+          125.817167,
+          86.418,
+          117.560459
+        ]
+      }
+    }
+  ],
+  "scope": "In-process analysis; excludes input validation, HTTP and JSON serialization. Internal cache JSON and hashing included. Cold includes cache clear; warm preloads default then changes scale/height."
+}

@@ -1,0 +1,107 @@
+{
+  "arithmetic_checks": {
+    "floor_area_m2": {
+      "expected": 8.021710098055152,
+      "actual": 8.021710098055154,
+      "absolute_error": 1.7763568394002505e-15
+    },
+    "perimeter_m": {
+      "expected": 11.444679509632223,
+      "actual": 11.444679509632225,
+      "absolute_error": 1.7763568394002505e-15
+    },
+    "wall_area_m2": {
+      "expected": 25.908533800350263,
+      "actual": 25.90853380035026,
+      "absolute_error": 3.552713678800501e-15
+    }
+  },
+  "datasets": {
+    "ur": {
+      "n": 8,
+      "mape_pct": 0.587612580709411,
+      "max_absolute_pct": 1.783413828919811
+    },
+    "mini": {
+      "n": 3,
+      "mape_pct": 5.946006741305494,
+      "max_absolute_pct": 15.936339294751289
+    }
+  },
+  "wall_gap": {
+    "reference_m2": 25.908533800350263,
+    "actual_m2": 25.59679439579685,
+    "error_pct": -1.2032305917257236,
+    "warnings": [
+      {
+        "code": "unmatched_door",
+        "message": "ドア id=20: どの部屋の壁にも対応付けられませんでした (控除されていません)",
+        "contour_id": 20
+      }
+    ]
+  },
+  "scale_sensitivity": [
+    {
+      "scale_error_pct": -5.0,
+      "floor_error_pct": -9.750000000000025,
+      "wall_error_pct": -5.000000000000016
+    },
+    {
+      "scale_error_pct": -1.0,
+      "floor_error_pct": -1.9899999999999807,
+      "wall_error_pct": -1.0000000000000009
+    },
+    {
+      "scale_error_pct": 0,
+      "floor_error_pct": 2.220446049250313e-14,
+      "wall_error_pct": -1.1102230246251565e-14
+    },
+    {
+      "scale_error_pct": 1.0,
+      "floor_error_pct": 2.010000000000023,
+      "wall_error_pct": 0.9999999999999787
+    },
+    {
+      "scale_error_pct": 5.0,
+      "floor_error_pct": 10.250000000000048,
+      "wall_error_pct": 5.000000000000004
+    }
+  ],
+  "offset_sensitivity": [
+    {
+      "offset_x_y_px": 0,
+      "wall_area_m2": 25.90853380035026,
+      "wall_error_pct": -1.1102230246251565e-14
+    },
+    {
+      "offset_x_y_px": 2,
+      "wall_area_m2": 25.90853380035026,
+      "wall_error_pct": -1.1102230246251565e-14
+    },
+    {
+      "offset_x_y_px": 5,
+      "wall_area_m2": 25.90853380035026,
+      "wall_error_pct": -1.1102230246251565e-14
+    },
+    {
+      "offset_x_y_px": 9,
+      "wall_area_m2": 25.90853380035026,
+      "wall_error_pct": -1.1102230246251565e-14
+    },
+    {
+      "offset_x_y_px": 10,
+      "wall_area_m2": 25.90853380035026,
+      "wall_error_pct": -1.1102230246251565e-14
+    },
+    {
+      "offset_x_y_px": 11,
+      "wall_area_m2": 0.0,
+      "wall_error_pct": -100.0
+    },
+    {
+      "offset_x_y_px": 20,
+      "wall_area_m2": 0.0,
+      "wall_error_pct": -100.0
+    }
+  ]
+}

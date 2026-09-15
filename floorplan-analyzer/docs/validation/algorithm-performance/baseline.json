@@ -1,0 +1,132 @@
+{
+  "metadata": {
+    "python": "3.9.6 (default, Apr 30 2025, 02:07:17) \n[Clang 17.0.0 (clang-1700.0.13.5)]",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "processor": "arm",
+    "machine": "arm64",
+    "shapely": "2.0.7",
+    "geos": "3.11.4",
+    "pydantic": "2.13.5",
+    "baseline_sha256": {
+      "__init__.py": "f0cd3f1de44b134e6f0b63f65f2174f50f4cb3975f13c0bf09746c0d31896520",
+      "analyzer.py": "ac194057aeeb48d737ab7fbcb5e576357a830df1af46189ed0de6802b5167954",
+      "geometry.py": "d5e098de46a65d29f8f51a806544b16e1a446e39c17ccfd5bf5d2171cfb51ea5",
+      "schemas.py": "f73a5ff22a83ea8ce9700525fdcc990c025e64f9cc60bb101f8d0098d9d991c9",
+      "topology.py": "0cb11122de6cf7ad8da8352e219e30eb0d2ad74af8fcaf5bae883a3a8cfccc1b"
+    }
+  },
+  "phase": "baseline",
+  "cases": [
+    {
+      "fixture": "sample",
+      "baseline": {
+        "count": 30,
+        "median_ms": 2.8701879999999997,
+        "p95_ms": 3.176833,
+        "raw_ms": [
+          2.868959,
+          2.833416,
+          2.845166,
+          2.823625,
+          2.891,
+          2.852209,
+          2.785417,
+          2.809541,
+          2.818042,
+          2.811833,
+          2.904458,
+          3.083,
+          2.827,
+          2.827125,
+          2.887167,
+          2.883208,
+          6.044792,
+          2.882292,
+          2.864458,
+          3.176833,
+          2.827917,
+          2.808916,
+          2.864417,
+          2.88975,
+          2.871417,
+          2.896583,
+          2.923708,
+          2.894041,
+          2.935208,
+          2.899791
+        ]
+      }
+    },
+    {
+      "fixture": "holes-door-gap-demo",
+      "baseline": {
+        "count": 30,
+        "median_ms": 0.4271665,
+        "p95_ms": 0.463,
+        "raw_ms": [
+          0.460334,
+          0.425083,
+          0.441083,
+          0.4405,
+          0.463,
+          0.457833,
+          0.453959,
+          0.433,
+          0.43225,
+          0.431583,
+          0.434583,
+          0.435834,
+          0.457666,
+          0.5155,
+          0.441458,
+          0.414291,
+          0.395334,
+          0.391791,
+          0.420791,
+          0.389833,
+          0.409875,
+          0.390334,
+          0.390833,
+          0.424666,
+          0.42925,
+          0.418625,
+          0.400792,
+          0.403042,
+          0.3995,
+          0.420917
+        ]
+      }
+    },
+    {
+      "fixture": "sample-110-rooms",
+      "baseline": {
+        "count": 5,
+        "median_ms": 91.50125,
+        "p95_ms": 94.5095,
+        "raw_ms": [
+          94.5095,
+          91.50125,
+          92.755625,
+          85.567792,
+          86.750875
+        ]
+      }
+    },
+    {
+      "fixture": "sample-550-rooms",
+      "baseline": {
+        "count": 5,
+        "median_ms": 1616.155334,
+        "p95_ms": 1628.418791,
+        "raw_ms": [
+          1628.418791,
+          1625.354,
+          1604.185083,
+          1616.155334,
+          1608.76325
+        ]
+      }
+    }
+  ],
+  "scope": "In-process analysis; excludes input validation, HTTP and JSON serialization. Cold includes cache clear; warm preloads default then changes scale/height."
+}

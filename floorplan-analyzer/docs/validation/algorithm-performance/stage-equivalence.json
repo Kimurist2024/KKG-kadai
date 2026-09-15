@@ -1,0 +1,722 @@
+[
+  {
+    "fixture": "sample",
+    "settings": "default",
+    "stage": 1,
+    "comparison": {
+      "numeric_fields": 1705,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample",
+    "settings": "default",
+    "stage": 2,
+    "comparison": {
+      "numeric_fields": 1705,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample",
+    "settings": "default",
+    "stage": 3,
+    "comparison": {
+      "numeric_fields": 1705,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample",
+    "settings": "height",
+    "stage": 1,
+    "comparison": {
+      "numeric_fields": 1705,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample",
+    "settings": "height",
+    "stage": 2,
+    "comparison": {
+      "numeric_fields": 1705,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample",
+    "settings": "height",
+    "stage": 3,
+    "comparison": {
+      "numeric_fields": 1705,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample",
+    "settings": "scale",
+    "stage": 1,
+    "comparison": {
+      "numeric_fields": 1705,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample",
+    "settings": "scale",
+    "stage": 2,
+    "comparison": {
+      "numeric_fields": 1705,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample",
+    "settings": "scale",
+    "stage": 3,
+    "comparison": {
+      "numeric_fields": 1705,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample",
+    "settings": "zero-tolerance",
+    "stage": 1,
+    "comparison": {
+      "numeric_fields": 1529,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample",
+    "settings": "zero-tolerance",
+    "stage": 2,
+    "comparison": {
+      "numeric_fields": 1529,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample",
+    "settings": "zero-tolerance",
+    "stage": 3,
+    "comparison": {
+      "numeric_fields": 1529,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample",
+    "settings": "tolerance",
+    "stage": 1,
+    "comparison": {
+      "numeric_fields": 1697,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample",
+    "settings": "tolerance",
+    "stage": 2,
+    "comparison": {
+      "numeric_fields": 1697,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample",
+    "settings": "tolerance",
+    "stage": 3,
+    "comparison": {
+      "numeric_fields": 1697,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "holes-door-gap-demo",
+    "settings": "default",
+    "stage": 1,
+    "comparison": {
+      "numeric_fields": 349,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "holes-door-gap-demo",
+    "settings": "default",
+    "stage": 2,
+    "comparison": {
+      "numeric_fields": 349,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "holes-door-gap-demo",
+    "settings": "default",
+    "stage": 3,
+    "comparison": {
+      "numeric_fields": 349,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "holes-door-gap-demo",
+    "settings": "height",
+    "stage": 1,
+    "comparison": {
+      "numeric_fields": 349,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "holes-door-gap-demo",
+    "settings": "height",
+    "stage": 2,
+    "comparison": {
+      "numeric_fields": 349,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "holes-door-gap-demo",
+    "settings": "height",
+    "stage": 3,
+    "comparison": {
+      "numeric_fields": 349,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "holes-door-gap-demo",
+    "settings": "scale",
+    "stage": 1,
+    "comparison": {
+      "numeric_fields": 349,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "holes-door-gap-demo",
+    "settings": "scale",
+    "stage": 2,
+    "comparison": {
+      "numeric_fields": 349,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "holes-door-gap-demo",
+    "settings": "scale",
+    "stage": 3,
+    "comparison": {
+      "numeric_fields": 349,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "holes-door-gap-demo",
+    "settings": "zero-tolerance",
+    "stage": 1,
+    "comparison": {
+      "numeric_fields": 349,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "holes-door-gap-demo",
+    "settings": "zero-tolerance",
+    "stage": 2,
+    "comparison": {
+      "numeric_fields": 349,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "holes-door-gap-demo",
+    "settings": "zero-tolerance",
+    "stage": 3,
+    "comparison": {
+      "numeric_fields": 349,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "holes-door-gap-demo",
+    "settings": "tolerance",
+    "stage": 1,
+    "comparison": {
+      "numeric_fields": 349,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "holes-door-gap-demo",
+    "settings": "tolerance",
+    "stage": 2,
+    "comparison": {
+      "numeric_fields": 349,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "holes-door-gap-demo",
+    "settings": "tolerance",
+    "stage": 3,
+    "comparison": {
+      "numeric_fields": 349,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-110-rooms",
+    "settings": "default",
+    "stage": 1,
+    "comparison": {
+      "numeric_fields": 16960,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-110-rooms",
+    "settings": "default",
+    "stage": 2,
+    "comparison": {
+      "numeric_fields": 16960,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-110-rooms",
+    "settings": "default",
+    "stage": 3,
+    "comparison": {
+      "numeric_fields": 16960,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-110-rooms",
+    "settings": "height",
+    "stage": 1,
+    "comparison": {
+      "numeric_fields": 16960,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-110-rooms",
+    "settings": "height",
+    "stage": 2,
+    "comparison": {
+      "numeric_fields": 16960,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-110-rooms",
+    "settings": "height",
+    "stage": 3,
+    "comparison": {
+      "numeric_fields": 16960,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-110-rooms",
+    "settings": "scale",
+    "stage": 1,
+    "comparison": {
+      "numeric_fields": 16960,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-110-rooms",
+    "settings": "scale",
+    "stage": 2,
+    "comparison": {
+      "numeric_fields": 16960,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-110-rooms",
+    "settings": "scale",
+    "stage": 3,
+    "comparison": {
+      "numeric_fields": 16960,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-110-rooms",
+    "settings": "zero-tolerance",
+    "stage": 1,
+    "comparison": {
+      "numeric_fields": 15200,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-110-rooms",
+    "settings": "zero-tolerance",
+    "stage": 2,
+    "comparison": {
+      "numeric_fields": 15200,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-110-rooms",
+    "settings": "zero-tolerance",
+    "stage": 3,
+    "comparison": {
+      "numeric_fields": 15200,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-110-rooms",
+    "settings": "tolerance",
+    "stage": 1,
+    "comparison": {
+      "numeric_fields": 16880,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-110-rooms",
+    "settings": "tolerance",
+    "stage": 2,
+    "comparison": {
+      "numeric_fields": 16880,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-110-rooms",
+    "settings": "tolerance",
+    "stage": 3,
+    "comparison": {
+      "numeric_fields": 16880,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-550-rooms",
+    "settings": "default",
+    "stage": 1,
+    "comparison": {
+      "numeric_fields": 84760,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-550-rooms",
+    "settings": "default",
+    "stage": 2,
+    "comparison": {
+      "numeric_fields": 84760,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-550-rooms",
+    "settings": "default",
+    "stage": 3,
+    "comparison": {
+      "numeric_fields": 84760,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-550-rooms",
+    "settings": "height",
+    "stage": 1,
+    "comparison": {
+      "numeric_fields": 84760,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-550-rooms",
+    "settings": "height",
+    "stage": 2,
+    "comparison": {
+      "numeric_fields": 84760,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-550-rooms",
+    "settings": "height",
+    "stage": 3,
+    "comparison": {
+      "numeric_fields": 84760,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-550-rooms",
+    "settings": "scale",
+    "stage": 1,
+    "comparison": {
+      "numeric_fields": 84760,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-550-rooms",
+    "settings": "scale",
+    "stage": 2,
+    "comparison": {
+      "numeric_fields": 84760,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-550-rooms",
+    "settings": "scale",
+    "stage": 3,
+    "comparison": {
+      "numeric_fields": 84760,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-550-rooms",
+    "settings": "zero-tolerance",
+    "stage": 1,
+    "comparison": {
+      "numeric_fields": 75960,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-550-rooms",
+    "settings": "zero-tolerance",
+    "stage": 2,
+    "comparison": {
+      "numeric_fields": 75960,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-550-rooms",
+    "settings": "zero-tolerance",
+    "stage": 3,
+    "comparison": {
+      "numeric_fields": 75960,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-550-rooms",
+    "settings": "tolerance",
+    "stage": 1,
+    "comparison": {
+      "numeric_fields": 84360,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-550-rooms",
+    "settings": "tolerance",
+    "stage": 2,
+    "comparison": {
+      "numeric_fields": 84360,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  },
+  {
+    "fixture": "sample-550-rooms",
+    "settings": "tolerance",
+    "stage": 3,
+    "comparison": {
+      "numeric_fields": 84360,
+      "different_numeric_fields": 0,
+      "max_absolute_difference": 0.0,
+      "max_relative_difference": 0.0,
+      "max_difference_path": null
+    }
+  }
+]
