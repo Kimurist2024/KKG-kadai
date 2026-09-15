@@ -18,7 +18,12 @@ echo "== 1. 検証ゲート =="
 
 echo "== 2. コミットと push =="
 git add -A
-if git diff --cached --quiet; then echo "変更がありません"; exit 1; fi
+if git diff --cached --quiet; then
+  # 新しい変更なし。push 失敗などからの再実行に備え、既存のコミットで続行する
+  AHEAD="$(git rev-list --count "origin/$BASE..HEAD")"
+  [ "$AHEAD" -gt 0 ] || { echo "$BASE との差分がありません"; exit 1; }
+  echo "新しい変更はありません。コミット済みの $AHEAD 件で続行します"
+else
 git commit -q -F - <<COMMIT
 $SUBJECT
 
@@ -27,6 +32,7 @@ $CRITERIA
 
 Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
 COMMIT
+fi
 git push -q -u origin "$BRANCH"
 
 echo "== 3. PR 作成 =="

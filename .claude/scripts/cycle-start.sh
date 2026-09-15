@@ -9,7 +9,11 @@ BASE=feature/kimura
 git fetch -q origin "$BASE"
 # 既存ブランチを強制的に基点へ戻すと未マージのコミットが失われるため、上書きしない
 if git show-ref --quiet --verify "refs/heads/work/$TOPIC"; then
-  echo "ブランチ work/$TOPIC は既に存在します。続きから作業するか、別の話題名にしてください"
+  echo "ローカルにブランチ work/$TOPIC が既に存在します。続きから作業するか、別の話題名にしてください"
+  exit 1
+fi
+if [ -n "$(git ls-remote --heads origin "work/$TOPIC" 2>/dev/null)" ]; then
+  echo "リモートにブランチ work/$TOPIC が既に存在します。別の話題名にするか、リモートのブランチを整理してください"
   exit 1
 fi
 git switch -q -c "work/$TOPIC" "origin/$BASE"
