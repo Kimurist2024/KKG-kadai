@@ -12,7 +12,12 @@ if git show-ref --quiet --verify "refs/heads/work/$TOPIC"; then
   echo "ローカルにブランチ work/$TOPIC が既に存在します。続きから作業するか、別の話題名にしてください"
   exit 1
 fi
-if [ -n "$(git ls-remote --heads origin "work/$TOPIC" 2>/dev/null)" ]; then
+# 通信失敗を「ブランチなし」と誤認しないよう、取得と判定を分ける
+if ! REMOTE_REF="$(git ls-remote --heads origin "work/$TOPIC")"; then
+  echo "リモートのブランチ一覧を取得できませんでした。通信状態を確認して再実行してください"
+  exit 1
+fi
+if [ -n "$REMOTE_REF" ]; then
   echo "リモートにブランチ work/$TOPIC が既に存在します。別の話題名にするか、リモートのブランチを整理してください"
   exit 1
 fi
