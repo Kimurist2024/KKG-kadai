@@ -22,13 +22,19 @@
 
 ## 1 サイクルの完了条件
 
-1. 受入条件を決める → 担当エージェントが Codex に実装させる
-2. `.claude/scripts/verify.sh` が **exit 0**（これが唯一の合格判定。自己申告は認めない）
-3. 作業ブランチを push し、`feature/kimura` 宛に PR
-4. `.claude/scripts/review.sh feature/kimura "<受入条件>"` が **VERDICT: OK**
-5. `feature/kimura` にマージ。**`main` への反映はユーザーが行う（AI は触らない）**
+```bash
+.claude/scripts/cycle-start.sh <話題>            # work/<話題> を作る
+.claude/scripts/cycle-finish.sh "<件名>" "<受入条件>"
+```
 
-詳細と差し戻しの扱いは `floorplan-analyzer/docs/orchestration.md`。
+`cycle-finish.sh` が verify → push → PR → Codex レビュー → `feature/kimura` へマージまで行う。
+どこかで失敗したらマージせず停止する。**`main` には触れない**（反映はユーザーが手動で行う）。
+
+- 合格判定は `verify.sh` の exit code のみ。自己申告は受け入れない。
+- レビューは正しさと受入条件違反だけを見る。スタイル指摘はさせない。
+- ハーネスを足すのは実際に失敗が起きたときだけ。
+
+詳細は `floorplan-analyzer/docs/orchestration.md`。
 
 ## オーケストレーション方針
 
