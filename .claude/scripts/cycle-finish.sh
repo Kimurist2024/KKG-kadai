@@ -30,7 +30,7 @@ $SUBJECT
 受入条件:
 $CRITERIA
 
-Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+Co-Authored-By: ${COMMIT_COAUTHOR:-Claude Fable 5.1 <noreply@anthropic.com>}
 COMMIT
 fi
 git push -q -u origin "$BRANCH"
@@ -53,7 +53,9 @@ $CRITERIA
 ## 検証
 \`.claude/scripts/verify.sh\` が exit 0 (pytest / typecheck / vitest / build)。
 
-マージ先は \`$BASE\`。\`main\` への反映は動作確認後に手動で行う。")"
+マージ先は \`$BASE\`。\`main\` への反映は動作確認後に手動で行う。
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)")"
 fi
 echo "PR: $PR"
 

@@ -1,7 +1,10 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useId, useMemo, useRef } from "react";
 import type { AnalyzeResponse, Layers } from "../types";
 import { bounds, fmt, labelPoint, regionPath } from "../format";
-import { fitRoomViewport } from "../viewport";
+import { usePlanViewport } from "../hooks/usePlanViewport";
+import DetectedSegmentLayer from "./plan/DetectedSegmentLayer";
+import SelectedRoomEdges from "./plan/SelectedRoomEdges";
+import { WALL_COLOR, DOOR_COLOR, OPENING_COLOR, SELECT_COLOR } from "./plan/colors";
 import { usePlanPan } from "../hooks/usePlanPan";
 
 interface Props {
@@ -20,12 +23,6 @@ interface Props {
   onSelectEdge: (index: number | null) => void;
 }
 
-const WALL_COLOR = "#e5484d";
-const DOOR_COLOR = "#12a594";
-const OPENING_COLOR = "#f59e0b";
-const SELECT_COLOR = "#2563eb";
-const ZOOM_STEPS = [100, 125, 150, 200, 250, 300, 400];
-
 const pointsAttr = (vs: { x: number; y: number }[]) => vs.map((v) => `${v.x},${v.y}`).join(" ");
 
 /** 解析結果を元画像に重ね、部屋・辺の選択、レイヤー、拡大・パンを扱う図面ビュー。 */
@@ -36,62 +33,15 @@ export default function FloorPlanView(props: Props) {
   } = props;
   const overlapPattern = useId();
   const { width: W, height: H } = result.image;
-  const [zoom, setZoom] = useState(100);
-  const [awaitingFit, setAwaitingFit] = useState(false);
-  const [fitRoom, setFitRoom] = useState(false); // 選択部屋に合わせて表示
-  const fitModeActive = fitRoom || awaitingFit; // 部屋を選ぶ待機中もボタンを選択色にする
   const canvasRef = useRef<HTMLDivElement>(null);
   const pan = usePlanPan(canvasRef);
-  const [containerW, setContainerW] = useState(800);
-  const [fitHeight, setFitHeight] = useState(480);
-  const fitting = fitRoom && selectedId !== null;
   const selected = result.rooms.find((r) => r.id === selectedId) ?? null;
-
-  // 表示領域の幅を監視し、辺番号などを「画面上のピクセル」基準で決める (スマホでも押せる大きさに)
-  useEffect(() => {
-    const el = canvasRef.current;
-    if (!el) return;
-    const resizeHeight = () => setFitHeight(Math.max(1, Math.min(480, window.innerHeight * 0.5) - 2));
-    resizeHeight();
-    window.addEventListener("resize", resizeHeight);
-    const ro = new ResizeObserver((entries) => setContainerW(entries[0].contentRect.width || 800));
-    ro.observe(el);
-    return () => { ro.disconnect(); window.removeEventListener("resize", resizeHeight); };
-  }, []);
+  const {
+    zoom, awaitingFit, viewBox, fitting, fitModeActive, fitHeight,
+    unitsPerPx, labelSize, badgeR, badgeFont, hitWidth,
+    canZoomIn, canZoomOut, zoomIn, zoomOut, showWhole, fitToSelected, requestFit,
+  } = usePlanViewport({ canvasRef, selected, selectedId, imageWidth: W, imageHeight: H });
   const highlight = useMemo(() => new Set(highlightSegmentIds), [highlightSegmentIds]);
-
-  useEffect(() => { if (!selected) setFitRoom(false); }, [selected]);
-
-  useEffect(() => {
-    if (awaitingFit && selected) {
-      setFitRoom(true);
-      setZoom(100);
-      setAwaitingFit(false);
-    }
-  }, [awaitingFit, selected]);
-
-  useEffect(() => {
-    if (canvasRef.current) {
-      canvasRef.current.scrollTop = 0;
-      canvasRef.current.scrollLeft = 0;
-    }
-    if (fitRoom) setZoom(100);
-  // スクロールバーの出入りによる幅変化では移動位置・倍率をリセットしない。
-  }, [fitRoom, selected?.id]);
-
-  // 表示範囲 (viewBox): 全体 or 選択部屋の周囲
-  const viewBox = useMemo(() => {
-    if (fitRoom && selected) {
-      return fitRoomViewport(selected.vertices, containerW, fitHeight);
-    }
-    return { x: 0, y: 0, w: W, h: H };
-  }, [fitRoom, selected, W, H, containerW, fitHeight]);
-  // 1 画面ピクセルあたりの図面座標 (ユーザー単位)
-  const unitsPerPx = viewBox.w / Math.max(1, (containerW * zoom) / 100);
-  const labelSize = (fitting ? 16 : 12) * unitsPerPx; // 部屋名: 図面に比例、ただし画面上 10px 以上
-  const badgeR = 12 * unitsPerPx; // 辺番号: 画面上 半径 12px
-  const badgeFont = 13 * unitsPerPx;
-  const hitWidth = 28 * unitsPerPx; // 辺の当たり判定: 画面上 28px
 
   // ホバーのたびに再計算しないよう、部屋ごとの静的な描画データはメモ化
   const shapes = useMemo(
@@ -110,8 +60,6 @@ export default function FloorPlanView(props: Props) {
   );
 
   const toggle = (k: keyof Layers) => onLayersChange({ ...layers, [k]: !layers[k] });
-  const zoomIdx = ZOOM_STEPS.indexOf(zoom);
-  const zoomBy = (d: number) => setZoom(ZOOM_STEPS[Math.max(0, Math.min(ZOOM_STEPS.length - 1, zoomIdx + d))]);
 
   return (
     <div className="plan">
@@ -125,16 +73,16 @@ export default function FloorPlanView(props: Props) {
         </span>
         <span className="spacer" />
         <span className="toolbar-group" role="group" aria-label="表示範囲">
-          <button type="button" className={`btn btn-sm ${!fitModeActive ? "active" : ""}`} aria-pressed={!fitModeActive} onClick={() => { setFitRoom(false); setAwaitingFit(false); setZoom(100); }}>全体</button>
+          <button type="button" className={`btn btn-sm ${!fitModeActive ? "active" : ""}`} aria-pressed={!fitModeActive} onClick={showWhole}>全体</button>
           <button type="button" className={`btn btn-sm ${fitModeActive ? "active" : ""}`} aria-pressed={fitModeActive} onClick={() => {
-            if (selected) { setFitRoom(true); setZoom(100); if (canvasRef.current) { canvasRef.current.scrollTop = 0; canvasRef.current.scrollLeft = 0; } }
-            else { setAwaitingFit(true); onLayersChange({ ...layers, rooms: true }); }
+            if (selected) { fitToSelected(); }
+            else { requestFit(); onLayersChange({ ...layers, rooms: true }); }
           }} title={selected ? "選択中の部屋の周囲を表示" : "押した後、図面または表から拡大する部屋を選択"}>
             選択部屋に合わせる
           </button>
-          <button type="button" className="btn btn-sm" onClick={() => zoomBy(-1)} disabled={zoomIdx <= 0} aria-label="縮小">−</button>
+          <button type="button" className="btn btn-sm" onClick={zoomOut} disabled={!canZoomOut} aria-label="縮小">−</button>
           <span className="zoom-label" title="表示範囲に収めた状態を100%とする表示倍率。面積計算の縮尺は変わりません。">{fitting ? "フィット " : ""}{zoom}%</span>
-          <button type="button" className="btn btn-sm" onClick={() => zoomBy(1)} disabled={zoomIdx >= ZOOM_STEPS.length - 1} aria-label="拡大">＋</button>
+          <button type="button" className="btn btn-sm" onClick={zoomIn} disabled={!canZoomIn} aria-label="拡大">＋</button>
         </span>
       </div>
 
@@ -186,56 +134,10 @@ export default function FloorPlanView(props: Props) {
           {layers.rooms && result.overlaps?.flatMap((overlap, i) => overlap.regions.map((region, j) => <path key={`overlap-${i}-${j}`} data-overlap="true" d={regionPath(region.vertices, region.holes)} fillRule="evenodd" fill={`url(#${overlapPattern})`} stroke="#a21caf" strokeWidth={unitsPerPx} pointerEvents="none" />))}
 
           {/* 壁・ドア (検出線分) */}
-          {layers.walls &&
-            result.walls.map((w) => (
-              <g key={`w${w.id}`} pointerEvents="none">
-                {highlight.has(w.id) && <line x1={w.start.x} y1={w.start.y} x2={w.end.x} y2={w.end.y} stroke="#fff" strokeWidth={12 * unitsPerPx} strokeLinecap="round" />}
-                <line x1={w.start.x} y1={w.start.y} x2={w.end.x} y2={w.end.y} stroke={WALL_COLOR} strokeWidth={(highlight.has(w.id) ? 7 : 3) * unitsPerPx} strokeLinecap="round" opacity={highlight.size && !highlight.has(w.id) ? 0.45 : 0.9}>
-                  <title>{`壁 id=${w.id}  ${fmt(w.length_m)} m (${fmt(w.length_px, 1)} px)`}</title>
-                </line>
-              </g>
-            ))}
-          {layers.doors &&
-            result.doors.map((d) => (
-              <g key={`d${d.id}`} pointerEvents="none">
-                {highlight.has(d.id) && <line x1={d.start.x} y1={d.start.y} x2={d.end.x} y2={d.end.y} stroke="#fff" strokeWidth={14 * unitsPerPx} strokeLinecap="round" />}
-                <line x1={d.start.x} y1={d.start.y} x2={d.end.x} y2={d.end.y} stroke={DOOR_COLOR} strokeWidth={(highlight.has(d.id) ? 9 : 4) * unitsPerPx} strokeLinecap="round" opacity={highlight.size && !highlight.has(d.id) ? 0.45 : 0.95}>
-                  <title>{`ドア id=${d.id}  ${fmt(d.length_m)} m (${fmt(d.length_px, 1)} px)`}</title>
-                </line>
-              </g>
-            ))}
+          {layers.walls && <DetectedSegmentLayer segments={result.walls} highlight={highlight} unitsPerPx={unitsPerPx} color={WALL_COLOR} strokeWidth={3} highlightedStrokeWidth={7} haloWidth={12} opacity={0.9} keyPrefix="w" titleKind="壁" />}
+          {layers.doors && <DetectedSegmentLayer segments={result.doors} highlight={highlight} unitsPerPx={unitsPerPx} color={DOOR_COLOR} strokeWidth={4} highlightedStrokeWidth={9} haloWidth={14} opacity={0.95} keyPrefix="d" titleKind="ドア" />}
 
-          {/* 選択中の部屋: 辺ごとの 壁あり / 開口 / ドア 区間と辺番号 */}
-          {selected &&
-            selected.edges.map((e) => {
-              const active = selectedEdge === e.index || hoverEdge === e.index;
-              const mid = { x: (e.start.x + e.end.x) / 2, y: (e.start.y + e.end.y) / 2 };
-              return (
-                <g
-                  key={e.index}
-                  onClick={() => onSelectEdge(selectedEdge === e.index ? null : e.index)}
-                  onMouseEnter={() => onHoverEdge(e.index)}
-                  onMouseLeave={() => onHoverEdge(null)}
-                  style={{ cursor: "pointer" }}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`辺 ${e.index + 1} を選択`}
-                  aria-pressed={selectedEdge === e.index}
-                  onKeyDown={(ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); onSelectEdge(selectedEdge === e.index ? null : e.index); } }}
-                >
-                  {active && <line x1={e.start.x} y1={e.start.y} x2={e.end.x} y2={e.end.y} stroke={SELECT_COLOR} strokeWidth={hitWidth * 0.6} strokeLinecap="round" opacity={0.35} />}
-                  <line x1={e.start.x} y1={e.start.y} x2={e.end.x} y2={e.end.y} stroke="transparent" strokeWidth={hitWidth} />
-                  {e.wall_intervals.map((iv, i) => <line key={`w${i}`} x1={iv.start.x} y1={iv.start.y} x2={iv.end.x} y2={iv.end.y} stroke="#9f1239" strokeWidth={6 * unitsPerPx} />)}
-                  {e.inferred_wall_intervals?.map((iv, i) => <line key={`inferred${i}`} x1={iv.start.x} y1={iv.start.y} x2={iv.end.x} y2={iv.end.y} stroke="#a21caf" strokeWidth={10 * unitsPerPx} strokeDasharray={`${3 * unitsPerPx} ${3 * unitsPerPx}`} pointerEvents="none" />)}
-                  {e.opening_intervals.map((iv, i) => <line key={`o${i}`} x1={iv.start.x} y1={iv.start.y} x2={iv.end.x} y2={iv.end.y} stroke={OPENING_COLOR} strokeWidth={5 * unitsPerPx} strokeDasharray={`${7 * unitsPerPx} ${5 * unitsPerPx}`} />)}
-                  {e.door_intervals.map((iv, i) => <line key={`d${i}`} x1={iv.start.x} y1={iv.start.y} x2={iv.end.x} y2={iv.end.y} stroke={DOOR_COLOR} strokeWidth={8 * unitsPerPx} />)}
-                  <circle cx={mid.x} cy={mid.y} r={badgeR} fill={active ? SELECT_COLOR : "#fff"} stroke={SELECT_COLOR} strokeWidth={1.5 * unitsPerPx} />
-                  <text x={mid.x} y={mid.y} textAnchor="middle" dominantBaseline="central" fontSize={badgeFont} fontWeight={700} fill={active ? "#fff" : SELECT_COLOR} pointerEvents="none">
-                    {e.index + 1}
-                  </text>
-                </g>
-              );
-            })}
+          {selected && <SelectedRoomEdges selected={selected} selectedEdge={selectedEdge} hoverEdge={hoverEdge} onSelectEdge={onSelectEdge} onHoverEdge={onHoverEdge} unitsPerPx={unitsPerPx} hitWidth={hitWidth} badgeR={badgeR} badgeFont={badgeFont} />}
 
           {/* 部屋名ラベル */}
           {layers.labels &&
