@@ -233,6 +233,26 @@ def test_correction_that_makes_hole_touch_outer_boundary_falls_back():
     assert len(response.rooms) == 2
 
 
+def test_duplicate_contour_ids_do_not_cross_wire_canonical_edge_references():
+    plan = MaskFile.model_validate({"image_width": 400, "image_height": 200, "contours": [
+        {"id": 1, "label_id": 1,
+         "vertices": [{"x": 0, "y": 0}, {"x": 100, "y": 0}, {"x": 100, "y": 100},
+                      {"x": 0, "y": 100}, {"x": 0, "y": 0}]},
+        {"id": 1, "label_id": 1,
+         "vertices": [{"x": 200, "y": 0}, {"x": 300, "y": 0},
+                      {"x": 300, "y": 100}, {"x": 200, "y": 100}]},
+    ]})
+    response = analyze_uncached(plan, settings())
+    processing = response.geometry_processing
+    assert processing is not None and processing.graph is not None
+    assert processing.applied_mode == "raw_fallback"
+    first, second = response.rooms
+    first_edge = processing.graph.edges[first.edges[0].canonical_edge_ids[0] - 1]
+    second_edge = processing.graph.edges[second.edges[0].canonical_edge_ids[0] - 1]
+    assert first_edge.start.x < 150 and first_edge.end.x < 150
+    assert second_edge.start.x > 150 and second_edge.end.x > 150
+
+
 def test_large_area_change_falls_back_to_original_geometry():
     response = analyze_uncached(mask(gap=3), settings())
     processing = response.geometry_processing

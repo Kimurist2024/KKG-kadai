@@ -380,7 +380,7 @@ def _build_graph(rings: Sequence[_Ring]) -> Tuple[PlanarGraph, Dict[Tuple[int, s
                 continue
             result_index = ring.output_offset + ring.source_edges[edge_index]
             sources.append((ring, edge_index, LineString([start, end]),
-                            (ring.contour_id, ring.kind, result_index)))
+                            (ring.contour_index, ring.kind, result_index)))
 
     merged = unary_union([source[2] for source in sources]) if sources else None
     atomic: List[Tuple[Point, Point]] = []

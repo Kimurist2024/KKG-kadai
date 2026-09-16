@@ -201,6 +201,7 @@ def analyze_room(
     holes: Optional[List[List[Vertex]]] = None,
     label_point: Optional[Vertex] = None,
     canonical_edges: Optional[Dict[Tuple[int, str, int], List[int]]] = None,
+    contour_index: Optional[int] = None,
 ) -> RoomResult:
     """外周と穴の全辺を解析し、部屋単位の床面積・周長・壁面積に集計する。"""
     mpp = settings.meters_per_px
@@ -218,7 +219,8 @@ def analyze_room(
             if g.distance(a, b) <= g.EPS_PX:
                 continue
             boundary_kind = "outer" if ring_index == 0 else "hole"
-            canonical_ids = (canonical_edges or {}).get((room.id, boundary_kind, offset + i))
+            canonical_ids = ((canonical_edges or {}).get((contour_index, boundary_kind, offset + i))
+                             if contour_index is not None else None)
             edge = analyze_edge(offset + i, a, b, wall_segments, door_segments, settings, canonical_ids)
             edge.boundary_kind = boundary_kind
             edges.append(edge)
@@ -363,6 +365,7 @@ def _analyze_core(mask: MaskFile, settings: Optional[AnalysisSettings] = None, *
             warnings.append(Warning(code="duplicate_id", contour_id=cid, message=f"輪郭 id={cid} が {n} 回出現しています (id は一意である前提です)"))
 
     rooms, walls, doors = classify(mask.contours, warnings)
+    contour_indices = {id(contour): index for index, contour in enumerate(mask.contours)}
 
     wall_segments, walls_out = _extract_segments("wall", walls, mpp, warnings)
     door_segments, doors_out = _extract_segments("door", doors, mpp, warnings)
@@ -393,7 +396,8 @@ def _analyze_core(mask: MaskFile, settings: Optional[AnalysisSettings] = None, *
             warnings.append(Warning(code="unnamed_room", contour_id=room.id, message=f"部屋 id={room.id}: room_name がありません。'{display}' として扱います"))
         point = polygon.representative_point()
         result = analyze_room(room, wall_index, door_index, settings, display, holes,
-                              Vertex(x=point.x, y=point.y), canonical_edges)
+                              Vertex(x=point.x, y=point.y), canonical_edges,
+                              contour_indices[id(room)])
         polygons.append(polygon)
         if any(e.inferred_wall_intervals for e in result.edges):
             warnings.append(Warning(code="inferred_door_wall", contour_id=room.id,
