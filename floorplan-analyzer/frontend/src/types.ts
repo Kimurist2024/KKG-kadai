@@ -11,6 +11,8 @@ export interface Settings {
   scale_px: number;
   scale_m: number;
   tolerance_px: number;
+  geometry_mode: "raw" | "regularized_shared";
+  boundary_reference: "unknown" | "centerline" | "inner_face";
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -19,6 +21,8 @@ export const DEFAULT_SETTINGS: Settings = {
   scale_px: 96.7,
   scale_m: 1.365,
   tolerance_px: 10,
+  geometry_mode: "raw",
+  boundary_reference: "unknown",
 };
 
 export interface IntervalOut {
@@ -34,6 +38,8 @@ export interface IntervalOut {
 export interface EdgeResult {
   boundary_kind?: "outer" | "hole";
   inferred_wall_intervals?: IntervalOut[];
+  canonical_edge_id?: number;
+  canonical_edge_ids?: number[];
   index: number;
   start: Vertex;
   end: Vertex;
@@ -84,7 +90,7 @@ export interface SegmentOut {
   color: string;
 }
 
-export type WarningCode = "room_overlap" | "inferred_door_wall" | "ai_generated" | "unnamed_room" | "unmatched_door" | "invalid_shape" | "ignored_contour" | "data_mismatch" | "duplicate_id" | "missing_wall_data" | "no_room_walls" | "low_wall_coverage";
+export type WarningCode = "room_overlap" | "inferred_door_wall" | "ai_generated" | "unnamed_room" | "unmatched_door" | "invalid_shape" | "ignored_contour" | "data_mismatch" | "duplicate_id" | "missing_wall_data" | "no_room_walls" | "low_wall_coverage" | "geometry_regularized" | "regularization_skipped";
 
 export interface Warning {
   code: WarningCode;
@@ -95,11 +101,36 @@ export interface Warning {
 export interface PolygonRegion { vertices: Vertex[]; holes: Vertex[][]; }
 export interface RoomOverlap { room_ids: number[]; area_m2: number; regions: PolygonRegion[]; }
 
+export interface PlanarGraph {
+  version: string;
+  nodes: { id: number; point: Vertex; room_ids: number[]; room_indices: number[]; max_displacement_px: number }[];
+  edges: { id: number; start_node_id: number; end_node_id: number; start: Vertex; end: Vertex; room_ids: number[]; room_indices: number[]; boundary_kinds: string[]; length_px: number }[];
+  shared_edge_count: number;
+  non_manifold_edge_count: number;
+}
+
+export interface GeometryProcessing {
+  requested_mode: string;
+  applied_mode: "regularized_shared" | "raw_fallback" | "unchanged";
+  algorithm_version: string;
+  boundary_reference: string;
+  dominant_angle_deg: number | null;
+  orientation_concentration: number;
+  orientation_inlier_ratio: number;
+  moved_vertex_count: number;
+  max_displacement_px: number;
+  max_area_change_ratio: number;
+  reject_reason: string | null;
+  graph: PlanarGraph | null;
+}
+
 export interface AnalyzeResponse {
   overlaps?: RoomOverlap[];
+  geometry_processing?: GeometryProcessing;
   image: { width: number; height: number; mime_type: string | null; has_image: boolean };
   timestamp: string | null;
-  settings: Settings & { meters_per_px: number };
+  settings: Omit<Settings, "geometry_mode" | "boundary_reference"> &
+    Partial<Pick<Settings, "geometry_mode" | "boundary_reference">> & { meters_per_px: number };
   summary: {
     room_count: number;
     wall_count: number;

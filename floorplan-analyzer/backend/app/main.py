@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Optional
+from typing import Literal, Optional
 
 from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.concurrency import run_in_threadpool
@@ -69,6 +69,8 @@ def settings_from_query(
     scale_px: float = Query(96.7, gt=0, description="スケール基準 px"),
     scale_m: float = Query(1.365, gt=0, description="スケール基準 m"),
     tolerance_px: float = Query(10.0, ge=0, description="壁/ドアの辺への許容距離 (px)"),
+    geometry_mode: Literal["raw", "regularized_shared"] = Query("raw", description="幾何補正モード"),
+    boundary_reference: Literal["unknown", "centerline", "inner_face"] = Query("unknown", description="部屋輪郭の基準"),
 ) -> AnalysisSettings:
     try:
         return AnalysisSettings(
@@ -77,6 +79,8 @@ def settings_from_query(
             scale_px=scale_px,
             scale_m=scale_m,
             tolerance_px=tolerance_px,
+            geometry_mode=geometry_mode,
+            boundary_reference=boundary_reference,
         )
     except ValidationError as e:  # 相関チェック (ドア高 ≤ 天井高) も 422 で返す
         raise HTTPException(status_code=422, detail=[err["msg"] for err in e.errors()]) from e

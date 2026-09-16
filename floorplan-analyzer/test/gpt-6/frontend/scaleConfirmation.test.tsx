@@ -78,6 +78,35 @@ test("new drawing requires explicit scale and acknowledgement; changing scale cl
   expect(apply).toHaveBeenCalledWith(expect.objectContaining({ scale_px: 949, scale_m: 44.66 }));
 });
 
+test("geometry correction is opt-in and is not inherited by a new drawing", () => {
+  const apply = vi.fn();
+  const { rerender } = render(<SettingsPanel applied={DEFAULT_SETTINGS} disabled={false} onApply={apply} />);
+  const correction = screen.getByRole("checkbox", { name: "図面の傾き・ずれを自動で整える" });
+  fireEvent.click(correction);
+  fireEvent.click(screen.getByRole("button", { name: "この条件で再計算" }));
+  expect(apply).toHaveBeenCalledWith(expect.objectContaining({
+    geometry_mode: "regularized_shared", boundary_reference: "centerline",
+  }));
+
+  rerender(<SettingsPanel applied={{ ...DEFAULT_SETTINGS, geometry_mode: "regularized_shared", boundary_reference: "centerline" }} disabled={false} onApply={apply} confirmScale />);
+  expect(screen.queryByRole("checkbox", { name: "図面の傾き・ずれを自動で整える" })).toBeNull();
+});
+
+test("unchanged settings are not marked dirty regardless of object key insertion order", () => {
+  const reordered = {
+    geometry_mode: "raw" as const,
+    boundary_reference: "unknown" as const,
+    tolerance_px: 10,
+    scale_m: 1.365,
+    scale_px: 96.7,
+    door_height_m: 2,
+    ceiling_height_m: 2.4,
+  };
+  render(<SettingsPanel applied={reordered} disabled={false} onApply={vi.fn()} />);
+  expect(screen.queryByText(/変更は未反映です/)).toBeNull();
+  expect((screen.getByRole("button", { name: "この条件で再計算" }) as HTMLButtonElement).disabled).toBe(true);
+});
+
 test("upload waits for scale; another file waits again and cancellation restores prior snapshot", async () => {
   const { result } = renderHook(useAnalysis);
   const a=file("a.json"), b=file("b.json");

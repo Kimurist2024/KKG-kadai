@@ -90,7 +90,11 @@ export function useAnalysis() {
         isSample,
         imageUrl: imageUrlPromise ? imageUrl : prev?.imageUrl ?? null,
         result,
-        settings: { ceiling_height_m, door_height_m, scale_px, scale_m, tolerance_px }, // サーバーが実際に適用した値
+        settings: {
+          ceiling_height_m, door_height_m, scale_px, scale_m, tolerance_px,
+          geometry_mode: result.settings.geometry_mode ?? settings.geometry_mode,
+          boundary_reference: result.settings.boundary_reference ?? settings.boundary_reference,
+        }, // サーバーが実際に適用した値
       }));
       setPending(null);
       setStatus({ state: "idle" });

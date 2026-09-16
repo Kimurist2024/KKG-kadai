@@ -215,6 +215,8 @@ docker compose up --build   # http://localhost:3000
 
 ## 5. アルゴリズムの考え方・設計背景
 
+部屋輪郭の傾き・ずれ補正と共有平面グラフはオプトインで利用できます。詳細と安全条件は [docs/geometry-regularization.md](docs/geometry-regularization.md) を参照してください。
+
 ### 5-1. 入力の分類
 
 `contours` を次のように分類します。

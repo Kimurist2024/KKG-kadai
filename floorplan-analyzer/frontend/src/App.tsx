@@ -25,6 +25,8 @@ const WARNING_LABELS: Record<WarningCode, { title: string; severity: "info" | "w
   ignored_contour: { title: "無視した輪郭", severity: "warn" },
   data_mismatch: { title: "JSON 記載値と再計算値の不一致", severity: "warn" },
   duplicate_id: { title: "id の重複", severity: "warn" },
+  geometry_regularized: { title: "図面幾何を補正", severity: "info" },
+  regularization_skipped: { title: "幾何補正を見送り", severity: "info" },
 };
 
 const EMPTY_OVERRIDES: Record<number, string> = {};
@@ -124,7 +126,7 @@ export default function App() {
     if (!view) return [];
     const map = new Map<WarningCode, Warning[]>();
     view.warnings.forEach((w) => map.set(w.code, [...(map.get(w.code) ?? []), w]));
-    const order: WarningCode[] = ["room_overlap", "inferred_door_wall", "ai_generated", "missing_wall_data", "no_room_walls", "low_wall_coverage", "unmatched_door", "data_mismatch", "ignored_contour", "invalid_shape", "duplicate_id", "unnamed_room"];
+    const order: WarningCode[] = ["room_overlap", "inferred_door_wall", "ai_generated", "geometry_regularized", "regularization_skipped", "missing_wall_data", "no_room_walls", "low_wall_coverage", "unmatched_door", "data_mismatch", "ignored_contour", "invalid_shape", "duplicate_id", "unnamed_room"];
     return order.filter((c) => map.has(c)).map((c) => ({ code: c, items: map.get(c)! }));
   }, [view]);
   const roomIds = useMemo(() => new Set(view?.rooms.map((r) => r.id) ?? []), [view]);
@@ -177,12 +179,17 @@ export default function App() {
           <span className="cond-chip">ドア高 <b>{appliedSettings.door_height_m} m</b></span>
           <span className="cond-chip">スケール <b>{appliedSettings.scale_px} px ＝ {appliedSettings.scale_m} m</b></span>
           <span className="cond-chip muted-chip">許容誤差 <b>{appliedSettings.tolerance_px} px</b></span>
+          <span className="cond-chip muted-chip">幾何 <b>{appliedSettings.geometry_mode === "regularized_shared" ? "自動補正" : "元座標"}</b></span>
           <span className="spacer" />
           <button type="button" className="btn btn-link" aria-expanded={showSettings} onClick={() => setShowSettings((v) => !v)}>
             {showSettings ? "計算条件を閉じる" : "計算条件を変更"}
           </button>
         </div>
         {showSettings && <SettingsPanel applied={appliedSettings} disabled={!file || loading} onApply={reanalyze} />}
+        {view?.geometry_processing && <div className="status" role="status">
+          <strong>{view.geometry_processing.applied_mode === "regularized_shared" ? "幾何補正を適用済み" : view.geometry_processing.applied_mode === "raw_fallback" ? "安全のため元座標で計算" : "補正不要"}</strong>
+          <p>最大移動 {view.geometry_processing.max_displacement_px.toFixed(3)} px・共有境界 {view.geometry_processing.graph?.shared_edge_count ?? 0} 本</p>
+        </div>}
         </section>}
         {loading && <div className="status loading" role="status" aria-live="polite">解析中…{view ? "（前回の結果を表示中）" : ""}</div>}
         {!pending && !loading && flashDone && <div className="status done" role="status" aria-live="polite">結果を更新しました</div>}
