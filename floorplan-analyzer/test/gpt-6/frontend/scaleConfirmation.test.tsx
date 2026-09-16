@@ -78,6 +78,20 @@ test("new drawing requires explicit scale and acknowledgement; changing scale cl
   expect(apply).toHaveBeenCalledWith(expect.objectContaining({ scale_px: 949, scale_m: 44.66 }));
 });
 
+test("geometry correction is opt-in and is not inherited by a new drawing", () => {
+  const apply = vi.fn();
+  const { rerender } = render(<SettingsPanel applied={DEFAULT_SETTINGS} disabled={false} onApply={apply} />);
+  const correction = screen.getByRole("checkbox", { name: "図面の傾き・ずれを自動で整える" });
+  fireEvent.click(correction);
+  fireEvent.click(screen.getByRole("button", { name: "この条件で再計算" }));
+  expect(apply).toHaveBeenCalledWith(expect.objectContaining({
+    geometry_mode: "regularized_shared", boundary_reference: "centerline",
+  }));
+
+  rerender(<SettingsPanel applied={{ ...DEFAULT_SETTINGS, geometry_mode: "regularized_shared", boundary_reference: "centerline" }} disabled={false} onApply={apply} confirmScale />);
+  expect(screen.queryByRole("checkbox", { name: "図面の傾き・ずれを自動で整える" })).toBeNull();
+});
+
 test("upload waits for scale; another file waits again and cancellation restores prior snapshot", async () => {
   const { result } = renderHook(useAnalysis);
   const a=file("a.json"), b=file("b.json");

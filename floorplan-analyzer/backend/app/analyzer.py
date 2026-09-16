@@ -36,6 +36,7 @@ from .schemas import (
     Summary,
     Vertex,
     Warning,
+    GeometryProcessing,
 )
 
 LABEL_WALL = 2
@@ -138,6 +139,7 @@ def analyze_edge(
     wall_segments: SegmentSource,
     door_segments: SegmentSource,
     settings: AnalysisSettings,
+    canonical_edge_id: Optional[int] = None,
 ) -> EdgeResult:
     """1 辺の壁・開口・扉を対応付け、区間の根拠と壁面積を返す。"""
     mpp = settings.meters_per_px
@@ -171,6 +173,7 @@ def analyze_edge(
 
     return EdgeResult(
         index=index,
+        canonical_edge_id=canonical_edge_id,
         inferred_wall_intervals=[_interval_out(a, b, iv, mpp) for iv in inferred],
         start=Vertex(x=a[0], y=a[1]),
         end=Vertex(x=b[0], y=b[1]),
@@ -196,6 +199,7 @@ def analyze_room(
     display_name: str,
     holes: Optional[List[List[Vertex]]] = None,
     label_point: Optional[Vertex] = None,
+    canonical_edges: Optional[Dict[Tuple[int, str, int], int]] = None,
 ) -> RoomResult:
     """外周と穴の全辺を解析し、部屋単位の床面積・周長・壁面積に集計する。"""
     mpp = settings.meters_per_px
@@ -212,8 +216,10 @@ def analyze_room(
             b = ring[(i + 1) % len(ring)]
             if g.distance(a, b) <= g.EPS_PX:
                 continue
-            edge = analyze_edge(offset + i, a, b, wall_segments, door_segments, settings)
-            edge.boundary_kind = "outer" if ring_index == 0 else "hole"
+            boundary_kind = "outer" if ring_index == 0 else "hole"
+            canonical_id = (canonical_edges or {}).get((room.id, boundary_kind, offset + i))
+            edge = analyze_edge(offset + i, a, b, wall_segments, door_segments, settings, canonical_id)
+            edge.boundary_kind = boundary_kind
             edges.append(edge)
         offset += len(ring)
 
@@ -333,9 +339,16 @@ def _room_overlaps(polygons, room_results, mpp, warnings, *, geometry_only):
     return overlaps, overlap_indices, union_area
 
 
-def _analyze_core(mask: MaskFile, settings: Optional[AnalysisSettings] = None, *, geometry_only=False):
+def _analyze_core(mask: MaskFile, settings: Optional[AnalysisSettings] = None, *, geometry_only=False,
+                  geometry_processing: Optional[GeometryProcessing] = None,
+                  canonical_edges: Optional[Dict[Tuple[int, str, int], int]] = None):
     """分類 → 有効な部屋の解析 → 警告 → 重複判定 → 全体集計の順に実行する。"""
     settings = settings or AnalysisSettings()
+    if settings.geometry_mode == "regularized_shared" and geometry_processing is None:
+        from .regularization import regularize_mask
+        active_mask, processing, edge_lookup = regularize_mask(mask, settings.boundary_reference)
+        return _analyze_core(active_mask, settings, geometry_only=geometry_only,
+                             geometry_processing=processing, canonical_edges=edge_lookup)
     mpp = settings.meters_per_px
     warnings: List[Warning] = []
     if mask.ai_recognition is not None:
@@ -379,7 +392,7 @@ def _analyze_core(mask: MaskFile, settings: Optional[AnalysisSettings] = None, *
             warnings.append(Warning(code="unnamed_room", contour_id=room.id, message=f"部屋 id={room.id}: room_name がありません。'{display}' として扱います"))
         point = polygon.representative_point()
         result = analyze_room(room, wall_index, door_index, settings, display, holes,
-                              Vertex(x=point.x, y=point.y))
+                              Vertex(x=point.x, y=point.y), canonical_edges)
         polygons.append(polygon)
         if any(e.inferred_wall_intervals for e in result.edges):
             warnings.append(Warning(code="inferred_door_wall", contour_id=room.id,
@@ -396,6 +409,15 @@ def _analyze_core(mask: MaskFile, settings: Optional[AnalysisSettings] = None, *
         room_results.append(result)
 
     warnings.extend(_wall_and_door_warnings(room_results, wall_segments, doors_out))
+    if geometry_processing is not None:
+        if geometry_processing.applied_mode == "regularized_shared":
+            warnings.append(Warning(code="geometry_regularized", message=(
+                f"方向・共有境界の補正を適用しました。最大頂点移動量 "
+                f"{geometry_processing.max_displacement_px:.3f} px、共有境界 "
+                f"{geometry_processing.graph.shared_edge_count if geometry_processing.graph else 0} 本です。")))
+        elif geometry_processing.applied_mode == "raw_fallback":
+            warnings.append(Warning(code="regularization_skipped", message=(
+                "方向・共有境界の補正を安全に適用できないため、入力どおりの輪郭で計算しました。")))
 
     # 重複する部屋名にはサフィックスを付けて区別できるようにする
     name_counts: Dict[str, int] = {}
@@ -414,6 +436,7 @@ def _analyze_core(mask: MaskFile, settings: Optional[AnalysisSettings] = None, *
 
     response = AnalyzeResponse(
         overlaps=overlaps,
+        geometry_processing=geometry_processing,
         image=ImageInfo(
             width=mask.image_width,
             height=mask.image_height,
@@ -452,11 +475,15 @@ def analyze(mask: MaskFile, settings: Optional[AnalysisSettings] = None) -> Anal
     def compute():
         # 単位縮尺で px・px² の幾何結果を保存する。高さは射影や形状判定に影響しない。
         unit = AnalysisSettings(scale_px=1, scale_m=1, ceiling_height_m=1,
-                                door_height_m=0, tolerance_px=settings.tolerance_px)
+                                door_height_m=0, tolerance_px=settings.tolerance_px,
+                                geometry_mode=settings.geometry_mode,
+                                boundary_reference=settings.boundary_reference)
         response, pairs = _analyze_core(mask, unit, geometry_only=True)
         return {"response": response.model_dump(mode="json"), "pairs": pairs}
 
-    return materialize(get_geometry(mask, settings.tolerance_px, compute), mask, settings)
+    geometry_key = ":".join((float(settings.tolerance_px).hex(), settings.geometry_mode,
+                             settings.boundary_reference, "manhattan_shared_v1"))
+    return materialize(get_geometry(mask, geometry_key, compute), mask, settings)
 
 
 def clear_geometry_cache():

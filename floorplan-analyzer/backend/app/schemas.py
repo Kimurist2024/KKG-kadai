@@ -1,7 +1,7 @@
 """API の入出力スキーマ (pydantic v2)。"""
 from __future__ import annotations
 
-from typing import Any, List, Optional
+from typing import Any, List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, FiniteFloat, computed_field, model_validator
 
@@ -75,6 +75,14 @@ class AnalysisSettings(BaseModel):
     tolerance_px: FiniteFloat = Field(
         default=10.0, ge=0, description="壁/ドアを辺に沿うとみなす許容距離 (px)"
     )
+    geometry_mode: Literal["raw", "regularized_shared"] = Field(
+        default="raw", description="入力座標をそのまま計算するか、方向と共有境界を小さく補正するか",
+        exclude_if=lambda value: value == "raw",
+    )
+    boundary_reference: Literal["unknown", "centerline", "inner_face"] = Field(
+        default="unknown", description="部屋輪郭の基準。第1段階では記録と安全判定に使う",
+        exclude_if=lambda value: value == "unknown",
+    )
 
     @model_validator(mode="after")
     def _check_heights(self) -> "AnalysisSettings":
@@ -119,6 +127,7 @@ class EdgeResult(BaseModel):
     """外周または穴の 1 辺について、対応区間と壁面積の内訳を返す。"""
 
     boundary_kind: str = "outer"
+    canonical_edge_id: Optional[int] = Field(default=None, exclude_if=lambda value: value is None)
     inferred_wall_intervals: List[IntervalOut] = Field(default_factory=list, description="扉開口から補完した壁区間。ids は補完根拠となったドア輪郭 id。wall_intervals にも含む")
     index: int
     start: Vertex
@@ -201,15 +210,57 @@ class ImageInfo(BaseModel):
 class Warning(BaseModel):
     """利用者に知らせる注意事項。UI が対象の輪郭へ誘導できるよう id を持つ。"""
 
-    code: str = Field(description="unnamed_room | unmatched_door | invalid_shape | ignored_contour | data_mismatch | duplicate_id | missing_wall_data | no_room_walls | low_wall_coverage | ai_generated | room_overlap | inferred_door_wall")
+    code: str = Field(description="unnamed_room | unmatched_door | invalid_shape | ignored_contour | data_mismatch | duplicate_id | missing_wall_data | no_room_walls | low_wall_coverage | ai_generated | room_overlap | inferred_door_wall | geometry_regularized | regularization_skipped")
     message: str
     contour_id: Optional[int] = None
+
+
+class CanonicalNode(BaseModel):
+    id: int
+    point: Vertex
+    room_ids: List[int]
+    max_displacement_px: float = 0
+
+
+class CanonicalEdge(BaseModel):
+    id: int
+    start_node_id: int
+    end_node_id: int
+    start: Vertex
+    end: Vertex
+    room_ids: List[int]
+    boundary_kinds: List[str]
+    length_px: float
+
+
+class PlanarGraph(BaseModel):
+    version: str = "manhattan_shared_v1"
+    nodes: List[CanonicalNode]
+    edges: List[CanonicalEdge]
+    shared_edge_count: int
+    non_manifold_edge_count: int = 0
+
+
+class GeometryProcessing(BaseModel):
+    requested_mode: str
+    applied_mode: str
+    algorithm_version: str = "manhattan_shared_v1"
+    boundary_reference: str
+    dominant_angle_deg: Optional[float] = None
+    orientation_concentration: float = 0
+    orientation_inlier_ratio: float = 0
+    moved_vertex_count: int = 0
+    max_displacement_px: float = 0
+    max_area_change_ratio: float = 0
+    reject_reason: Optional[str] = None
+    graph: Optional[PlanarGraph] = None
 
 
 class AnalyzeResponse(BaseModel):
     """解析 API の返却値。画面・表・CSV が共通で参照する結果。"""
 
     overlaps: List[OverlapResult] = Field(default_factory=list)
+    geometry_processing: Optional[GeometryProcessing] = Field(default=None, exclude_if=lambda value: value is None)
     image: ImageInfo
     timestamp: Optional[str]
     settings: AnalysisSettings

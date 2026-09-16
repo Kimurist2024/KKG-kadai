@@ -62,11 +62,11 @@ class GeometryCache:
 cache = GeometryCache()
 
 
-def get_geometry(mask, tolerance, compute):
-    """輪郭と許容誤差をキーに幾何結果を取得する。失効・未登録なら compute で計算する。"""
+def get_geometry(mask, geometry_key, compute):
+    """輪郭と幾何計算条件をキーに結果を取得する。"""
     # 穴・id・名前・元の面積等もキーに含める。画像と表示メタデータは再利用しない。
     source = mask.model_dump_json(exclude={"image_data", "timestamp", "image_width", "image_height"})
-    key = hashlib.sha256(("geometry-v1:" + float(tolerance).hex() + ":" + source).encode()).digest()
+    key = hashlib.sha256(("geometry-v2:" + str(geometry_key) + ":" + source).encode()).digest()
     stored = cache.get(key)
     if stored is not None:
         return json.loads(stored)

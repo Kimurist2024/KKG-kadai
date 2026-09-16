@@ -9,8 +9,8 @@ interface Props {
   confirmScale?: boolean;
 }
 
-type SettingKey = keyof Settings;
-const LIMITS: Record<SettingKey, { label: string; min: number; step: number }> = {
+type NumericSettingKey = "ceiling_height_m" | "door_height_m" | "scale_px" | "scale_m" | "tolerance_px";
+const LIMITS: Record<NumericSettingKey, { label: string; min: number; step: number }> = {
   ceiling_height_m: { label: "天井高", min: 0.01, step: 0.01 },
   door_height_m: { label: "ドア高さ", min: 0, step: 0.01 },
   scale_px: { label: "画像上の長さ", min: 0.1, step: 0.1 },
@@ -18,20 +18,27 @@ const LIMITS: Record<SettingKey, { label: string; min: number; step: number }> =
   tolerance_px: { label: "許容誤差", min: 0, step: 1 },
 };
 
-type Draft = Record<SettingKey, string>;
-const toDraft = (settings: Settings): Draft =>
-  Object.fromEntries((Object.keys(settings) as SettingKey[]).map((key) => [key, String(settings[key])])) as Draft;
+type Draft = Record<NumericSettingKey, string> & Pick<Settings, "geometry_mode" | "boundary_reference">;
+const toDraft = (settings: Settings): Draft => ({
+  ceiling_height_m: String(settings.ceiling_height_m),
+  door_height_m: String(settings.door_height_m),
+  scale_px: String(settings.scale_px),
+  scale_m: String(settings.scale_m),
+  tolerance_px: String(settings.tolerance_px),
+  geometry_mode: settings.geometry_mode,
+  boundary_reference: settings.boundary_reference,
+});
 
 /** 初回解析では前の図面の縮尺を使わせず、入力を空欄から始める。 */
 function createDraft(settings: Settings, confirmScale: boolean): Draft {
   const draft = toDraft(settings);
-  return confirmScale ? { ...draft, scale_px: "", scale_m: "" } : draft;
+  return confirmScale ? { ...draft, scale_px: "", scale_m: "", geometry_mode: "raw", boundary_reference: "unknown" } : draft;
 }
 
 /** 文字列の下書きを検証して Settings にする。問題があればエラーメッセージを返す。 */
 function parseDraft(draft: Draft): { ok: true; value: Settings } | { ok: false; error: string } {
-  const value = {} as Settings;
-  for (const key of Object.keys(LIMITS) as SettingKey[]) {
+  const value = { geometry_mode: draft.geometry_mode, boundary_reference: draft.boundary_reference } as Settings;
+  for (const key of Object.keys(LIMITS) as NumericSettingKey[]) {
     const limit = LIMITS[key];
     const number = Number(draft[key]);
     if (draft[key].trim() === "" || !Number.isFinite(number)) return { ok: false, error: `${limit.label} に数値を入力してください` };
@@ -55,7 +62,7 @@ export default function SettingsPanel({ applied, disabled, onApply, confirmScale
     setError(null);
   }, [applied, confirmScale]);
 
-  const update = (key: SettingKey, text: string) => {
+  const update = (key: NumericSettingKey, text: string) => {
     if (key === "scale_px" || key === "scale_m") setConfirmed(false);
     const next = { ...draft, [key]: text };
     setDraft(next); // 入力中の表記 ("2.40" など) はそのまま保持する
@@ -85,7 +92,7 @@ export default function SettingsPanel({ applied, disabled, onApply, confirmScale
   const scaleM = Number(draft.scale_m);
   const metersPerPixel = scalePx > 0 && Number.isFinite(scaleM) ? scaleM / scalePx : NaN;
 
-  const numInput = (key: SettingKey, width = 90) => (
+  const numInput = (key: NumericSettingKey, width = 90) => (
     <input
       type="number"
       inputMode="decimal"
@@ -131,6 +138,22 @@ export default function SettingsPanel({ applied, disabled, onApply, confirmScale
           <span className="field-input">{numInput("tolerance_px")}<span className="unit">px</span></span>
           <span className="field-help">部屋の辺からこの距離以内にある壁・ドア線分を「その辺に沿う」とみなします。これより短い隙間は壁として補完します。</span>
         </div>
+        {!confirmScale && <div className="field field-wide">
+          <label className="scale-confirm-check">
+            <input
+              type="checkbox"
+              checked={draft.geometry_mode === "regularized_shared"}
+              disabled={disabled}
+              onChange={(e) => setDraft((current) => ({
+                ...current,
+                geometry_mode: e.target.checked ? "regularized_shared" : "raw",
+                boundary_reference: e.target.checked ? "centerline" : "unknown",
+              }))}
+            />
+            図面の傾き・ずれを自動で整える
+          </label>
+          <span className="field-help">壁中心線の輪郭を前提に、方向をソフトに補正し、近い部屋境界を共有化します。適用が安全でない場合は元座標に戻します。</span>
+        </div>}
       </details>
       {confirmScale && <label className="scale-confirm-check"><input type="checkbox" checked={confirmed} disabled={disabled} onChange={(e) => setConfirmed(e.target.checked)} />この図面の基準寸法と、元画像上のピクセル距離を確認しました</label>}
       <div className="settings-footer">
