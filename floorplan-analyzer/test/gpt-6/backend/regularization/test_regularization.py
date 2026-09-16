@@ -214,6 +214,25 @@ def test_vertex_sharing_that_creates_zero_length_edge_falls_back():
     assert len(response.rooms[0].edges) == 5
 
 
+def test_correction_that_makes_hole_touch_outer_boundary_falls_back():
+    plan = MaskFile.model_validate({"image_width": 1300, "image_height": 1300, "contours": [
+        {"id": 1, "label_id": 1,
+         "vertices": [{"x": 200, "y": 200}, {"x": 1200, "y": 200},
+                      {"x": 1200, "y": 1200}, {"x": 200, "y": 1200}],
+         "holes": [[{"x": 201, "y": 201}, {"x": 210, "y": 201},
+                    {"x": 210, "y": 210}, {"x": 201, "y": 210}]]},
+        {"id": 2, "label_id": 1,
+         "vertices": [{"x": 0, "y": 0}, {"x": 200, "y": 0},
+                      {"x": 200, "y": 199}, {"x": 0, "y": 199}]},
+    ]})
+    response = analyze_uncached(plan, settings())
+    processing = response.geometry_processing
+    assert processing is not None
+    assert processing.applied_mode == "raw_fallback"
+    assert processing.reject_reason == "invalid_hole_topology"
+    assert len(response.rooms) == 2
+
+
 def test_large_area_change_falls_back_to_original_geometry():
     response = analyze_uncached(mask(gap=3), settings())
     processing = response.geometry_processing

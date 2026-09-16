@@ -354,6 +354,13 @@ def _valid_changes(mask: MaskFile, rings: Sequence[_Ring]) -> Tuple[bool, float,
         holes = [holes_by_index[index].points for index in sorted(holes_by_index)]  # type: ignore[index]
         raw_holes = [holes_by_index[index].raw for index in sorted(holes_by_index)]  # type: ignore[index]
         raw_polygon, polygon = Polygon(outer.raw, raw_holes), Polygon(outer.points, holes)
+        corrected_outer = Polygon(outer.points)
+        for hole in holes:
+            corrected_hole = Polygon(hole)
+            if (not corrected_hole.is_valid or corrected_hole.area <= 0
+                    or not corrected_outer.contains(corrected_hole)
+                    or not corrected_outer.boundary.disjoint(corrected_hole)):
+                return False, max_ratio, "invalid_hole_topology"
         if not raw_polygon.is_valid or not polygon.is_valid or polygon.area <= 0:
             return False, max_ratio, "invalid_topology"
         ratio = abs(polygon.area - raw_polygon.area) / max(raw_polygon.area, 1e-12)
