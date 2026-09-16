@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from typing import Iterable, List, Sequence, Set, Tuple
+from typing import Iterable, List, NamedTuple, Optional, Sequence, Set, Tuple
 
 Point = Tuple[float, float]
 Segment = Tuple[Point, Point]
@@ -63,6 +63,8 @@ def project_segments_onto_edge(
 ) -> List[Interval]:
     """辺 (edge_start→edge_end) に「沿っている」線分を辺上の区間として射影する。
 
+    座標系の構築と線分ごとの判定を分け、公開関数は採用区間の収集を担う。
+
     採用条件:
       1. 線分と辺のなす角が max_angle_deg 以内 (平行性)
       2. 線分の両端点が辺を含む直線から tolerance_px 以内 (近接性)
@@ -70,33 +72,83 @@ def project_segments_onto_edge(
     短い線分は除外され、辺と平行に重なる壁だけが採用される。辺の範囲外は切り落とす。
     ゼロ長の線分は無視する。
     """
-    ax, ay = edge_start
-    bx, by = edge_end
-    length = distance(edge_start, edge_end)
-    if length <= EPS_PX:
+    axes = _edge_axes(edge_start, edge_end)
+    if axes is None:
         return []
-    ux, uy = (bx - ax) / length, (by - ay) / length  # 辺方向の単位ベクトル
-    nx, ny = -uy, ux  # 法線
     max_sin = math.sin(math.radians(max_angle_deg))
 
     intervals: List[Interval] = []
-    for seg_id, (p, q) in segments:
-        vx, vy = q[0] - p[0], q[1] - p[1]
-        seg_len = math.hypot(vx, vy)
-        if seg_len <= EPS_PX:
-            continue
-        if abs(ux * vy - uy * vx) / seg_len > max_sin:  # |sin θ| が閾値超 → 平行でない
-            continue
-        dp = abs((p[0] - ax) * nx + (p[1] - ay) * ny)
-        dq = abs((q[0] - ax) * nx + (q[1] - ay) * ny)
-        if dp > tolerance_px or dq > tolerance_px:
-            continue
-        tp = (p[0] - ax) * ux + (p[1] - ay) * uy
-        tq = (q[0] - ax) * ux + (q[1] - ay) * uy
-        lo, hi = max(0.0, min(tp, tq)), min(length, max(tp, tq))
-        if hi - lo > EPS_PX:
-            intervals.append(Interval(lo, hi, {seg_id}))
+    for seg_id, segment in segments:
+        interval = _project_segment(
+            axes, edge_start, seg_id, segment, tolerance_px, max_sin
+        )
+        if interval is not None:
+            intervals.append(interval)
     return intervals
+
+
+class _EdgeAxes(NamedTuple):
+    length: float
+    direction: Point
+    normal: Point
+
+
+def _edge_axes(edge_start: Point, edge_end: Point) -> Optional[_EdgeAxes]:
+    """辺の座標系の構築を線分ごとの採否判定から分けるためにまとめる。"""
+    start_x, start_y = edge_start
+    end_x, end_y = edge_end
+    length = distance(edge_start, edge_end)
+    if length <= EPS_PX:
+        return None
+    direction_x, direction_y = (end_x - start_x) / length, (end_y - start_y) / length
+    normal_x, normal_y = -direction_y, direction_x
+    return _EdgeAxes(length, (direction_x, direction_y), (normal_x, normal_y))
+
+
+def _project_segment(
+    axes: _EdgeAxes,
+    edge_start: Point,
+    segment_id: int,
+    segment: Segment,
+    tolerance_px: float,
+    max_sin: float,
+) -> Optional[Interval]:
+    """1 本の線分の採否と射影をまとめ、線分列の走査から切り離す。"""
+    edge_length, direction, normal = axes
+    start_x, start_y = edge_start
+    direction_x, direction_y = direction
+    normal_x, normal_y = normal
+    segment_start, segment_end = segment
+    delta_x, delta_y = segment_end[0] - segment_start[0], segment_end[1] - segment_start[1]
+    segment_length = math.hypot(delta_x, delta_y)
+    # 方向を定められないゼロ長の線分を弾く。
+    if segment_length <= EPS_PX:
+        return None
+    # 採用条件 1: 辺との角度が許容値を超える線分を弾く。
+    if abs(direction_x * delta_y - direction_y * delta_x) / segment_length > max_sin:
+        return None
+    start_normal_distance = abs(
+        (segment_start[0] - start_x) * normal_x + (segment_start[1] - start_y) * normal_y
+    )
+    end_normal_distance = abs(
+        (segment_end[0] - start_x) * normal_x + (segment_end[1] - start_y) * normal_y
+    )
+    # 採用条件 2: 片端でも辺の許容距離帯から外れる線分を弾く。
+    if start_normal_distance > tolerance_px or end_normal_distance > tolerance_px:
+        return None
+    start_arclength = (
+        (segment_start[0] - start_x) * direction_x + (segment_start[1] - start_y) * direction_y
+    )
+    end_arclength = (
+        (segment_end[0] - start_x) * direction_x + (segment_end[1] - start_y) * direction_y
+    )
+    clipped_start, clipped_end = (
+        max(0.0, min(start_arclength, end_arclength)),
+        min(edge_length, max(start_arclength, end_arclength)),
+    )
+    if clipped_end - clipped_start > EPS_PX:
+        return Interval(clipped_start, clipped_end, {segment_id})
+    return None
 
 
 def merge_intervals(intervals: Iterable[Interval], gap_tolerance_px: float = 0.0) -> List[Interval]:
@@ -130,26 +182,50 @@ def drop_short(intervals: Iterable[Interval], min_length_px: float) -> List[Inte
 def clip_intervals(a: Iterable[Interval], b: Iterable[Interval]) -> List[Interval]:
     """a ∩ b。b が非重複なら開始位置の走査で不要な比較を省く。
 
+    非重複判定と二つの交差処理を分け、公開関数で方式の選択と併合を行う。
     a は重複していてもよく、交差前に併合しない（ids の混入を防止）。
     b の重複時は従来の全比較を使い、EPS 以下の断片を除く順序も維持する。
     非重複 b の走査はソート後 O(len(a) + len(b) + 候補交差数)。
     """
-    result: List[Interval] = []
     b_list = sorted(b, key=lambda iv: (iv.start, iv.end))
-    disjoint = all(left.end <= right.start for left, right in zip(b_list, b_list[1:]))
+    if _intervals_are_disjoint(b_list):
+        result = _clip_disjoint_intervals(a, b_list)
+    else:
+        result = _clip_overlapping_intervals(a, b_list)
+    return merge_intervals(result)
+
+
+def _intervals_are_disjoint(intervals: Sequence[Interval]) -> bool:
+    """走査方式の選択理由を明示するため、ソート済み区間の非重複判定を分ける。"""
+    return all(left.end <= right.start for left, right in zip(intervals, intervals[1:]))
+
+
+def _clip_disjoint_intervals(a: Iterable[Interval], b_list: Sequence[Interval]) -> List[Interval]:
+    """非重複時だけ使えるカーソル走査を総当たりの処理から分ける。"""
+    result: List[Interval] = []
     cursor = 0
     for ia in sorted(a, key=lambda iv: (iv.start, iv.end)):
-        if disjoint:
-            while cursor < len(b_list) and b_list[cursor].end <= ia.start:
-                cursor += 1
-        for index in range(cursor if disjoint else 0, len(b_list)):
+        while cursor < len(b_list) and b_list[cursor].end <= ia.start:
+            cursor += 1
+        for index in range(cursor, len(b_list)):
             ib = b_list[index]
-            if disjoint and ib.start >= ia.end:
+            if ib.start >= ia.end:
                 break
             lo, hi = max(ia.start, ib.start), min(ia.end, ib.end)
             if hi - lo > EPS_PX:
                 result.append(Interval(lo, hi, set(ia.ids)))
-    return merge_intervals(result)
+    return result
+
+
+def _clip_overlapping_intervals(a: Iterable[Interval], b_list: Sequence[Interval]) -> List[Interval]:
+    """重複時の全比較を独立させ、非重複を前提とする分岐を取り除く。"""
+    result: List[Interval] = []
+    for ia in sorted(a, key=lambda iv: (iv.start, iv.end)):
+        for ib in b_list:
+            lo, hi = max(ia.start, ib.start), min(ia.end, ib.end)
+            if hi - lo > EPS_PX:
+                result.append(Interval(lo, hi, set(ia.ids)))
+    return result
 
 
 def complement_intervals(intervals: Iterable[Interval], edge_length: float) -> List[Interval]:

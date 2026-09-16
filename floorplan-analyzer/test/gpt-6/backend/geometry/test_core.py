@@ -76,3 +76,16 @@ def test_complement_clips_out_of_range_intervals():
     out = g.complement_intervals([g.Interval(-10, 30), g.Interval(90, 200)], 100)
     assert [(o.start, o.end) for o in out] == [(30, 90)]
     assert g.complement_intervals([], 0) == []
+
+
+def test_projection_requires_both_endpoints_within_tolerance_independently_of_angle():
+    """平行性を満たす線分で近接性だけを独立して検証するためのケース。"""
+    edge_start, edge_end = (0, 0), (100, 0)
+    outside = [(1, ((0, 0), (100, 15)))]
+    inside = [(2, ((0, 0), (100, 9)))]
+    assert g.project_segments_onto_edge(
+        edge_start, edge_end, outside, tolerance_px=10, max_angle_deg=10
+    ) == []
+    assert g.project_segments_onto_edge(
+        edge_start, edge_end, inside, tolerance_px=10, max_angle_deg=10
+    ) == [g.Interval(0.0, 100.0, {2})]
