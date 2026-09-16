@@ -343,6 +343,11 @@ def _valid_changes(mask: MaskFile, rings: Sequence[_Ring]) -> Tuple[bool, float,
             continue
         contour_rings = [outer, *record["holes"].values()]  # type: ignore[union-attr]
         if any(
+            math.hypot(point[0] - raw[0], point[1] - raw[1]) > MAX_DISPLACEMENT_PX + 1e-9
+            for ring in contour_rings for point, raw in zip(ring.points, ring.raw)
+        ):
+            return False, max_ratio, "displacement_limit"
+        if any(
             math.hypot(
                 ring.points[(index + 1) % len(ring.points)][0] - point[0],
                 ring.points[(index + 1) % len(ring.points)][1] - point[1],
@@ -402,9 +407,10 @@ def _build_graph(rings: Sequence[_Ring]) -> Tuple[PlanarGraph, Dict[Tuple[int, s
     atomic = sorted(set(atomic))
     node_points = sorted({point for edge in atomic for point in edge})
     node_ids = {point: index + 1 for index, point in enumerate(node_points)}
-    nodes = [CanonicalNode(id=node_ids[point], point=Vertex(x=point[0], y=point[1]), room_ids=[])
+    nodes = [CanonicalNode(id=node_ids[point], point=Vertex(x=point[0], y=point[1]), room_ids=[], room_indices=[])
              for point in node_points]
     node_rooms: Dict[int, set] = {node.id: set() for node in nodes}
+    node_room_indices: Dict[int, set] = {node.id: set() for node in nodes}
     node_shift: Dict[int, float] = {node.id: 0.0 for node in nodes}
     edge_lookup: Dict[Tuple[int, str, int], List[int]] = {}
     edges: List[CanonicalEdge] = []
@@ -419,10 +425,12 @@ def _build_graph(rings: Sequence[_Ring]) -> Tuple[PlanarGraph, Dict[Tuple[int, s
                 owners.append((ring, source_index, ref))
                 edge_lookup.setdefault(ref, []).append(edge_id)
         room_ids = sorted({owner[0].contour_id for owner in owners})
+        room_indices = sorted({owner[0].contour_index for owner in owners})
         kinds = sorted({owner[0].kind for owner in owners})
         start_id, end_id = node_ids[start], node_ids[end]
         for node_id in (start_id, end_id):
             node_rooms[node_id].update(room_ids)
+            node_room_indices[node_id].update(room_indices)
         for ring, source_index, _ in owners:
             for point, raw in ((ring.points[source_index], ring.raw[source_index]),
                                (ring.points[(source_index + 1) % len(ring.points)],
@@ -433,16 +441,17 @@ def _build_graph(rings: Sequence[_Ring]) -> Tuple[PlanarGraph, Dict[Tuple[int, s
                     node_shift[end_id] = max(node_shift[end_id], math.hypot(point[0] - raw[0], point[1] - raw[1]))
         edges.append(CanonicalEdge(id=edge_id, start_node_id=start_id, end_node_id=end_id,
             start=Vertex(x=start[0], y=start[1]), end=Vertex(x=end[0], y=end[1]),
-            room_ids=room_ids, boundary_kinds=kinds, length_px=atom.length))
+            room_ids=room_ids, room_indices=room_indices, boundary_kinds=kinds, length_px=atom.length))
     for node in nodes:
         node.room_ids = sorted(node_rooms[node.id])
+        node.room_indices = sorted(node_room_indices[node.id])
         node.max_displacement_px = node_shift[node.id]
     non_manifold = 0
     for edge in edges:
-        if len(edge.room_ids) > 2:
+        if len(edge.room_indices) > 2:
             non_manifold += 1
     return PlanarGraph(nodes=nodes, edges=edges,
-        shared_edge_count=sum(len(edge.room_ids) == 2 for edge in edges),
+        shared_edge_count=sum(len(edge.room_indices) == 2 for edge in edges),
         non_manifold_edge_count=non_manifold), edge_lookup
 
 

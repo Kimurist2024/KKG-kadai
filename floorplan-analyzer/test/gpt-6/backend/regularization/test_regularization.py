@@ -253,6 +253,35 @@ def test_duplicate_contour_ids_do_not_cross_wire_canonical_edge_references():
     assert second_edge.start.x > 150 and second_edge.end.x > 150
 
 
+def test_duplicate_display_ids_still_count_as_two_shared_edge_owners():
+    plan = mask()
+    plan.contours[1].id = 1
+    # 隣接するようずれを無くす。
+    for vertex in plan.contours[1].vertices:
+        vertex.x -= 1
+    response = analyze_uncached(plan, settings())
+    processing = response.geometry_processing
+    assert processing is not None and processing.graph is not None
+    assert processing.graph.shared_edge_count == 1
+    shared = next(edge for edge in processing.graph.edges if len(edge.room_indices) == 2)
+    assert shared.room_ids == [1]
+    assert shared.room_indices == [0, 1]
+
+
+def test_vertex_sharing_cannot_exceed_total_displacement_cap():
+    plan = MaskFile.model_validate({"image_width": 2100, "image_height": 1100, "contours": [
+        {"id": 1, "label_id": 1, "vertices": [{"x": 0, "y": 10}, {"x": 1000, "y": 10},
+            {"x": 1010, "y": 1010}, {"x": 0, "y": 1010}]},
+        {"id": 2, "label_id": 1, "vertices": [{"x": 1002, "y": 8}, {"x": 2002, "y": 8},
+            {"x": 2002, "y": 1008}, {"x": 1012, "y": 1008}]},
+    ]})
+    response = analyze_uncached(plan, settings())
+    processing = response.geometry_processing
+    assert processing is not None
+    assert processing.applied_mode == "raw_fallback"
+    assert processing.reject_reason == "displacement_limit"
+
+
 def test_large_area_change_falls_back_to_original_geometry():
     response = analyze_uncached(mask(gap=3), settings())
     processing = response.geometry_processing

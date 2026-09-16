@@ -220,6 +220,7 @@ class CanonicalNode(BaseModel):
     id: int
     point: Vertex
     room_ids: List[int]
+    room_indices: List[int] = Field(default_factory=list)
     max_displacement_px: float = 0
 
 
@@ -230,6 +231,7 @@ class CanonicalEdge(BaseModel):
     start: Vertex
     end: Vertex
     room_ids: List[int]
+    room_indices: List[int] = Field(default_factory=list)
     boundary_kinds: List[str]
     length_px: float
 

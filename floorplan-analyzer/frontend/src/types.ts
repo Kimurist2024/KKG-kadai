@@ -103,8 +103,8 @@ export interface RoomOverlap { room_ids: number[]; area_m2: number; regions: Pol
 
 export interface PlanarGraph {
   version: string;
-  nodes: { id: number; point: Vertex; room_ids: number[]; max_displacement_px: number }[];
-  edges: { id: number; start_node_id: number; end_node_id: number; start: Vertex; end: Vertex; room_ids: number[]; boundary_kinds: string[]; length_px: number }[];
+  nodes: { id: number; point: Vertex; room_ids: number[]; room_indices: number[]; max_displacement_px: number }[];
+  edges: { id: number; start_node_id: number; end_node_id: number; start: Vertex; end: Vertex; room_ids: number[]; room_indices: number[]; boundary_kinds: string[]; length_px: number }[];
   shared_edge_count: number;
   non_manifold_edge_count: number;
 }
