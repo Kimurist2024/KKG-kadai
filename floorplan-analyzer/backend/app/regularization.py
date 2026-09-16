@@ -103,6 +103,22 @@ def _input_topology_valid(mask: MaskFile) -> bool:
     for contour in mask.contours:
         if contour.isLine:
             continue
+        sequences = [contour.vertices]
+        if isinstance(contour.holes, list):
+            for raw_hole in contour.holes:
+                if isinstance(raw_hole, list):
+                    try:
+                        sequences.append([Vertex.model_validate(point) for point in raw_hole])
+                    except Exception:
+                        return False
+        # 連続重複点や、始点を末尾に再記した輪は、元辺IDと
+        # 補正後の辺の対応が曖昧になるため raw に戻す。
+        for sequence in sequences:
+            points = [(float(point.x), float(point.y)) for point in sequence]
+            if len(points) < 3 or any(
+                points[index] == points[(index + 1) % len(points)] for index in range(len(points))
+            ):
+                return False
         try:
             room_polygon(contour)
         except Exception:
@@ -418,9 +434,10 @@ def regularize_mask(mask: MaskFile, boundary_reference: str):
     """Return a corrected copy, diagnostics and room-edge to canonical-edge IDs."""
     rings = _rings(mask)
     if not _input_topology_valid(mask):
+        graph, lookup = _build_graph(rings)
         processing = GeometryProcessing(requested_mode="regularized_shared", applied_mode="raw_fallback",
-            boundary_reference=boundary_reference, reject_reason="invalid_input_topology")
-        return mask, processing, {}
+            boundary_reference=boundary_reference, reject_reason="invalid_input_topology", graph=graph)
+        return mask, processing, lookup
     if boundary_reference == "centerline":
         # 部分共有辺の中間端点も、独立した部屋補正の前に明示化する。
         _node_rings(rings)

@@ -170,6 +170,35 @@ def test_graph_noding_does_not_split_wall_and_door_interval_analysis():
     assert len(corrected.rooms[0].edges[1].canonical_edge_ids) > 1
 
 
+def test_consecutive_duplicate_vertex_falls_back_without_crashing():
+    plan = MaskFile.model_validate({"image_width": 200, "image_height": 200, "contours": [{
+        "id": 1, "label_id": 1,
+        "vertices": [{"x": 0, "y": 0}, {"x": 100, "y": 0}, {"x": 100, "y": 0},
+                     {"x": 100, "y": 100}, {"x": 0, "y": 100}],
+    }]})
+    response = analyze_uncached(plan, settings())
+    assert response.geometry_processing is not None
+    assert response.geometry_processing.applied_mode == "raw_fallback"
+    assert [edge.index for edge in response.rooms[0].edges] == [0, 2, 3, 4]
+
+
+def test_explicit_closing_vertex_fallback_preserves_hole_edge_offsets():
+    plan = MaskFile.model_validate({"image_width": 200, "image_height": 200, "contours": [{
+        "id": 1, "label_id": 1,
+        "vertices": [{"x": 0, "y": 0}, {"x": 100, "y": 0}, {"x": 100, "y": 100},
+                     {"x": 0, "y": 100}, {"x": 0, "y": 0}],
+        "holes": [[{"x": 20, "y": 20}, {"x": 40, "y": 20},
+                   {"x": 40, "y": 40}, {"x": 20, "y": 40}]],
+    }]})
+    response = analyze_uncached(plan, settings())
+    processing = response.geometry_processing
+    assert processing is not None and processing.graph is not None
+    assert processing.applied_mode == "raw_fallback"
+    hole_edges = [edge for edge in response.rooms[0].edges if edge.boundary_kind == "hole"]
+    assert [edge.index for edge in hole_edges] == [5, 6, 7, 8]
+    assert all(edge.canonical_edge_ids for edge in hole_edges)
+
+
 def test_large_area_change_falls_back_to_original_geometry():
     response = analyze_uncached(mask(gap=3), settings())
     processing = response.geometry_processing
