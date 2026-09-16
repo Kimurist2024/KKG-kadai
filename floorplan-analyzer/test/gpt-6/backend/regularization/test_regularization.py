@@ -79,9 +79,11 @@ def test_t_junction_splits_long_edge_and_shares_all_atomic_boundaries():
     processing = response.geometry_processing
     assert processing is not None and processing.graph is not None
     assert processing.graph.shared_edge_count == 3
-    # A の長辺自体がT字端点で2辺に分割され、各部屋から同じIDを参照する。
-    assert response.rooms[0].edges[1].canonical_edge_id == response.rooms[1].edges[3].canonical_edge_id
-    assert response.rooms[0].edges[2].canonical_edge_id == response.rooms[2].edges[3].canonical_edge_id
+    # 計算用のAの長辺は維持し、グラフ上で2原子辺を参照する。
+    assert set(response.rooms[0].edges[1].canonical_edge_ids) == {
+        response.rooms[1].edges[3].canonical_edge_id,
+        response.rooms[2].edges[3].canonical_edge_id,
+    }
 
 
 def test_malformed_hole_forces_raw_fallback_instead_of_being_dropped():
@@ -103,6 +105,17 @@ def test_non_array_holes_force_raw_fallback():
     assert response.geometry_processing.reject_reason == "invalid_input_topology"
 
 
+def test_hole_touching_outer_boundary_forces_raw_fallback():
+    plan = mask(second=False)
+    plan.contours[0].holes = [[
+        {"x": 0, "y": 50}, {"x": 2, "y": 48}, {"x": 4, "y": 50}, {"x": 2, "y": 52},
+    ]]
+    response = analyze_uncached(plan, settings())
+    assert response.geometry_processing is not None
+    assert response.geometry_processing.applied_mode == "raw_fallback"
+    assert response.geometry_processing.reject_reason == "invalid_input_topology"
+
+
 def test_preexisting_partial_shared_edge_stays_connected_after_regularization():
     plan = MaskFile.model_validate({"image_width": 300, "image_height": 300, "contours": [
         {"id": 1, "label_id": 1, "vertices": [{"x": 0, "y": 0}, {"x": 100, "y": 0}, {"x": 102, "y": 200}, {"x": 0, "y": 200}]},
@@ -111,7 +124,8 @@ def test_preexisting_partial_shared_edge_stays_connected_after_regularization():
     response = analyze_uncached(plan, settings())
     processing = response.geometry_processing
     assert processing is not None and processing.graph is not None
-    assert processing.applied_mode == "regularized_shared"
+    assert processing.applied_mode == "raw_fallback"
+    assert processing.reject_reason == "shared_constraint_conflict"
     assert processing.graph.shared_edge_count == 1
     assert response.summary.overlap_floor_area_m2 == 0
 
@@ -137,6 +151,23 @@ def test_direction_rejection_uses_raw_edge_indices_for_canonical_lookup():
                 dot = (point.x - ax) * (point.x - bx) + (point.y - ay) * (point.y - by)
                 assert abs(cross) < 1e-7
                 assert dot <= 1e-7
+
+
+def test_graph_noding_does_not_split_wall_and_door_interval_analysis():
+    contours = [
+        {"id": 1, "label_id": 1, "vertices": [{"x": 0, "y": 0}, {"x": 100, "y": 0}, {"x": 100, "y": 200}, {"x": 0, "y": 200}]},
+        {"id": 2, "label_id": 1, "vertices": [{"x": 100, "y": 0}, {"x": 200, "y": 0}, {"x": 200, "y": 80}, {"x": 100, "y": 80}]},
+        {"id": 10, "label_id": 2, "isLine": True, "vertices": [{"x": 100, "y": 0}, {"x": 100, "y": 80}]},
+        {"id": 11, "label_id": 2, "isLine": True, "vertices": [{"x": 100, "y": 120}, {"x": 100, "y": 200}]},
+        {"id": 12, "label_id": 3, "isLine": True, "vertices": [{"x": 100, "y": 80}, {"x": 100, "y": 120}]},
+    ]
+    plan = MaskFile.model_validate({"image_width": 300, "image_height": 300, "contours": contours})
+    raw = analyze_uncached(plan, AnalysisSettings(scale_px=100, scale_m=1))
+    corrected = analyze_uncached(plan, settings())
+    assert corrected.rooms[0].door_length_m == raw.rooms[0].door_length_m == 0.4
+    assert corrected.rooms[0].wall_area_m2 == raw.rooms[0].wall_area_m2
+    assert len(corrected.rooms[0].edges) == 4
+    assert len(corrected.rooms[0].edges[1].canonical_edge_ids) > 1
 
 
 def test_large_area_change_falls_back_to_original_geometry():

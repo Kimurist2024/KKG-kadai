@@ -21,6 +21,7 @@ from .schemas import (
     PlanarGraph,
     Vertex,
 )
+from .topology import room_polygon
 
 Point = Tuple[float, float]
 MAX_ANGLE_DEG = 7.0
@@ -42,6 +43,8 @@ class _Ring:
     index: int
     raw: List[Point]
     points: List[Point]
+    output_offset: int
+    source_edges: List[int]
 
 
 @dataclass(frozen=True)
@@ -73,8 +76,10 @@ def _rings(mask: MaskFile) -> List[_Ring]:
         if contour.isLine or len(contour.vertices) < 3:
             continue
         outer = [(float(p.x), float(p.y)) for p in contour.vertices]
-        rings.append(_Ring(contour_index, contour.id, "outer", 0, outer, list(outer)))
+        rings.append(_Ring(contour_index, contour.id, "outer", 0, outer, list(outer), 0,
+                           list(range(len(outer)))))
         raw_holes = contour.holes if isinstance(contour.holes, list) else []
+        hole_offset = len(outer)
         for hole_index, raw_hole in enumerate(raw_holes):
             if not isinstance(raw_hole, list) or len(raw_hole) < 3:
                 continue
@@ -83,7 +88,9 @@ def _rings(mask: MaskFile) -> List[_Ring]:
             except Exception:
                 continue
             points = [(float(p.x), float(p.y)) for p in hole]
-            rings.append(_Ring(contour_index, contour.id, "hole", hole_index, points, list(points)))
+            rings.append(_Ring(contour_index, contour.id, "hole", hole_index, points, list(points),
+                               hole_offset, list(range(len(points)))))
+            hole_offset += len(points)
     return rings
 
 
@@ -96,22 +103,9 @@ def _input_topology_valid(mask: MaskFile) -> bool:
     for contour in mask.contours:
         if contour.isLine:
             continue
-        if len(contour.vertices) < 3:
-            return False
-        outer = [(float(point.x), float(point.y)) for point in contour.vertices]
-        if contour.holes is not None and not isinstance(contour.holes, list):
-            return False
-        holes: List[List[Point]] = []
-        for raw_hole in contour.holes or []:
-            if not isinstance(raw_hole, list) or len(raw_hole) < 3:
-                return False
-            try:
-                vertices = [Vertex.model_validate(point) for point in raw_hole]
-            except Exception:
-                return False
-            holes.append([(float(point.x), float(point.y)) for point in vertices])
-        polygon = Polygon(outer, holes)
-        if not polygon.is_valid or polygon.area <= 0:
+        try:
+            room_polygon(contour)
+        except Exception:
             return False
     return True
 
@@ -141,17 +135,22 @@ def _node_rings(rings: Sequence[_Ring]) -> None:
     tolerance = 1e-7
     for ring in rings:
         noded: List[Point] = []
-        for index, start in enumerate(ring.raw):
-            end = ring.raw[(index + 1) % len(ring.raw)]
+        noded_sources: List[int] = []
+        original = list(ring.raw)
+        original_sources = list(ring.source_edges)
+        for index, start in enumerate(original):
+            end = original[(index + 1) % len(original)]
             line = LineString([start, end])
             points = [point for point in node_points if line.distance(ShapelyPoint(point)) <= tolerance]
             points.sort(key=lambda point: line.project(ShapelyPoint(point)))
             for point in points[:-1]:
                 if not noded or point != noded[-1]:
                     noded.append(point)
+                    noded_sources.append(original_sources[index])
         if len(noded) >= 3:
             ring.raw = noded
             ring.points = list(noded)
+            ring.source_edges = noded_sources
 
 
 def _coalesce_preexisting_shared_nodes(rings: Sequence[_Ring]) -> None:
@@ -169,6 +168,23 @@ def _coalesce_preexisting_shared_nodes(rings: Sequence[_Ring]) -> None:
         )
         for ring, index in refs:
             ring.points[index] = target
+
+
+def _noded_points_preserve_source_edges(rings: Sequence[_Ring]) -> bool:
+    """共有接合点を拘束しても、元の1辺が折れ線にならないことを確認する。"""
+    tolerance = 1e-7
+    for ring in rings:
+        original_count = max(ring.source_edges, default=-1) + 1
+        if original_count < 1:
+            continue
+        starts = [ring.source_edges.index(index) for index in range(original_count)]
+        for source_index, start_index in enumerate(starts):
+            end_index = starts[(source_index + 1) % original_count]
+            line = LineString([ring.points[start_index], ring.points[end_index]])
+            for index, owner in enumerate(ring.source_edges):
+                if owner == source_index and line.distance(ShapelyPoint(ring.points[index])) > tolerance:
+                    return False
+    return True
 
 
 def estimate_direction(rings: Sequence[_Ring]) -> _Direction:
@@ -324,24 +340,13 @@ def _valid_changes(mask: MaskFile, rings: Sequence[_Ring]) -> Tuple[bool, float,
 
 def _build_graph(rings: Sequence[_Ring]) -> Tuple[PlanarGraph, Dict[Tuple[int, str, int], List[int]]]:
     """全境界線を一度 noding し、T字接合と部分重なりも原子辺に分割する。"""
-    ring_offsets: Dict[Tuple[int, str, int], int] = {}
-    for contour_index in sorted({ring.contour_index for ring in rings}):
-        contour_rings = [ring for ring in rings if ring.contour_index == contour_index]
-        outer_length = next((len(ring.points) for ring in contour_rings if ring.kind == "outer"), 0)
-        for ring in contour_rings:
-            ring_offsets[(ring.contour_index, ring.kind, ring.index)] = (
-                0 if ring.kind == "outer" else outer_length + sum(
-                    len(other.points) for other in contour_rings
-                    if other.kind == "hole" and other.index < ring.index
-                )
-            )
     sources: List[Tuple[_Ring, int, LineString, Tuple[int, str, int]]] = []
     for ring in rings:
         for edge_index, start in enumerate(ring.points):
             end = ring.points[(edge_index + 1) % len(ring.points)]
             if math.hypot(end[0] - start[0], end[1] - start[1]) <= 1e-9:
                 continue
-            result_index = ring_offsets[(ring.contour_index, ring.kind, ring.index)] + edge_index
+            result_index = ring.output_offset + ring.source_edges[edge_index]
             sources.append((ring, edge_index, LineString([start, end]),
                             (ring.contour_id, ring.kind, result_index)))
 
@@ -437,6 +442,15 @@ def regularize_mask(mask: MaskFile, boundary_reference: str):
     if boundary_reference == "centerline":
         _coalesce_preexisting_shared_nodes(rings)
         _snap_shared_vertices(rings)
+        if not _noded_points_preserve_source_edges(rings):
+            raw_rings = _rings(mask)
+            graph, lookup = _build_graph(raw_rings)
+            processing = GeometryProcessing(requested_mode=requested, applied_mode="raw_fallback",
+                boundary_reference=boundary_reference, dominant_angle_deg=math.degrees(direction.angle),
+                orientation_concentration=direction.concentration,
+                orientation_inlier_ratio=direction.inlier_ratio,
+                reject_reason="shared_constraint_conflict", graph=graph)
+            return mask, processing, lookup
     valid, area_ratio, reason = _valid_changes(mask, rings)
     if not valid:
         raw_rings = _rings(mask)
@@ -450,7 +464,11 @@ def regularize_mask(mask: MaskFile, boundary_reference: str):
     corrected = mask.model_copy(deep=True)
     for ring in rings:
         contour: Contour = corrected.contours[ring.contour_index]
-        vertices = [Vertex(x=x, y=y) for x, y in ring.points]
+        # noding 点は正準グラフにだけ残し、壁・ドア区間を計算する
+        # 部屋輪郭は元の連続辺構成を保つ。
+        original_count = max(ring.source_edges, default=-1) + 1
+        output_points = [ring.points[ring.source_edges.index(index)] for index in range(original_count)]
+        vertices = [Vertex(x=x, y=y) for x, y in output_points]
         if ring.kind == "outer":
             contour.vertices = vertices
         else:
