@@ -199,6 +199,21 @@ def test_explicit_closing_vertex_fallback_preserves_hole_edge_offsets():
     assert all(edge.canonical_edge_ids for edge in hole_edges)
 
 
+def test_vertex_sharing_that_creates_zero_length_edge_falls_back():
+    plan = MaskFile.model_validate({"image_width": 300, "image_height": 200, "contours": [
+        {"id": 1, "label_id": 1, "vertices": [{"x": 0, "y": 0}, {"x": 100, "y": 0},
+            {"x": 100, "y": 1}, {"x": 100, "y": 100}, {"x": 0, "y": 100}]},
+        {"id": 2, "label_id": 1, "vertices": [{"x": 101, "y": 0}, {"x": 201, "y": 0},
+            {"x": 201, "y": 100}, {"x": 101, "y": 100}]},
+    ]})
+    response = analyze_uncached(plan, settings())
+    processing = response.geometry_processing
+    assert processing is not None
+    assert processing.applied_mode == "raw_fallback"
+    assert processing.reject_reason == "degenerate_edge"
+    assert len(response.rooms[0].edges) == 5
+
+
 def test_large_area_change_falls_back_to_original_geometry():
     response = analyze_uncached(mask(gap=3), settings())
     processing = response.geometry_processing

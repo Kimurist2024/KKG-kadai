@@ -341,6 +341,15 @@ def _valid_changes(mask: MaskFile, rings: Sequence[_Ring]) -> Tuple[bool, float,
         outer = record["outer"]
         if not isinstance(outer, _Ring):
             continue
+        contour_rings = [outer, *record["holes"].values()]  # type: ignore[union-attr]
+        if any(
+            math.hypot(
+                ring.points[(index + 1) % len(ring.points)][0] - point[0],
+                ring.points[(index + 1) % len(ring.points)][1] - point[1],
+            ) <= 1e-9
+            for ring in contour_rings for index, point in enumerate(ring.points)
+        ):
+            return False, max_ratio, "degenerate_edge"
         holes_by_index = record["holes"]
         holes = [holes_by_index[index].points for index in sorted(holes_by_index)]  # type: ignore[index]
         raw_holes = [holes_by_index[index].raw for index in sorted(holes_by_index)]  # type: ignore[index]
