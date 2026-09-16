@@ -422,7 +422,8 @@ def regularize_mask(mask: MaskFile, boundary_reference: str):
     direction = estimate_direction(rings)
     requested = "regularized_shared"
     if not direction.accepted:
-        graph, lookup = _build_graph(rings)
+        # 返すのは元輪郭なので、noding 後の辺番号を混ぜない。
+        graph, lookup = _build_graph(_rings(mask))
         processing = GeometryProcessing(requested_mode=requested, applied_mode="raw_fallback",
             boundary_reference=boundary_reference, dominant_angle_deg=math.degrees(direction.angle),
             orientation_concentration=direction.concentration,

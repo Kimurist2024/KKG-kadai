@@ -116,6 +116,29 @@ def test_preexisting_partial_shared_edge_stays_connected_after_regularization():
     assert response.summary.overlap_floor_area_m2 == 0
 
 
+def test_direction_rejection_uses_raw_edge_indices_for_canonical_lookup():
+    plan = MaskFile.model_validate({"image_width": 300, "image_height": 300, "contours": [
+        {"id": 1, "label_id": 1, "vertices": [{"x": 0, "y": 0}, {"x": 100, "y": 0}, {"x": 100, "y": 200}, {"x": 0, "y": 200}]},
+        {"id": 2, "label_id": 1, "vertices": [{"x": 100, "y": 0}, {"x": 200, "y": 0}, {"x": 100, "y": 100}]},
+    ]})
+    response = analyze_uncached(plan, settings())
+    processing = response.geometry_processing
+    assert processing is not None and processing.graph is not None
+    assert processing.applied_mode == "raw_fallback"
+    assert processing.reject_reason == "non_manhattan"
+    room = response.rooms[0]
+    for edge in room.edges:
+        assert edge.canonical_edge_ids
+        ax, ay, bx, by = edge.start.x, edge.start.y, edge.end.x, edge.end.y
+        for canonical_id in edge.canonical_edge_ids:
+            canonical = processing.graph.edges[canonical_id - 1]
+            for point in (canonical.start, canonical.end):
+                cross = (bx - ax) * (point.y - ay) - (by - ay) * (point.x - ax)
+                dot = (point.x - ax) * (point.x - bx) + (point.y - ay) * (point.y - by)
+                assert abs(cross) < 1e-7
+                assert dot <= 1e-7
+
+
 def test_large_area_change_falls_back_to_original_geometry():
     response = analyze_uncached(mask(gap=3), settings())
     processing = response.geometry_processing
