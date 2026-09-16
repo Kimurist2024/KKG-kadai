@@ -128,6 +128,7 @@ class EdgeResult(BaseModel):
 
     boundary_kind: str = "outer"
     canonical_edge_id: Optional[int] = Field(default=None, exclude_if=lambda value: value is None)
+    canonical_edge_ids: List[int] = Field(default_factory=list, exclude_if=lambda value: not value)
     inferred_wall_intervals: List[IntervalOut] = Field(default_factory=list, description="扉開口から補完した壁区間。ids は補完根拠となったドア輪郭 id。wall_intervals にも含む")
     index: int
     start: Vertex

@@ -139,7 +139,7 @@ def analyze_edge(
     wall_segments: SegmentSource,
     door_segments: SegmentSource,
     settings: AnalysisSettings,
-    canonical_edge_id: Optional[int] = None,
+    canonical_edge_ids: Optional[List[int]] = None,
 ) -> EdgeResult:
     """1 辺の壁・開口・扉を対応付け、区間の根拠と壁面積を返す。"""
     mpp = settings.meters_per_px
@@ -173,7 +173,8 @@ def analyze_edge(
 
     return EdgeResult(
         index=index,
-        canonical_edge_id=canonical_edge_id,
+        canonical_edge_id=canonical_edge_ids[0] if canonical_edge_ids and len(canonical_edge_ids) == 1 else None,
+        canonical_edge_ids=canonical_edge_ids or [],
         inferred_wall_intervals=[_interval_out(a, b, iv, mpp) for iv in inferred],
         start=Vertex(x=a[0], y=a[1]),
         end=Vertex(x=b[0], y=b[1]),
@@ -199,7 +200,7 @@ def analyze_room(
     display_name: str,
     holes: Optional[List[List[Vertex]]] = None,
     label_point: Optional[Vertex] = None,
-    canonical_edges: Optional[Dict[Tuple[int, str, int], int]] = None,
+    canonical_edges: Optional[Dict[Tuple[int, str, int], List[int]]] = None,
 ) -> RoomResult:
     """外周と穴の全辺を解析し、部屋単位の床面積・周長・壁面積に集計する。"""
     mpp = settings.meters_per_px
@@ -217,8 +218,8 @@ def analyze_room(
             if g.distance(a, b) <= g.EPS_PX:
                 continue
             boundary_kind = "outer" if ring_index == 0 else "hole"
-            canonical_id = (canonical_edges or {}).get((room.id, boundary_kind, offset + i))
-            edge = analyze_edge(offset + i, a, b, wall_segments, door_segments, settings, canonical_id)
+            canonical_ids = (canonical_edges or {}).get((room.id, boundary_kind, offset + i))
+            edge = analyze_edge(offset + i, a, b, wall_segments, door_segments, settings, canonical_ids)
             edge.boundary_kind = boundary_kind
             edges.append(edge)
         offset += len(ring)
@@ -341,7 +342,7 @@ def _room_overlaps(polygons, room_results, mpp, warnings, *, geometry_only):
 
 def _analyze_core(mask: MaskFile, settings: Optional[AnalysisSettings] = None, *, geometry_only=False,
                   geometry_processing: Optional[GeometryProcessing] = None,
-                  canonical_edges: Optional[Dict[Tuple[int, str, int], int]] = None):
+                  canonical_edges: Optional[Dict[Tuple[int, str, int], List[int]]] = None):
     """分類 → 有効な部屋の解析 → 警告 → 重複判定 → 全体集計の順に実行する。"""
     settings = settings or AnalysisSettings()
     if settings.geometry_mode == "regularized_shared" and geometry_processing is None:

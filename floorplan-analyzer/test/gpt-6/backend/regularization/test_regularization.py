@@ -69,6 +69,33 @@ def test_unknown_reference_does_not_snap_distinct_room_boundaries():
     assert processing.max_displacement_px < 1e-9
 
 
+def test_t_junction_splits_long_edge_and_shares_all_atomic_boundaries():
+    plan = MaskFile.model_validate({"image_width": 300, "image_height": 300, "contours": [
+        {"id": 1, "label_id": 1, "vertices": [{"x": 0, "y": 0}, {"x": 100, "y": 0}, {"x": 100, "y": 200}, {"x": 0, "y": 200}]},
+        {"id": 2, "label_id": 1, "vertices": [{"x": 100, "y": 0}, {"x": 200, "y": 0}, {"x": 200, "y": 100}, {"x": 100, "y": 100}]},
+        {"id": 3, "label_id": 1, "vertices": [{"x": 100, "y": 100}, {"x": 200, "y": 100}, {"x": 200, "y": 200}, {"x": 100, "y": 200}]},
+    ]})
+    response = analyze_uncached(plan, settings())
+    processing = response.geometry_processing
+    assert processing is not None and processing.graph is not None
+    assert processing.graph.shared_edge_count == 3
+    assert len(response.rooms[0].edges[1].canonical_edge_ids) == 2
+    assert set(response.rooms[0].edges[1].canonical_edge_ids) == {
+        response.rooms[1].edges[3].canonical_edge_id,
+        response.rooms[2].edges[3].canonical_edge_id,
+    }
+
+
+def test_malformed_hole_forces_raw_fallback_instead_of_being_dropped():
+    plan = mask(second=False)
+    plan.contours[0].holes = [[{"x": 10, "y": 10}, {"x": 20, "y": 10}]]
+    response = analyze_uncached(plan, settings())
+    processing = response.geometry_processing
+    assert processing is not None
+    assert processing.applied_mode == "raw_fallback"
+    assert processing.reject_reason == "invalid_input_topology"
+
+
 def test_large_area_change_falls_back_to_original_geometry():
     response = analyze_uncached(mask(gap=3), settings())
     processing = response.geometry_processing

@@ -39,6 +39,7 @@ export interface EdgeResult {
   boundary_kind?: "outer" | "hole";
   inferred_wall_intervals?: IntervalOut[];
   canonical_edge_id?: number;
+  canonical_edge_ids?: number[];
   index: number;
   start: Vertex;
   end: Vertex;

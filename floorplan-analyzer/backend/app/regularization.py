@@ -9,7 +9,8 @@ import math
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Sequence, Tuple
 
-from shapely.geometry import Polygon
+from shapely.geometry import LineString, Polygon
+from shapely.ops import unary_union
 
 from .schemas import (
     CanonicalEdge,
@@ -84,6 +85,33 @@ def _rings(mask: MaskFile) -> List[_Ring]:
             points = [(float(p.x), float(p.y)) for p in hole]
             rings.append(_Ring(contour_index, contour.id, "hole", hole_index, points, list(points)))
     return rings
+
+
+def _input_topology_valid(mask: MaskFile) -> bool:
+    """補正前に部屋と穴の全入力を検査する。
+
+    不正な穴を黙って除外すると、異なる図形を「補正済み」として返すため、
+    一つでも解釈できない穴があれば全体を raw に戻す。
+    """
+    for contour in mask.contours:
+        if contour.isLine:
+            continue
+        if len(contour.vertices) < 3:
+            return False
+        outer = [(float(point.x), float(point.y)) for point in contour.vertices]
+        holes: List[List[Point]] = []
+        for raw_hole in contour.holes if isinstance(contour.holes, list) else []:
+            if not isinstance(raw_hole, list) or len(raw_hole) < 3:
+                return False
+            try:
+                vertices = [Vertex.model_validate(point) for point in raw_hole]
+            except Exception:
+                return False
+            holes.append([(float(point.x), float(point.y)) for point in vertices])
+        polygon = Polygon(outer, holes)
+        if not polygon.is_valid or polygon.area <= 0:
+            return False
+    return True
 
 
 def estimate_direction(rings: Sequence[_Ring]) -> _Direction:
@@ -237,34 +265,8 @@ def _valid_changes(mask: MaskFile, rings: Sequence[_Ring]) -> Tuple[bool, float,
     return True, max_ratio, None
 
 
-def _build_graph(rings: Sequence[_Ring]) -> Tuple[PlanarGraph, Dict[Tuple[int, str, int], int]]:
-    nodes: List[CanonicalNode] = []
-    node_by_point: Dict[Point, int] = {}
-    node_rooms: Dict[int, set] = {}
-    max_shift: Dict[int, float] = {}
-    vertex_nodes: Dict[Tuple[int, str, int, int], int] = {}
-    for ring in rings:
-        for vertex_index, point in enumerate(ring.points):
-            node_id = node_by_point.get(point)
-            if node_id is None:
-                node_id = len(nodes) + 1
-                node_by_point[point] = node_id
-                nodes.append(CanonicalNode(id=node_id, point=Vertex(x=point[0], y=point[1]), room_ids=[]))
-                node_rooms[node_id] = set()
-                max_shift[node_id] = 0.0
-            node_rooms[node_id].add(ring.contour_id)
-            raw = ring.raw[vertex_index]
-            max_shift[node_id] = max(max_shift[node_id], math.hypot(point[0] - raw[0], point[1] - raw[1]))
-            vertex_nodes[(ring.contour_index, ring.kind, ring.index, vertex_index)] = node_id
-    for node in nodes:
-        node.room_ids = sorted(node_rooms[node.id])
-        node.max_displacement_px = max_shift[node.id]
-
-    edges: List[CanonicalEdge] = []
-    edge_by_nodes: Dict[Tuple[int, int], int] = {}
-    edge_rooms: Dict[int, set] = {}
-    edge_kinds: Dict[int, set] = {}
-    edge_lookup: Dict[Tuple[int, str, int], int] = {}
+def _build_graph(rings: Sequence[_Ring]) -> Tuple[PlanarGraph, Dict[Tuple[int, str, int], List[int]]]:
+    """全境界線を一度 noding し、T字接合と部分重なりも原子辺に分割する。"""
     ring_offsets: Dict[Tuple[int, str, int], int] = {}
     for contour_index in sorted({ring.contour_index for ring in rings}):
         contour_rings = [ring for ring in rings if ring.contour_index == contour_index]
@@ -276,31 +278,73 @@ def _build_graph(rings: Sequence[_Ring]) -> Tuple[PlanarGraph, Dict[Tuple[int, s
                     if other.kind == "hole" and other.index < ring.index
                 )
             )
+    sources: List[Tuple[_Ring, int, LineString, Tuple[int, str, int]]] = []
     for ring in rings:
-        for edge_index in range(len(ring.points)):
-            start_id = vertex_nodes[(ring.contour_index, ring.kind, ring.index, edge_index)]
-            end_id = vertex_nodes[(ring.contour_index, ring.kind, ring.index, (edge_index + 1) % len(ring.points))]
-            if start_id == end_id:
+        for edge_index, start in enumerate(ring.points):
+            end = ring.points[(edge_index + 1) % len(ring.points)]
+            if math.hypot(end[0] - start[0], end[1] - start[1]) <= 1e-9:
                 continue
-            key = (min(start_id, end_id), max(start_id, end_id))
-            edge_id = edge_by_nodes.get(key)
-            if edge_id is None:
-                edge_id = len(edges) + 1
-                edge_by_nodes[key] = edge_id
-                start, end = nodes[start_id - 1].point, nodes[end_id - 1].point
-                edges.append(CanonicalEdge(id=edge_id, start_node_id=start_id, end_node_id=end_id,
-                    start=start, end=end, room_ids=[], boundary_kinds=[],
-                    length_px=math.hypot(end.x - start.x, end.y - start.y)))
-                edge_rooms[edge_id] = set()
-                edge_kinds[edge_id] = set()
-            edge_rooms[edge_id].add(ring.contour_id)
-            edge_kinds[edge_id].add(ring.kind)
-            result_edge_index = ring_offsets[(ring.contour_index, ring.kind, ring.index)] + edge_index
-            edge_lookup[(ring.contour_id, ring.kind, result_edge_index)] = edge_id
+            result_index = ring_offsets[(ring.contour_index, ring.kind, ring.index)] + edge_index
+            sources.append((ring, edge_index, LineString([start, end]),
+                            (ring.contour_id, ring.kind, result_index)))
+
+    merged = unary_union([source[2] for source in sources]) if sources else None
+    atomic: List[Tuple[Point, Point]] = []
+
+    def collect(geometry) -> None:
+        if geometry is None or geometry.is_empty:
+            return
+        if geometry.geom_type == "LineString":
+            coords = list(geometry.coords)
+            for start, end in zip(coords, coords[1:]):
+                a, b = (float(start[0]), float(start[1])), (float(end[0]), float(end[1]))
+                if a != b:
+                    atomic.append((min(a, b), max(a, b)))
+        elif hasattr(geometry, "geoms"):
+            for part in geometry.geoms:
+                collect(part)
+
+    collect(merged)
+    atomic = sorted(set(atomic))
+    node_points = sorted({point for edge in atomic for point in edge})
+    node_ids = {point: index + 1 for index, point in enumerate(node_points)}
+    nodes = [CanonicalNode(id=node_ids[point], point=Vertex(x=point[0], y=point[1]), room_ids=[])
+             for point in node_points]
+    node_rooms: Dict[int, set] = {node.id: set() for node in nodes}
+    node_shift: Dict[int, float] = {node.id: 0.0 for node in nodes}
+    edge_lookup: Dict[Tuple[int, str, int], List[int]] = {}
+    edges: List[CanonicalEdge] = []
+    tolerance = 1e-7
+    for edge_id, (start, end) in enumerate(atomic, 1):
+        atom = LineString([start, end])
+        owners = []
+        for ring, source_index, source_line, ref in sources:
+            if (source_line.distance(atom) <= tolerance
+                    and source_line.distance(atom.boundary.geoms[0]) <= tolerance
+                    and source_line.distance(atom.boundary.geoms[-1]) <= tolerance):
+                owners.append((ring, source_index, ref))
+                edge_lookup.setdefault(ref, []).append(edge_id)
+        room_ids = sorted({owner[0].contour_id for owner in owners})
+        kinds = sorted({owner[0].kind for owner in owners})
+        start_id, end_id = node_ids[start], node_ids[end]
+        for node_id in (start_id, end_id):
+            node_rooms[node_id].update(room_ids)
+        for ring, source_index, _ in owners:
+            for point, raw in ((ring.points[source_index], ring.raw[source_index]),
+                               (ring.points[(source_index + 1) % len(ring.points)],
+                                ring.raw[(source_index + 1) % len(ring.raw)])):
+                if point == start:
+                    node_shift[start_id] = max(node_shift[start_id], math.hypot(point[0] - raw[0], point[1] - raw[1]))
+                if point == end:
+                    node_shift[end_id] = max(node_shift[end_id], math.hypot(point[0] - raw[0], point[1] - raw[1]))
+        edges.append(CanonicalEdge(id=edge_id, start_node_id=start_id, end_node_id=end_id,
+            start=Vertex(x=start[0], y=start[1]), end=Vertex(x=end[0], y=end[1]),
+            room_ids=room_ids, boundary_kinds=kinds, length_px=atom.length))
+    for node in nodes:
+        node.room_ids = sorted(node_rooms[node.id])
+        node.max_displacement_px = node_shift[node.id]
     non_manifold = 0
     for edge in edges:
-        edge.room_ids = sorted(edge_rooms[edge.id])
-        edge.boundary_kinds = sorted(edge_kinds[edge.id])
         if len(edge.room_ids) > 2:
             non_manifold += 1
     return PlanarGraph(nodes=nodes, edges=edges,
@@ -311,6 +355,10 @@ def _build_graph(rings: Sequence[_Ring]) -> Tuple[PlanarGraph, Dict[Tuple[int, s
 def regularize_mask(mask: MaskFile, boundary_reference: str):
     """Return a corrected copy, diagnostics and room-edge to canonical-edge IDs."""
     rings = _rings(mask)
+    if not _input_topology_valid(mask):
+        processing = GeometryProcessing(requested_mode="regularized_shared", applied_mode="raw_fallback",
+            boundary_reference=boundary_reference, reject_reason="invalid_input_topology")
+        return mask, processing, {}
     direction = estimate_direction(rings)
     requested = "regularized_shared"
     if not direction.accepted:
