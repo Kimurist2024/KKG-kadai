@@ -9,7 +9,7 @@ import math
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Sequence, Tuple
 
-from shapely.geometry import LineString, Polygon
+from shapely.geometry import LineString, Point as ShapelyPoint, Polygon
 from shapely.ops import unary_union
 
 from .schemas import (
@@ -99,8 +99,10 @@ def _input_topology_valid(mask: MaskFile) -> bool:
         if len(contour.vertices) < 3:
             return False
         outer = [(float(point.x), float(point.y)) for point in contour.vertices]
+        if contour.holes is not None and not isinstance(contour.holes, list):
+            return False
         holes: List[List[Point]] = []
-        for raw_hole in contour.holes if isinstance(contour.holes, list) else []:
+        for raw_hole in contour.holes or []:
             if not isinstance(raw_hole, list) or len(raw_hole) < 3:
                 return False
             try:
@@ -112,6 +114,61 @@ def _input_topology_valid(mask: MaskFile) -> bool:
         if not polygon.is_valid or polygon.area <= 0:
             return False
     return True
+
+
+def _node_rings(rings: Sequence[_Ring]) -> None:
+    """補正前の全境界を交点と部分重なり端点で分割する。"""
+    source_lines = [
+        LineString([start, ring.raw[(index + 1) % len(ring.raw)]])
+        for ring in rings for index, start in enumerate(ring.raw)
+        if start != ring.raw[(index + 1) % len(ring.raw)]
+    ]
+    if not source_lines:
+        return
+    merged = unary_union(source_lines)
+    node_points: set[Point] = set()
+
+    def collect(geometry) -> None:
+        if geometry.is_empty:
+            return
+        if geometry.geom_type == "LineString":
+            node_points.update((float(x), float(y)) for x, y in geometry.coords)
+        elif hasattr(geometry, "geoms"):
+            for part in geometry.geoms:
+                collect(part)
+
+    collect(merged)
+    tolerance = 1e-7
+    for ring in rings:
+        noded: List[Point] = []
+        for index, start in enumerate(ring.raw):
+            end = ring.raw[(index + 1) % len(ring.raw)]
+            line = LineString([start, end])
+            points = [point for point in node_points if line.distance(ShapelyPoint(point)) <= tolerance]
+            points.sort(key=lambda point: line.project(ShapelyPoint(point)))
+            for point in points[:-1]:
+                if not noded or point != noded[-1]:
+                    noded.append(point)
+        if len(noded) >= 3:
+            ring.raw = noded
+            ring.points = list(noded)
+
+
+def _coalesce_preexisting_shared_nodes(rings: Sequence[_Ring]) -> None:
+    """補正前から同一だった異なる部屋の接合点を同じ補正座標にする。"""
+    groups: Dict[Point, List[Tuple[_Ring, int]]] = {}
+    for ring in rings:
+        for index, raw in enumerate(ring.raw):
+            groups.setdefault(raw, []).append((ring, index))
+    for refs in groups.values():
+        if len({ring.contour_index for ring, _ in refs}) < 2:
+            continue
+        target = (
+            math.fsum(ring.points[index][0] for ring, index in refs) / len(refs),
+            math.fsum(ring.points[index][1] for ring, index in refs) / len(refs),
+        )
+        for ring, index in refs:
+            ring.points[index] = target
 
 
 def estimate_direction(rings: Sequence[_Ring]) -> _Direction:
@@ -359,6 +416,9 @@ def regularize_mask(mask: MaskFile, boundary_reference: str):
         processing = GeometryProcessing(requested_mode="regularized_shared", applied_mode="raw_fallback",
             boundary_reference=boundary_reference, reject_reason="invalid_input_topology")
         return mask, processing, {}
+    if boundary_reference == "centerline":
+        # 部分共有辺の中間端点も、独立した部屋補正の前に明示化する。
+        _node_rings(rings)
     direction = estimate_direction(rings)
     requested = "regularized_shared"
     if not direction.accepted:
@@ -374,6 +434,7 @@ def regularize_mask(mask: MaskFile, boundary_reference: str):
     # 異なる部屋の輪郭が同じ壁の中心線を表すと明示された場合だけ、
     # 近接する端点を共有ノードにする。基準不明では証拠のない吸着を行わない。
     if boundary_reference == "centerline":
+        _coalesce_preexisting_shared_nodes(rings)
         _snap_shared_vertices(rings)
     valid, area_ratio, reason = _valid_changes(mask, rings)
     if not valid:
