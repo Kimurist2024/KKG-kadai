@@ -87,7 +87,11 @@ export default function SettingsPanel({ applied, disabled, onApply, confirmScale
   };
 
   const parsed = parseDraft(draft);
-  const dirty = parsed.ok && JSON.stringify(parsed.value) !== JSON.stringify(applied);
+  const dirty = parsed.ok && (
+    (Object.keys(LIMITS) as NumericSettingKey[]).some((key) => parsed.value[key] !== applied[key])
+    || parsed.value.geometry_mode !== applied.geometry_mode
+    || parsed.value.boundary_reference !== applied.boundary_reference
+  );
   const scalePx = Number(draft.scale_px);
   const scaleM = Number(draft.scale_m);
   const metersPerPixel = scalePx > 0 && Number.isFinite(scaleM) ? scaleM / scalePx : NaN;

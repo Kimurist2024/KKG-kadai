@@ -92,6 +92,21 @@ test("geometry correction is opt-in and is not inherited by a new drawing", () =
   expect(screen.queryByRole("checkbox", { name: "図面の傾き・ずれを自動で整える" })).toBeNull();
 });
 
+test("unchanged settings are not marked dirty regardless of object key insertion order", () => {
+  const reordered = {
+    geometry_mode: "raw" as const,
+    boundary_reference: "unknown" as const,
+    tolerance_px: 10,
+    scale_m: 1.365,
+    scale_px: 96.7,
+    door_height_m: 2,
+    ceiling_height_m: 2.4,
+  };
+  render(<SettingsPanel applied={reordered} disabled={false} onApply={vi.fn()} />);
+  expect(screen.queryByText(/変更は未反映です/)).toBeNull();
+  expect((screen.getByRole("button", { name: "この条件で再計算" }) as HTMLButtonElement).disabled).toBe(true);
+});
+
 test("upload waits for scale; another file waits again and cancellation restores prior snapshot", async () => {
   const { result } = renderHook(useAnalysis);
   const a=file("a.json"), b=file("b.json");
