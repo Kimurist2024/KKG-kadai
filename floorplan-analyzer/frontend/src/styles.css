@@ -28,6 +28,15 @@ code { background: #f1f5f9; padding: 1px 4px; border-radius: 4px; font-size: 12p
 
 .header { display: flex; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
 .header p { margin: 0; }
+.guide-entry { margin-top: 8px; }
+.guide-entry a, .usage-guide nav > a:not(.btn) { color: var(--primary-dark); text-underline-offset: 3px; }
+.usage-guide { max-width: 880px; }
+.guide-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.usage-guide p { line-height: 1.8; overflow-wrap: anywhere; }
+.guide-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.guide-actions .btn { text-decoration: none; text-align: center; }
+.usage-guide a:focus-visible, .guide-entry a:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
+@media (max-width: 600px) { .guide-actions { flex-direction: column; } }
 .summary-cards { display: flex; gap: 10px; margin-left: auto; }
 .card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 14px; min-width: 120px; display: flex; flex-direction: column; }
 .card-label { font-size: 11px; color: var(--muted); }
