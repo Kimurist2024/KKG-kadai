@@ -7,6 +7,7 @@ import json
 import threading
 import time
 from collections import OrderedDict
+from pydantic_core import to_json
 
 from .schemas import AnalyzeResponse
 
@@ -75,7 +76,8 @@ def get_geometry(mask, geometry_key, compute, *compute_args):
     geometry["response"].pop("image")
     geometry["response"].pop("timestamp")
     geometry["response"].pop("settings")
-    stored = json.dumps(geometry, ensure_ascii=False, separators=(",", ":")).encode()
+    # 既存依存のネイティブ serializer を利用。復元は従来の json.loads のまま。
+    stored = to_json(geometry, inf_nan_mode="constants")
     cache.put(key, stored)
     return geometry
 

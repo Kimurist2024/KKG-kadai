@@ -214,6 +214,12 @@ def analyze_room(
     edges: List[EdgeResult] = []
     offset = 0
     for ring_index, ring in enumerate(rings):
+        ring_edges = [(a, ring[(i + 1) % len(ring)]) for i, a in enumerate(ring)]
+        # 大きな輪郭では候補リストを全辺分保持せず、従来の逐次検索を使う。
+        wall_candidates = (wall_segments.near_many(ring_edges, settings.tolerance_px)
+                           if isinstance(wall_segments, SegmentIndex) and len(ring) <= 64 else None)
+        door_candidates = (door_segments.near_many(ring_edges, settings.tolerance_px)
+                           if isinstance(door_segments, SegmentIndex) and len(ring) <= 64 else None)
         for i, a in enumerate(ring):
             b = ring[(i + 1) % len(ring)]
             if g.distance(a, b) <= g.EPS_PX:
@@ -221,7 +227,10 @@ def analyze_room(
             boundary_kind = "outer" if ring_index == 0 else "hole"
             canonical_ids = ((canonical_edges or {}).get((contour_index, boundary_kind, offset + i))
                              if contour_index is not None else None)
-            edge = analyze_edge(offset + i, a, b, wall_segments, door_segments, settings, canonical_ids)
+            edge = analyze_edge(offset + i, a, b,
+                                wall_candidates[i] if wall_candidates is not None else wall_segments,
+                                door_candidates[i] if door_candidates is not None else door_segments,
+                                settings, canonical_ids)
             edge.boundary_kind = boundary_kind
             edges.append(edge)
         offset += len(ring)

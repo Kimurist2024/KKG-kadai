@@ -13,6 +13,7 @@
 
 部屋選択時の表示処理の改善と計測結果は [性能検証](docs/selection-performance.md) を参照してください。
 面積・壁・扉の計算高速化と変更前後の全項目比較は [アルゴリズム性能検証](docs/validation/algorithm-performance/report.md) を参照してください。
+直前の実装を基準にした最新の高速化・浮動小数点の完全一致検証・論文調査は [計算結果を変えない高速化](docs/validation/exact-speed/README.md) にあります。100倍の目標は未達です。
 
 応募要件との対応と動作確認の範囲は [技術構成と検証状況](docs/architecture.md)、AWS の手順は [インフラ手順](infra/README.md) を参照してください。
 
