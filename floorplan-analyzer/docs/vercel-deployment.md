@@ -1,6 +1,18 @@
 # Vercel デプロイ記録
 
-2026-09-15、本番デプロイの READY と、ログインなしの HTTP アクセス・サンプル解析を確認しました。
+## 最新: 2026-09-17（feature/kimura 69c083f、UI 改善サイクル 1〜2 を反映）
+
+- 公開 URL: https://floorplan-analyzer-taupe.vercel.app（別名 https://floorplan-analyzer-kimu4.vercel.app）
+- Deployment: `dpl_HxUt8omQi6FEbLD6NCiRoAa3SbSB`（READY / production）
+- 固有 URL: https://floorplan-analyzer-7p96yldht-kimu4.vercel.app（Deployment Protection のため直接アクセスはログインが必要。公開 URL は不要）
+- Inspector: https://vercel.com/kimu4/floorplan-analyzer/HxUt8omQi6FEbLD6NCiRoAa3SbSB
+- 実行: `npx vercel@59 deploy --prod --scope kimu4 --yes`（Vercel CLI 59.20.0）
+- HTTP での確認（computer use は不使用）: `/` 200 で新しい計算条件の説明文を含む、`/guide` 200 で書き直した使い方ページ、`/api/health` `{"status":"ok"}`、`/api/analyze` にサンプルを送信して 部屋 11・床面積合計 48.75 m²・壁面積合計 155.54 m²（ローカルと一致）
+- 含まれる変更: 使い方ページの書き直し（#12）、見出し・条件の式の常時表示・壁なし長の強調・要確認バッジ・選択行・スクロール保持・ファイルバー・集計カードの序列・並べ替え 3 状態・表示名の復元・reduced-motion（UI 改善サイクル 1〜2）、幾何計算と表示コンポーネントの整理（#5）、空間検索の高速化（#11）
+
+## 2026-09-15 の記録
+
+本番デプロイの READY と、ログインなしの HTTP アクセス・サンプル解析を確認しました。
 
 - 公開 URL: https://floorplan-analyzer-taupe.vercel.app
 - 別名: https://floorplan-analyzer-kimu4.vercel.app
