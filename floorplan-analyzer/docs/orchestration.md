@@ -91,7 +91,7 @@ build は TypeScript の型検査を含む。仮想環境がなければ README 
 | 案出し、司令塔、アルゴリズム担当・調査担当の判断・検証・報告 | Claude Opus 5（既定。`.claude/settings.json`） |
 | UI（`frontend/src/`）のコード編集 | Claude Fable 5.1（司令塔本人、または `ui-designer`。直接 Edit/Write。ユーザー指定 2026-09-17） |
 | backend（`backend/`）のコード作成・変更 | Codex `gpt-6-astra`（`.claude/scripts/codex-task.sh` 経由。effort は high / medium） |
-| 差分レビュー | Codex `gpt-6-astra`（`review.sh`。実装者と別モデル・別コンテキスト） |
+| 差分レビュー | Codex `gpt-6-astra`（`review.sh`。実装とは別コンテキスト。UI に対しては別モデル、backend に対しては同じモデルの別セッション） |
 
 アルゴリズム担当はファイル編集ツールを持たない。UI 担当は Fable が直接編集し、レビューは Codex が行う。Codex に渡す指示には、編集してよいファイル・対象外・受入条件・検証コマンドを必ず含め、Codex の報告とは別に自分で検証を再実行する。effort は設計判断を伴う変更を high、テスト追加や局所修正を medium とする。
 

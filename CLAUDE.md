@@ -18,7 +18,7 @@
   - `high`: アルゴリズム変更、複数ファイルにまたがる設計判断、状態管理の競合が絡む UI 変更
   - `medium`: テスト追加、単一コンポーネントの表示調整、小さな修正
 - 司令塔は backend を直接編集せず Codex に任せる。例外は `types.ts` / `api.ts` の同期など数行の統合作業と設定ファイル。UI は上記のとおり Fable が直接編集してよい。
-- レビューは実装者と別モデル（Codex、`review.sh`）が行う。UI を Fable が書き、Codex が審査することで書き手と評価者の分離を保つ。
+- レビューは `review.sh` で Codex が実装とは別セッションで行う。UI は別モデル（Fable が書き Codex が審査）、backend は同じ Codex の別コンテキストによる審査。
 - 検証（pytest / npm test / typecheck / build）は Codex の自己申告に頼らず、担当エージェントまたは司令塔が再実行する。
 
 ## 1 サイクルの完了条件
