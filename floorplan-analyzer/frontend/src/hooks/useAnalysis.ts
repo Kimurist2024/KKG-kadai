@@ -13,13 +13,6 @@ interface Snapshot {
   settings: Settings;
 }
 
-/** 縮尺の確認を待っている図面。id はファイル切替時のフォーム初期化にも使う。 */
-interface PendingPlan {
-  file: File;
-  imageUrl: string | null;
-  id: number;
-}
-
 /**
  * アップロードされた JSON から元画像 (base64) を取り出して data URL にする。
  * ファイル自体はそのままバックエンドへ送るが、画像はレスポンスに含まれないのでここで取り出す。
@@ -46,7 +39,6 @@ async function extractImageUrl(file: File): Promise<string | null> {
  */
 export function useAnalysis() {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
-  const [pending, setPending] = useState<PendingPlan | null>(null);
   const [status, setStatus] = useState<Status>({ state: "idle" });
   const [updatedAt, setUpdatedAt] = useState<number | null>(null); // 直近の解析完了時刻 (完了通知用)
   const generation = useRef(0);
@@ -96,7 +88,6 @@ export function useAnalysis() {
           boundary_reference: result.settings.boundary_reference ?? settings.boundary_reference,
         }, // サーバーが実際に適用した値
       }));
-      setPending(null);
       setStatus({ state: "idle" });
       setUpdatedAt(Date.now());
     } catch (e) {
@@ -107,22 +98,10 @@ export function useAnalysis() {
 
   const loadFile = useCallback(async (file: File) => {
     const operation = beginOperation();
-    setPending({ file, imageUrl: null, id: operation.id });
-    const imageUrl = await extractImageUrl(file);
-    if (!operation.isCurrent()) return;
-    setPending({ file, imageUrl, id: operation.id });
-    setStatus({ state: "idle" });
-  }, [beginOperation]);
-
-  const cancelPending = useCallback(() => {
-    generation.current++;
-    abortRef.current?.abort();
-    setPending(null);
-    setStatus({ state: "idle" });
-  }, []);
+    await analyzeWithinOperation(operation, file, DEFAULT_SETTINGS, extractImageUrl(file));
+  }, [beginOperation, analyzeWithinOperation]);
 
   const loadSample = useCallback(async () => {
-    setPending(null);
     const operation = beginOperation(); // 取得中も同じ世代で管理し、後から選ばれたファイルを上書きしない
     try {
       const res = await fetch("/sample_mask.json", { signal: operation.signal });
@@ -137,24 +116,9 @@ export function useAnalysis() {
     }
   }, [beginOperation, analyzeWithinOperation]);
 
-  /** 確認待ちの図面を初回解析、または現在の図面だけを再計算する。 */
-  const reanalyze = useCallback(
-    (next: Settings) => {
-      if (pending) {
-        void analyzeWithinOperation(beginOperation(), pending.file, next, Promise.resolve(pending.imageUrl));
-      } else if (snapshot) {
-        // 再計算では確定済みの元画像を引き継ぐ。
-        void analyzeWithinOperation(beginOperation(), snapshot.file, next, undefined, snapshot.isSample);
-      }
-    },
-    [beginOperation, analyzeWithinOperation, snapshot, pending],
-  );
-
   const appliedSettings = snapshot?.settings ?? DEFAULT_SETTINGS;
 
   return {
-    pending,
-    cancelPending,
     file: snapshot?.file ?? null,
     isSample: snapshot?.isSample ?? false,
     imageUrl: snapshot?.imageUrl ?? null,
@@ -164,6 +128,5 @@ export function useAnalysis() {
     updatedAt,
     loadFile,
     loadSample,
-    reanalyze,
   };
 }

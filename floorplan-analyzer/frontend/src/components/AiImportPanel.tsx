@@ -5,7 +5,7 @@ import { recognizeImage } from "../api";
 import { downloadText } from "../format";
 import type { RecognitionResponse } from "../types";
 
-/** 画像送信への同意、AI 認識、候補輪郭の照合を経て、確認済み JSON を縮尺確認へ渡す。 */
+/** 画像送信への同意と候補輪郭の照合を経て、課題の固定条件で解析する。 */
 export default function AiImportPanel({ onFile, disabled }: { onFile: (file: File) => void; disabled: boolean }) {
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -51,7 +51,8 @@ export default function AiImportPanel({ onFile, disabled }: { onFile: (file: Fil
     {open && <section className="ai-input-section" aria-labelledby="ai-import-heading">
       <p className="section-kicker">新しい図面の入力 · AI 認識</p>
       <h2 id="ai-import-heading">図面画像から輪郭を作成</h2>
-      <p>PNG・JPEG の図面から、部屋・壁・ドアの候補を作ります。認識結果を確認した後に、縮尺を指定して面積を計算します。</p>
+      <p>PNG・JPEG の図面から、部屋・壁・ドアの候補を作ります。認識結果を確認した後に、課題指定の固定条件で面積を計算します。</p>
+      <p className="status warn">縮尺は 96.7 px ＝ 1.365 m 固定です。縮尺が異なる画像や拡大・縮小した画像では、実際の面積・長さと一致しません。</p>
       <p className="muted">画像はサーバー経由で OpenAI に送信されます。AI の見落としや位置ずれがあるため、結果は参考値として扱ってください。</p>
       <label className="ai-field">図面画像（10 MB 以下）
         <input type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" disabled={busy || disabled} onChange={(e) => {
@@ -87,7 +88,7 @@ export default function AiImportPanel({ onFile, disabled }: { onFile: (file: Fil
         <button type="button" className="btn btn-primary" disabled={!confirmed || disabled} onClick={() => {
           onFile(new File([json], filename, { type: "application/json" }));
           setOpen(false); setToken(""); setResult(null); setConfirmed(false);
-        }}>この認識結果で縮尺確認へ</button>
+        }}>この認識結果を解析</button>
       </div>}
     </section>}
   </div>;

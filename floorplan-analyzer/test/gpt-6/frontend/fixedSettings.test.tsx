@@ -1,0 +1,82 @@
+// @vitest-environment jsdom
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { act, cleanup, fireEvent, render, renderHook, screen } from "@testing-library/react";
+import App from "../../../frontend/src/App";
+import { useAnalysis } from "../../../frontend/src/hooks/useAnalysis";
+import { analyzeFile } from "../../../frontend/src/api";
+import { DEFAULT_SETTINGS, type AnalyzeResponse } from "../../../frontend/src/types";
+import { roomsToCsv } from "../../../frontend/src/format";
+import sample from "./fixtures/sample-result.json";
+
+vi.mock("../../../frontend/src/api", () => ({ analyzeFile: vi.fn() }));
+const response = sample as AnalyzeResponse;
+const file = (name: string, text = async () => "{}") => Object.assign(new File(["{}"], name), { text });
+beforeEach(() => {
+  vi.mocked(analyzeFile).mockReset().mockResolvedValue(response);
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, blob: async () => new Blob(["{}"]) }));
+  vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
+});
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+
+test("uploads analyze immediately using the fixed assignment values and raw geometry", async () => {
+  const { result } = renderHook(useAnalysis);
+  for (const name of ["a.json", "b.json"]) {
+    const drawing = file(name);
+    await act(() => result.current.loadFile(drawing));
+    expect(analyzeFile).toHaveBeenLastCalledWith(drawing, {
+      ceiling_height_m: 2.4, door_height_m: 2, scale_px: 96.7, scale_m: 1.365,
+      tolerance_px: 10, geometry_mode: "raw", boundary_reference: "unknown",
+    }, expect.any(AbortSignal));
+    expect(result.current.file).toBe(drawing);
+  }
+});
+
+test("late image read and analysis cannot overwrite a newer drawing", async () => {
+  const { result } = renderHook(useAnalysis);
+  let finishImage!: (s: string) => void;
+  let finishAnalysis!: (r: AnalyzeResponse) => void;
+  vi.mocked(analyzeFile).mockImplementationOnce(() => new Promise(r => { finishAnalysis = r; }));
+  let slow!: Promise<void>;
+  act(() => { slow = result.current.loadFile(file("slow.json", () => new Promise(r => { finishImage = r; }))); });
+  const latest = file("latest.json");
+  await act(() => result.current.loadFile(latest));
+  await act(async () => { finishImage("{}"); finishAnalysis(response); await slow; });
+  expect(result.current.file).toBe(latest);
+});
+
+test("failed upload preserves the prior snapshot and can be retried", async () => {
+  const { result } = renderHook(useAnalysis);
+  const previous = file("previous.json"), next = file("next.json");
+  await act(() => result.current.loadFile(previous));
+  vi.mocked(analyzeFile).mockRejectedValueOnce(new Error("network"));
+  await act(() => result.current.loadFile(next));
+  expect(result.current.status).toEqual({ state: "error", message: "network" });
+  expect(result.current.file).toBe(previous);
+  await act(() => result.current.loadFile(next));
+  expect(result.current.file).toBe(next);
+});
+
+test("sample and upload show results without editable calculation conditions; CSV and AI remain", async () => {
+  const { container } = render(<App />);
+  await screen.findByText("サンプル表示中");
+  expect(screen.getByRole("heading", { name: "課題指定の計算条件（固定）" })).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "計算条件を変更" })).toBeNull();
+  expect(screen.queryByRole("spinbutton")).toBeNull();
+  expect(screen.getByRole("button", { name: /CSV/ })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "画像から AI で輪郭を作成" })).toBeTruthy();
+  fireEvent.change(container.querySelector('input[type="file"]')!, { target: { files: [file("drawing.json")] } });
+  await screen.findByText("drawing.json");
+  expect(screen.queryByText("この図面の縮尺を確認")).toBeNull();
+  expect(vi.mocked(analyzeFile).mock.lastCall?.[1]).toEqual(DEFAULT_SETTINGS);
+  expect(screen.getByRole("img", { name: "平面図の解析結果" })).toBeTruthy();
+  expect(container.querySelector("table.rooms")).not.toBeNull();
+});
+
+test("CSV retains missing-wall and AI caveats", () => {
+  const csv = roomsToCsv({ ...response, warnings: [
+    { code: "missing_wall_data", contour_id: null, message: "壁データがありません。" },
+    { code: "ai_generated", contour_id: null, message: "AI による参考値" },
+  ] });
+  expect(csv).toContain("壁データがありません。");
+  expect(csv).toContain("AI による参考値");
+});

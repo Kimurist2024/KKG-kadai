@@ -57,8 +57,8 @@
 ## コードを読む順番
 
 画面の流れは `frontend/src/App.tsx` から辿ります。`hooks/useAnalysis.ts` が
-ファイル読込・縮尺確認待ち・API 通信を管理し、`components/SettingsPanel.tsx` が
-条件入力を検証します。表示は `FloorPlanView`（図面）、`RoomTable`（一覧）、
+ファイル読込・課題の固定条件による即時解析・API 通信を管理します。
+条件入力フォームはありません。表示は `FloorPlanView`（図面）、`RoomTable`（一覧）、
 `RoomDetail`（算出根拠）に分かれています。各コンポーネントの宣言前に役割を記載しています。
 
 計算は `backend/app/main.py` → `analyzer.analyze` の順です。

@@ -34,7 +34,7 @@ test("確認事項は図面側にあり、見出しと計算条件はスクロ�
   const checks = screen.getByRole("region", { name: "確認事項のスクロール領域" });
   expect(plan.closest(".panel")?.contains(checks)).toBe(true);
   expect(checks.contains(screen.getByRole("heading", { name: "解析結果の確認事項" }))).toBe(false);
-  expect(plan.closest(".panel")?.contains(screen.getByRole("heading", { name: "現在の図面の計算条件" }))).toBe(false);
+  expect(plan.closest(".panel")?.contains(screen.getByRole("heading", { name: "課題指定の計算条件（固定）" }))).toBe(false);
   const diagnostics = within(checks).getByText("診断メッセージ一覧").closest("details")!;
   fireEvent.click(within(checks).getByText("診断メッセージ一覧"));
   expect(diagnostics.open).toBe(true);
