@@ -286,3 +286,40 @@ table.edges tbody tr.selected td:first-child { border-left: 2px solid var(--prim
 .check-description { display: block; margin: 4px 0 0 16px; font-size: 12px; font-weight: 400; color: var(--muted); }
 
 .plan-canvas:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* guide page (usage-guide only) */
+.guide-hero { background: var(--accent-bg); border-color: #bfdbfe; }
+.guide-hero h2 { margin-bottom: 10px; }
+.guide-hero-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.guide-hero-item { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.guide-hero-item .btn { text-decoration: none; text-align: center; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.guide-hero-item p { margin: 0; }
+.guide-hero > p { margin: 10px 0 0; }
+.guide-num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 4px; background: var(--primary-dark); color: #fff; font-size: 12px; font-weight: 700; flex: none; }
+.guide-steps h2 { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.guide-flow-list { display: grid; gap: 6px; margin: 8px 0; }
+.guide-flow-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px; background: #f8fafc; font-size: 13px; }
+.guide-flow-text { min-width: 0; overflow-wrap: anywhere; }
+.guide-pair { display: grid; grid-template-columns: 8em minmax(0, 1fr); gap: 6px 12px; margin: 0; }
+.guide-pair dt { font-weight: 700; color: var(--primary-dark); }
+.guide-pair dd { margin: 0; line-height: 1.8; overflow-wrap: anywhere; }
+.guide-details { margin-top: 10px; font-size: 13px; }
+.guide-details summary { cursor: pointer; font-weight: 600; }
+.guide-details summary:focus-visible, .guide-terms summary:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.guide-details p { margin: 6px 0 0; }
+.usage-guide .legend { margin: 8px 0; }
+.guide-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 10px; }
+.guide-faq { margin: 0; }
+.guide-faq dt { font-weight: 700; margin-top: 10px; overflow-wrap: anywhere; }
+.guide-faq dt:first-child { margin-top: 0; }
+.guide-faq dd { margin: 4px 0 0; line-height: 1.8; overflow-wrap: anywhere; }
+.guide-terms-list { margin: 8px 0 0; display: grid; grid-template-columns: 10.5em minmax(0, 1fr); gap: 4px 12px; }
+.guide-terms-list dt { font-weight: 600; color: var(--text); }
+.guide-terms-list dd { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .guide-pair, .guide-terms-list { grid-template-columns: minmax(0, 1fr); }
+  .guide-pair dt { margin-top: 6px; }
+  .guide-pair dt:first-child { margin-top: 0; }
+  .guide-hero-actions { grid-template-columns: minmax(0, 1fr); }
+  .guide-flow-row { align-items: flex-start; }
+}
