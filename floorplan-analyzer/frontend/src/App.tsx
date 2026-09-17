@@ -104,7 +104,11 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, [selectRoom]);
 
-  const scrollTo = useCallback((ref: React.RefObject<HTMLElement | null>) => ref.current?.scrollIntoView({ behavior: "smooth", block: "start" }), []);
+  const scrollTo = useCallback((ref: React.RefObject<HTMLElement | null>) => {
+    // 動きを減らす設定 (prefers-reduced-motion) ではスムーズスクロールを使わない
+    const reduce = typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    ref.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  }, []);
   const showDetail = useCallback(() => {
     scrollTo(detailRef);
     // スクロール後に見出しへフォーカス (スクリーンリーダー・キーボード利用者のため)
@@ -124,7 +128,11 @@ export default function App() {
   const warningGroups = useMemo(() => {
     if (!view) return [];
     const map = new Map<WarningCode, Warning[]>();
-    view.warnings.forEach((w) => map.set(w.code, [...(map.get(w.code) ?? []), w]));
+    // 専用ブロックで見せるもの (壁の要確認、重複箇所) は診断一覧から外し、同じ内容を二重に並べない
+    const hasOverlapBlock = !!view.overlaps?.length;
+    view.warnings
+      .filter((w) => !isWallWarning(w) && !(w.code === "room_overlap" && hasOverlapBlock))
+      .forEach((w) => map.set(w.code, [...(map.get(w.code) ?? []), w]));
     const order: WarningCode[] = ["room_overlap", "inferred_door_wall", "ai_generated", "geometry_regularized", "regularization_skipped", "missing_wall_data", "no_room_walls", "low_wall_coverage", "unmatched_door", "data_mismatch", "ignored_contour", "invalid_shape", "duplicate_id", "unnamed_room"];
     return order.filter((c) => map.has(c)).map((c) => ({ code: c, items: map.get(c)! }));
   }, [view]);
@@ -138,6 +146,7 @@ export default function App() {
   const hasWarnOnly = warningGroups.some((g) => WARNING_LABELS[g.code].severity === "warn");
 
   const wallWarnings = view?.warnings.filter(isWallWarning) ?? [];
+  const hasChecks = warningGroups.length > 0 || wallWarnings.length > 0 || !!view?.overlaps?.length || !!view?.warnings.some((w) => w.code === "ai_generated");
   const selectedRoom = view?.rooms.find((r) => r.id === selectedId) ?? null;
   const loading = status.state === "loading";
 
@@ -151,10 +160,14 @@ export default function App() {
         </div>
         {view && (
           <div className="summary-cards">
+            {/* 課題の主役である壁面積を先頭に置く。重複除外は床面積カードの副行にまとめる */}
+            <div className="card card-primary"><span className="card-label">壁面積 合計（内壁・両面計上）{wallWarnings.length > 0 && <b className="wall-review" title="壁が未検出または対応率が低い部屋を含みます。図面下の「解析結果の確認事項」に理由があります">要確認</b>}</span><span className="card-value">{fmt(view.summary.total_wall_area_m2)} <small>m²</small></span></div>
+            <div className="card">
+              <span className="card-label">床面積 合計（部屋別の合算）</span>
+              <span className="card-value">{fmt(view.summary.total_floor_area_m2)} <small>m²</small></span>
+              {(view.summary.overlap_floor_area_m2 ?? 0) > 0 && <span className="card-sub" title="部屋領域が重なっている分を除いた床面積">重複を除くと {fmt(view.summary.union_floor_area_m2!)} m²</span>}
+            </div>
             <div className="card"><span className="card-label">部屋数</span><span className="card-value">{view.summary.room_count}</span></div>
-            <div className="card"><span className="card-label">床面積 合計（部屋別の合算）</span><span className="card-value">{fmt(view.summary.total_floor_area_m2)} <small>m²</small></span></div>
-            {(view.summary.overlap_floor_area_m2 ?? 0) > 0 && <div className="card"><span className="card-label">重複を除いた床面積</span><span className="card-value">{fmt(view.summary.union_floor_area_m2!)} <small>m²</small></span></div>}
-            <div className="card"><span className="card-label">壁面積 合計（内壁・両面計上）{wallWarnings.length > 0 && <b className="wall-review" title="壁が未検出または対応率が低い部屋を含みます。図面下の「解析結果の確認事項」に理由があります">要確認</b>}</span><span className="card-value">{fmt(view.summary.total_wall_area_m2)} <small>m²</small></span></div>
           </div>
         )}
       </header>
@@ -179,7 +192,7 @@ export default function App() {
 
       {view && (
         <>
-          <section className="main-grid">
+          <section className="main-grid" aria-busy={loading}>
             <section className="panel" ref={planRef} aria-labelledby="plan-heading">
               <h2 id="plan-heading" className="section-heading">図面（可視化結果）</h2>
               <FloorPlanView
@@ -209,7 +222,7 @@ export default function App() {
                   <button type="button" className="btn btn-secondary btn-sm" onClick={() => selectRoom(null)}>選択解除</button>
                 </div>
               )}
-              {view && warningGroups.length > 0 && <section className="workspace-section result-checks" aria-labelledby="checks-heading">
+              {view && hasChecks && <section className="workspace-section result-checks" aria-labelledby="checks-heading">
               <h2 id="checks-heading" className="section-heading">解析結果の確認事項</h2>
               <p className="section-description">表示中の図面に対する検出結果です。対象箇所と入力データを確認してください。</p>
               <div className="result-checks-scroll" role="region" aria-label="確認事項のスクロール領域" tabIndex={0}>

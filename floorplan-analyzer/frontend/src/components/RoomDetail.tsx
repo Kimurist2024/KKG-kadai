@@ -45,7 +45,15 @@ function RoomDetail({ result, room, originalRoomName, hoverEdge, selectedEdge, o
         <span className="swatch lg" style={{ background: room.color }} />
         {editing ? (
           <form className="rename" onSubmit={(e) => { e.preventDefault(); commitName(); }}>
-            <input autoFocus value={nameDraft} onChange={(e) => setNameDraft(e.target.value)} aria-label="部屋の表示名" maxLength={40} />
+            <input
+              autoFocus
+              value={nameDraft}
+              onChange={(e) => setNameDraft(e.target.value)}
+              // 入力中の Esc はフォームの取消にし、画面全体の「選択解除」(window の Esc) には伝えない
+              onKeyDown={(e) => { if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); setEditing(false); setNameDraft(room.name); } }}
+              aria-label="部屋の表示名"
+              maxLength={40}
+            />
             <button type="submit" className="btn btn-primary btn-sm">決定</button>
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setEditing(false); setNameDraft(room.name); }}>取消</button>
           </form>
@@ -55,7 +63,12 @@ function RoomDetail({ result, room, originalRoomName, hoverEdge, selectedEdge, o
             <button type="button" className="btn btn-link btn-sm" onClick={() => { setNameDraft(originalRoomName === null && room.room_name === null ? "" : room.name); setEditing(true); }} title="表示名を変更 (JSON は変更しません)">
               {room.room_name === null ? "名前を付ける" : "表示名を変更"}
             </button>
-            {room.name !== (originalRoomName ?? "") && room.room_name !== null && <span className="tag">表示名を上書き中</span>}
+            {room.name !== (originalRoomName ?? "") && room.room_name !== null && (
+              <>
+                <span className="tag">表示名を上書き中</span>
+                <button type="button" className="btn btn-link btn-sm" onClick={() => onRename(room.id, null)} title="JSON に記載の名前 (無ければ自動命名) に戻します">元に戻す</button>
+              </>
+            )}
           </>
         )}
         <span className="spacer" />
@@ -87,6 +100,7 @@ function RoomDetail({ result, room, originalRoomName, hoverEdge, selectedEdge, o
           <div className="metric-label">床面積</div>
           <div className="metric-value">{fmt(room.floor_area_m2)} <small>m²</small></div>
           <div className="metric-formula" title="頂点座標からシューレース公式で算出">{floorAreaFormula(room, mpp)}</div>
+          <div className="muted small">1 px ＝ {s.scale_m} m ÷ {s.scale_px} px ＝ {mpp.toFixed(5)} m（課題指定の縮尺）</div>
         </div>
         <div className="metric">
           <div className="metric-label">周長</div>

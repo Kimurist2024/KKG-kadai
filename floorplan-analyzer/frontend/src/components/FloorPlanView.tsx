@@ -53,7 +53,8 @@ export default function FloorPlanView(props: Props) {
           points: pointsAttr(r.vertices),
           label: r.label_point ?? labelPoint(r.vertices),
           path: regionPath(r.vertices, r.holes),
-          fontSize: Math.max(Math.min(labelSize * 0.55, 9 * unitsPerPx), Math.min(labelSize, (b.maxX - b.minX) / (r.name.length * 1.05 + 0.5))),
+          // 部屋幅に収まる大きさまで縮めるが、画面上 10px を下限にして読めなくならないようにする
+          fontSize: Math.max(10 * unitsPerPx, Math.min(labelSize, (b.maxX - b.minX) / (r.name.length * 1.05 + 0.5))),
         };
       }),
     [result.rooms, labelSize, unitsPerPx],
@@ -149,12 +150,17 @@ export default function FloorPlanView(props: Props) {
         </svg>
       </div>
 
-      <p className="muted small">拡大した図面はマウスでドラッグして移動できます。スクロールバー・ホイールでも移動できます。</p>
+      {/* 補助文は状態に合わせる: 拡大中だけ移動方法を、それ以外は拡大方法を案内する */}
+      <p className="muted small">
+        {zoom > 100 || fitting
+          ? "拡大した図面はマウスでドラッグして移動できます。スクロールバー・ホイールでも移動できます。"
+          : "「＋」で拡大、「選択部屋に合わせる」で選んだ部屋を大きく表示できます。表示倍率を変えても計算結果は変わりません。"}
+      </p>
       <div className="legend">
-        {!!result.overlaps?.length && <span><i style={{ background: "#a21caf" }} /> 紫斜線：部屋の重複</span>}
+        {!!result.overlaps?.length && layers.rooms && <span><i style={{ background: "#a21caf" }} /> 紫斜線：部屋の重複</span>}
         {selected?.edges.some(e => e.inferred_wall_intervals?.length) && <span>紫点線：扉から補完した壁</span>}
-        <span><i style={{ background: WALL_COLOR }} /> 壁 (検出線分)</span>
-        <span><i style={{ background: DOOR_COLOR }} /> ドア (検出線分)</span>
+        {layers.walls && <span><i style={{ background: WALL_COLOR }} /> 壁 (検出線分)</span>}
+        {layers.doors && <span><i style={{ background: DOOR_COLOR }} /> ドア (検出線分)</span>}
         {selected ? (
           <>
             <span><i style={{ background: "#9f1239" }} /> 壁あり区間</span>

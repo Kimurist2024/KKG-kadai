@@ -98,14 +98,21 @@ export default function RoomTable({ result, selectedId, hoverId, onSelect, onHov
           wall_length_m: t.wall_length_m + r.wall_length_m,
           opening_length_m: t.opening_length_m + r.opening_length_m,
           door_length_m: t.door_length_m + r.door_length_m,
+          door_count: t.door_count + r.door_count,
         }),
-        { perimeter_m: 0, wall_length_m: 0, opening_length_m: 0, door_length_m: 0 },
+        { perimeter_m: 0, wall_length_m: 0, opening_length_m: 0, door_length_m: 0, door_count: 0 },
       ),
     [result.rooms],
   );
 
+  // 見出しのクリックで 降順 → 昇順 → 元の順 (id 順) の 3 状態を巡回する (部屋名は昇順から)
   const clickHeader = (key: SortKey) =>
-    setSort((s) => (s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: key === "name" ? 1 : -1 }));
+    setSort((s) => {
+      const first: 1 | -1 = key === "name" ? 1 : -1;
+      if (s.key !== key) return { key, dir: first };
+      if (s.dir === first) return { key, dir: first === 1 ? -1 : 1 };
+      return { key: "id", dir: 1 };
+    });
   const arrow = (key: SortKey) => (sort.key === key ? (sort.dir === 1 ? " ▲" : " ▼") : "");
   const cls = (c: { optional: boolean; numeric: boolean }) => `${c.numeric ? "num" : ""} ${c.optional ? "col-optional" : ""}`;
 
@@ -122,7 +129,7 @@ export default function RoomTable({ result, selectedId, hoverId, onSelect, onHov
           CSV ダウンロード
         </button>
       </div>
-      <p className="muted small table-hint">行をクリックすると図面でハイライトし、画面下部に算出根拠パネルが開きます（行の「算出根拠を見る ↓」で移動）。見出しで並べ替えできます。</p>
+      <p className="muted small table-hint">行をクリックすると図面でハイライトし、画面下部に算出根拠パネルが開きます（行の「算出根拠を見る ↓」で移動）。見出しをクリックすると 降順 → 昇順 → 元の順 に並べ替えます。</p>
       <div className="table-scroll">
         <table className="rooms">
           <thead>
@@ -153,7 +160,7 @@ export default function RoomTable({ result, selectedId, hoverId, onSelect, onHov
               <td className="num col-optional">{fmt(totals.perimeter_m)}</td>
               <td className="num col-optional">{fmt(totals.wall_length_m)}</td>
               <td className={`num col-optional ${totals.opening_length_m > 0.005 ? "has-opening" : ""}`}>{fmt(totals.opening_length_m)}</td>
-              <td className="num col-optional">{fmt(totals.door_length_m)}</td>
+              <td className="num col-optional">{fmt(totals.door_length_m)}{totals.door_count > 0 && <span className="muted"> ({totals.door_count})</span>}</td>
               <td className="num strong">{fmt(result.summary.total_wall_area_m2)}</td>
             </tr>
           </tfoot>
