@@ -5,7 +5,6 @@ import type { AnalyzeResponse, Layers, Warning, WarningCode } from "./types";
 import { isWallWarning } from "./warnings";
 import { fmt } from "./format";
 import { useAnalysis } from "./hooks/useAnalysis";
-import AiImportPanel from "./components/AiImportPanel";
 import UploadPanel from "./components/UploadPanel";
 import FloorPlanView from "./components/FloorPlanView";
 import RoomTable from "./components/RoomTable";
@@ -159,7 +158,6 @@ export default function App() {
 
       <section className="panel">
         <UploadPanel fileName={file?.name ?? null} isSample={isSample} loading={loading} onFile={handleFile} onLoadSample={() => { selectRoom(null); void loadSample(); }} compact />
-        <AiImportPanel key={fileKey} onFile={handleFile} disabled={loading} />
         <section className="workspace-section" aria-labelledby="conditions-heading">
         <h2 id="conditions-heading" className="section-heading">課題指定の計算条件（固定）</h2>
         <div className="conditions">
