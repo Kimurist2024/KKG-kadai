@@ -56,14 +56,15 @@ test("failed upload preserves the prior snapshot and can be retried", async () =
   expect(result.current.file).toBe(next);
 });
 
-test("sample and upload show results without editable calculation conditions; CSV and AI remain", async () => {
+test("sample and upload show results without editable conditions or image AI; CSV remains", async () => {
   const { container } = render(<App />);
   await screen.findByText("サンプル表示中");
   expect(screen.getByRole("heading", { name: "課題指定の計算条件（固定）" })).toBeTruthy();
   expect(screen.queryByRole("button", { name: "計算条件を変更" })).toBeNull();
   expect(screen.queryByRole("spinbutton")).toBeNull();
   expect(screen.getByRole("button", { name: /CSV/ })).toBeTruthy();
-  expect(screen.getByRole("button", { name: "画像から AI で輪郭を作成" })).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "画像から AI で輪郭を作成" })).toBeNull();
+  expect(screen.queryByText("AI 利用トークン")).toBeNull();
   fireEvent.change(container.querySelector('input[type="file"]')!, { target: { files: [file("drawing.json")] } });
   await screen.findByText("drawing.json");
   expect(screen.queryByText("この図面の縮尺を確認")).toBeNull();
