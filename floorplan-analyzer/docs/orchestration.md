@@ -64,7 +64,7 @@ build は TypeScript の型検査を含む。仮想環境がなければ README 
 
 ```bash
 .claude/scripts/cycle-start.sh <話題>            # feature/kimura の最新から作業ブランチを作る
-# … 担当エージェントが codex-task.sh で実装 …
+# … 実装: UI (frontend/src/) は Fable が直接編集、backend は algorithm-engineer が codex-task.sh で委譲 …
 .claude/scripts/verify.sh quick                  # 反復中の確認
 .claude/scripts/cycle-finish.sh "<件名>" "<受入条件>"
 ```
