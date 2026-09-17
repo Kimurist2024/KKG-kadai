@@ -16,7 +16,16 @@ beforeEach(() => {
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, blob: async () => new Blob(["{}"]) }));
   vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
 });
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); window.history.replaceState({}, "", "/"); });
+
+test("guide upload entry skips the sample and offers JSON selection", () => {
+  window.history.replaceState({}, "", "/?start=upload");
+  render(<App />);
+  expect(fetch).not.toHaveBeenCalled();
+  expect(analyzeFile).not.toHaveBeenCalled();
+  expect(screen.getByRole("button", { name: "JSON ファイルを選択" })).toBeTruthy();
+  expect(screen.getByRole("link", { name: "はじめての方へ：使い方を見る" }).getAttribute("href")).toBe("/guide");
+});
 
 test("uploads analyze immediately using the fixed assignment values and raw geometry", async () => {
   const { result } = renderHook(useAnalysis);

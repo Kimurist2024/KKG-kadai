@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import type { AnalyzeResponse, Layers, Warning, WarningCode } from "./types";
 import { isWallWarning } from "./warnings";
 import { fmt } from "./format";
@@ -88,6 +89,7 @@ export default function App() {
   loadSampleRef.current = loadSample;
   useEffect(() => {
     const q = new URLSearchParams(window.location.search);
+    if (q.get("start") === "upload") return;
     const room = Number(q.get("room"));
     void Promise.resolve(loadSampleRef.current()).then(() => { if (q.has("room") && Number.isFinite(room)) setSelectedId(room); });
   }, []);
@@ -145,6 +147,7 @@ export default function App() {
         <div>
           <h1>平面図 面積・壁面積 解析</h1>
           <p className="muted">部屋・壁・ドアのセグメンテーション結果 (JSON) から、部屋ごとの床面積・周長・壁面積を算出します。</p>
+          <nav className="guide-entry" aria-label="操作ガイド"><Link href="/guide">はじめての方へ：使い方を見る</Link></nav>
         </div>
         {view && (
           <div className="summary-cards">
@@ -157,7 +160,7 @@ export default function App() {
       </header>
 
       <section className="panel">
-        <UploadPanel fileName={file?.name ?? null} isSample={isSample} loading={loading} onFile={handleFile} onLoadSample={() => { selectRoom(null); void loadSample(); }} compact />
+        <UploadPanel fileName={file?.name ?? null} isSample={isSample} loading={loading} onFile={handleFile} onLoadSample={() => { selectRoom(null); void loadSample(); }} compact={!!file || loading} />
         <section className="workspace-section" aria-labelledby="conditions-heading">
         <h2 id="conditions-heading" className="section-heading">課題指定の計算条件（固定）</h2>
         <div className="conditions">
