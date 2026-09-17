@@ -29,14 +29,18 @@ interface RowProps {
   r: RoomResult;
   selected: boolean;
   hovered: boolean;
-  hasWallWarning: boolean;
+  /** 壁面積に付ける「要確認」の理由 (改行区切り)。空文字なら警告なし。memo 比較のため文字列で渡す */
+  wallWarningText: string;
   onSelect: Props["onSelect"];
   onHover: Props["onHover"];
   onShowDetail: Props["onShowDetail"];
 }
 
+const OPENING_TITLE = "壁線分が検出されなかった区間があります（壁面積に含めません）";
+
 // 選択・ホバーが変わった行だけ更新し、他の部屋の数値セルを作り直さない。
-const RoomRow = memo(function RoomRow({ r, selected, hovered, hasWallWarning, onSelect, onHover, onShowDetail }: RowProps) {
+const RoomRow = memo(function RoomRow({ r, selected, hovered, wallWarningText, onSelect, onHover, onShowDetail }: RowProps) {
+  const hasOpening = r.opening_length_m > 0.005; // 課題 2-2「壁が存在しない輪郭区間」を表の段階で拾えるようにする
   return (
               <tr
                 className={`${selected ? "selected" : ""} ${hovered ? "hover" : ""}`}
@@ -53,6 +57,8 @@ const RoomRow = memo(function RoomRow({ r, selected, hovered, hasWallWarning, on
                 <td className="name-col">
                   {r.name}
                   {r.room_name === null && <span className="tag" title="JSON に room_name がありません。詳細で名前を付けられます">名称未設定</span>}
+                  {/* 狭い画面で「壁なし長」列が隠れても分かるように、部屋名の隣にも印を出す */}
+                  {hasOpening && <span className="tag tag-opening only-narrow" title={OPENING_TITLE}>壁なし区間あり</span>}
                   {selected && (
                     <button type="button" className="btn btn-link btn-sm row-action" onClick={(e) => { e.stopPropagation(); onShowDetail(); }}>
                       算出根拠を見る ↓
@@ -62,9 +68,9 @@ const RoomRow = memo(function RoomRow({ r, selected, hovered, hasWallWarning, on
                 <td className="num">{fmt(r.floor_area_m2)}</td>
                 <td className="num col-optional">{fmt(r.perimeter_m)}</td>
                 <td className="num col-optional">{fmt(r.wall_length_m)}</td>
-                <td className="num col-optional">{fmt(r.opening_length_m)}</td>
+                <td className={`num col-optional ${hasOpening ? "has-opening" : ""}`} title={hasOpening ? OPENING_TITLE : undefined}>{fmt(r.opening_length_m)}</td>
                 <td className="num col-optional">{fmt(r.door_length_m)}{r.door_count > 0 && <span className="muted"> ({r.door_count})</span>}</td>
-                <td className="num strong">{fmt(r.wall_area_m2)}{hasWallWarning && <span className="wall-review">要確認</span>}</td>
+                <td className="num strong"><span>{fmt(r.wall_area_m2)}</span>{wallWarningText && <span className="wall-review" title={wallWarningText} aria-label={`要確認: ${wallWarningText}`}>要確認</span>}</td>
               </tr>
   );
 });
@@ -105,6 +111,7 @@ export default function RoomTable({ result, selectedId, hoverId, onSelect, onHov
 
   return (
     <div className={`table-wrap ${showAll ? "show-all" : ""}`}>
+      <h2 id="table-heading" className="section-heading">部屋別の床面積・壁面積</h2>
       <div className="table-toolbar">
         <span className="muted">{result.summary.room_count} 部屋 / 壁 {result.summary.wall_count} 本 / ドア {result.summary.door_count} 本</span>
         <span className="spacer" />
@@ -115,7 +122,7 @@ export default function RoomTable({ result, selectedId, hoverId, onSelect, onHov
           CSV ダウンロード
         </button>
       </div>
-      <p className="muted small table-hint">行をクリックすると図面でハイライトし、算出根拠を表示します。見出しで並べ替えできます。</p>
+      <p className="muted small table-hint">行をクリックすると図面でハイライトし、画面下部に算出根拠パネルが開きます（行の「算出根拠を見る ↓」で移動）。見出しで並べ替えできます。</p>
       <div className="table-scroll">
         <table className="rooms">
           <thead>
@@ -134,7 +141,7 @@ export default function RoomTable({ result, selectedId, hoverId, onSelect, onHov
           <tbody>
             {rows.map((r: RoomResult) => (
               <RoomRow key={r.id} r={r} selected={r.id === selectedId} hovered={r.id === hoverId}
-                hasWallWarning={wallWarningsForRoom(result, r.id).length > 0}
+                wallWarningText={wallWarningsForRoom(result, r.id).map((w) => w.message).join("\n")}
                 onSelect={onSelect} onHover={onHover} onShowDetail={onShowDetail} />
             ))}
           </tbody>
@@ -145,7 +152,7 @@ export default function RoomTable({ result, selectedId, hoverId, onSelect, onHov
               <td className="num">{fmt(result.summary.total_floor_area_m2)}</td>
               <td className="num col-optional">{fmt(totals.perimeter_m)}</td>
               <td className="num col-optional">{fmt(totals.wall_length_m)}</td>
-              <td className="num col-optional">{fmt(totals.opening_length_m)}</td>
+              <td className={`num col-optional ${totals.opening_length_m > 0.005 ? "has-opening" : ""}`}>{fmt(totals.opening_length_m)}</td>
               <td className="num col-optional">{fmt(totals.door_length_m)}</td>
               <td className="num strong">{fmt(result.summary.total_wall_area_m2)}</td>
             </tr>

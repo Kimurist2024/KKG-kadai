@@ -16,7 +16,7 @@
 body { margin: 0; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
 h1 { font-size: 20px; margin: 0 0 4px; }
 h2 { font-size: 18px; margin: 0; }
-h3 { font-size: 15px; margin: 18px 0 8px; }
+h3 { font-size: 14px; margin: 18px 0 8px; }
 code { background: #f1f5f9; padding: 1px 4px; border-radius: 4px; font-size: 12px; }
 .app { max-width: 1500px; margin: 0 auto; padding: 16px 20px 40px; display: flex; flex-direction: column; gap: 14px; }
 .muted { color: var(--muted); }
@@ -76,8 +76,7 @@ code { background: #f1f5f9; padding: 1px 4px; border-radius: 4px; font-size: 12p
 .dropzone-file { font-weight: 600; }
 
 /* conditions & settings */
-.conditions { display: flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 13px; flex-wrap: wrap; }
-.conditions-label { color: var(--muted); font-size: 12px; margin-right: 4px; }
+.conditions { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 13px; flex-wrap: wrap; }
 .cond-chip { background: #f1f5f9; border-radius: 4px; padding: 2px 10px; font-size: 12.5px; }
 .cond-chip b { font-weight: 600; }
 .cond-chip.muted-chip { color: var(--muted); }
@@ -136,8 +135,11 @@ table.rooms th { padding: 0; }
 .th-btn:hover, .th-btn:focus-visible { background: #eef2f7; }
 .th-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
 table.rooms tbody tr { cursor: pointer; }
-table.rooms tbody tr:hover, table.rooms tbody tr.hover, table.rooms tbody tr:focus-visible { background: #f1f5f9; outline: none; }
-table.rooms tbody tr.selected { background: var(--accent-bg);  }
+table.rooms tbody tr:hover, table.rooms tbody tr.hover { background: #f1f5f9; }
+table.rooms tbody tr:focus-visible { background: #f1f5f9; outline: 2px solid var(--primary); outline-offset: -2px; }
+/* 選択行はホバー色より濃くし、図面へマウスを移しても表側で選択位置を見失わないようにする */
+table.rooms tbody tr.selected, table.rooms tbody tr.selected.hover, table.rooms tbody tr.selected:hover { background: #dbeafe; }
+table.rooms tbody tr.selected td { font-weight: 600; }
 tfoot td { font-weight: 600; background: #f8fafc; }
 .color-col { width: 28px; }
 .swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(0,0,0,.15); vertical-align: middle; }
@@ -175,7 +177,8 @@ tfoot td { font-weight: 600; background: #f8fafc; }
 .metric-formula { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; margin-top: 4px; word-break: break-all; }
 .edge-table-wrap { overflow-x: auto; }
 table.edges tbody tr { cursor: pointer; }
-table.edges tbody tr:hover, table.edges tbody tr.hover, table.edges tbody tr:focus-visible { background: var(--accent-bg); outline: none; }
+table.edges tbody tr:hover, table.edges tbody tr.hover { background: var(--accent-bg); }
+table.edges tbody tr:focus-visible { background: var(--accent-bg); outline: 2px solid var(--primary); outline-offset: -2px; }
 table.edges tbody tr.selected {  }
 table.edges tbody tr.no-wall td { color: var(--muted); }
 table.edges.compact { margin-top: 8px; }
@@ -189,7 +192,8 @@ table.edges.compact tbody tr { cursor: default; }
 .chip-open { background: #fffbeb; border-color: #fcd34d; color: #b45309; }
 .chip-door { background: #f0fdfa; border-color: #5eead4; color: #0f766e; }
 .chip:hover { filter: brightness(0.95); }
-.chip.pinned { outline: 2px solid var(--primary); outline-offset: 1px; }
+/* 確定選択は塗りつぶしにし、Tab で通過中 (枠線のみ) と区別する */
+.chip.pinned { background: var(--primary); border-color: var(--primary-dark); color: #fff; }
 .chip:disabled { cursor: default; opacity: 0.85; }
 .source-check { margin-top: 14px; font-size: 13px; }
 .source-check summary { cursor: pointer; color: var(--muted); }
@@ -222,7 +226,8 @@ table.edges.compact tbody tr { cursor: default; }
 .scale-preview img { display: block; max-width: 100%; height: auto; }
 .scale-confirm-check { display: flex; align-items: flex-start; gap: 8px; margin: 16px 0; }
 .scale-review > .btn { margin-top: 12px; }
-.wall-review { display: inline-block; color: var(--warn); margin-left: 6px; }
+/* 「要確認」は本文と同色のテキストではなく、枠付きのバッジにして理由 (title) を持たせる */
+.wall-review { display: inline-block; margin-left: 6px; padding: 0 6px; border: 1px solid #b45309; border-radius: 4px; background: #fffbeb; color: #b45309; font-size: 11px; font-weight: 600; line-height: 1.5; }
 
 .ai-import { margin-top: 16px; }
 .ai-import section { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
@@ -257,13 +262,13 @@ table.edges tbody tr.selected td:first-child { border-left: 2px solid var(--prim
 
 /* 入力フォーム・計算設定・結果の診断を、階層と余白で区別する。 */
 .workspace-section {
-  margin-top: 20px;
-  padding: 16px;
+  margin-top: 12px;
+  padding: 10px 14px;
   border: 1px solid var(--border);
   border-radius: 4px;
   background: #fff;
 }
-.section-heading { font-size: 14px; font-weight: 700; }
+.section-heading { font-size: 15px; font-weight: 700; }
 .section-description { margin: 4px 0 12px; color: var(--muted); font-size: 12.5px; }
 .section-kicker { margin: 0 0 6px; font-size: 12px; color: var(--muted); letter-spacing: .04em; }
 .ai-import .ai-input-section { padding: 16px; border: 1px solid var(--border); border-radius: 4px; background: #fafafa; }
@@ -323,3 +328,22 @@ table.edges tbody tr.selected td:first-child { border-left: 2px solid var(--prim
   .guide-hero-actions { grid-template-columns: minmax(0, 1fr); }
   .guide-flow-row { align-items: flex-start; }
 }
+
+/* 解析画面: 見出し・条件の説明・結果表の印・状態表示の視認性 */
+.main-grid .section-heading { margin: 0 0 8px; }
+.conditions-note { margin: 8px 0 0; }
+/* 壁なし長が 0 でない部屋: 図面の凡例 (橙の破線) と対応させ、色だけに頼らない */
+table.rooms td.has-opening { color: #b45309; font-weight: 600; border-left: 3px dashed #d97706; padding-left: 5px; }
+.tag.tag-opening { color: #b45309; background: #fffbeb; }
+/* 数値の右揃えを保ったまま、要確認バッジを数値の下段に置く */
+td.num .wall-review { display: block; width: max-content; margin: 2px 0 0 auto; }
+table.rooms tbody tr.selected td:first-child { border-left-width: 3px; }
+/* 状態表示は左罫線の色で区別する (背景は従来のまま)。重複チェックの紫罫線は維持 */
+.status.loading { border-left: 3px solid var(--primary); }
+.status.done { border-left: 3px solid #15803d; }
+.status.warn:not(.overlap-check) { border-left: 3px solid #b45309; }
+.status.error { border-left: 3px solid #b91c1c; }
+/* ファイルバー: 「サンプル表示中」は計算条件のチップと違う形にする */
+.file-badge { font-size: 12px; color: var(--primary-dark); background: var(--accent-bg); border: 1px solid #bfdbfe; border-radius: 999px; padding: 1px 8px; font-weight: 600; white-space: nowrap; }
+.dropzone-drop-hint { white-space: nowrap; }
+@media (pointer: coarse) { .dropzone-drop-hint { display: none; } }

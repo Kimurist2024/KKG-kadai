@@ -26,16 +26,16 @@ export function perimeterFormula(r: RoomResult, mpp: number): string {
 /** 辺ごとの壁面積の計算式 */
 export function edgeWallFormula(e: EdgeResult, ceiling: number, door: number): string {
   if (e.wall_length_m <= 1e-9) return "壁なし (開口) → 0 m²";
-  const base = `${fmt(e.wall_length_m)} m × ${ceiling} m`;
+  const base = `${fmt(e.wall_length_m)} m × ${fmt(ceiling, 1)} m`;
   if (e.door_length_m <= 1e-9) return `${base} = ${fmt(e.wall_area_m2)} m²`;
-  return `${base} − ${fmt(e.door_length_m)} m × ${door} m = ${fmt(e.wall_area_m2)} m²`;
+  return `${base} − ${fmt(e.door_length_m)} m × ${fmt(door, 1)} m = ${fmt(e.wall_area_m2)} m²`;
 }
 
 /** 部屋全体の壁面積の計算式 */
 export function roomWallFormula(r: RoomResult, ceiling: number, door: number): string {
-  const gross = `${fmt(r.wall_length_m)} m × ${ceiling} m`;
+  const gross = `${fmt(r.wall_length_m)} m × ${fmt(ceiling, 1)} m`;
   if (r.door_length_m <= 1e-9) return `${gross} = ${fmt(r.wall_area_m2)} m²`;
-  return `${gross} − ${fmt(r.door_length_m)} m × ${door} m = ${fmt(r.wall_area_gross_m2)} − ${fmt(r.door_area_m2)} = ${fmt(r.wall_area_m2)} m²`;
+  return `${gross} − ${fmt(r.door_length_m)} m × ${fmt(door, 1)} m = ${fmt(r.wall_area_gross_m2)} − ${fmt(r.door_area_m2)} = ${fmt(r.wall_area_m2)} m²`;
 }
 
 /** 表を CSV (UTF-8 BOM 付き, Excel で開ける) にする */

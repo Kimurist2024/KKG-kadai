@@ -42,7 +42,7 @@ function Chips({ label, items, cls, pinned, onHoverSegments, onPinSegments }: Ch
           onBlur={() => onHoverSegments([])}
           onClick={(e) => { e.stopPropagation(); onPinSegments(isPinned(iv.ids) ? [] : iv.ids); }}
         >
-          {label} {fmt(iv.length_m)} m
+          {isPinned(iv.ids) ? "✓ " : ""}{label} {fmt(iv.length_m)} m
         </button>
       ))}
     </span>

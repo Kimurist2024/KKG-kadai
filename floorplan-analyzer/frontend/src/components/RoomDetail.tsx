@@ -39,6 +39,8 @@ function RoomDetail({ result, room, originalRoomName, hoverEdge, selectedEdge, o
 
   return (
     <div className="detail">
+      {/* 「算出根拠を見る」の着地先であることを名指しする (h2 は部屋名のまま) */}
+      <p className="section-kicker">算出根拠（計算式・辺ごとの内訳）</p>
       <div className="detail-head">
         <span className="swatch lg" style={{ background: room.color }} />
         {editing ? (
@@ -71,10 +73,10 @@ function RoomDetail({ result, room, originalRoomName, hoverEdge, selectedEdge, o
           <span className="headline-value">{fmt(room.wall_area_m2)} <small>m²</small></span>
         </div>
         <div className="headline-breakdown">
-          壁部分 <b>{fmt(room.wall_area_gross_m2)}</b> − ドア控除 <b>{fmt(room.door_area_m2)}</b> ＝ <b>{fmt(room.wall_area_m2)} m²</b>
+          壁部分 <b>{fmt(room.wall_area_gross_m2)} m²</b> − ドア控除 <b>{fmt(room.door_area_m2)} m²</b> ＝ <b>{fmt(room.wall_area_m2)} m²</b>
           <div className="muted small">
-            壁部分 ＝ 壁長 {fmt(room.wall_length_m)} m × 天井高 {s.ceiling_height_m} m ／
-            ドア控除 ＝ 控除ドア幅 {fmt(room.door_length_m)} m × ドア高 {s.door_height_m} m（{room.door_count} 箇所）
+            壁部分 ＝ 壁長 {fmt(room.wall_length_m)} m × 天井高 {fmt(s.ceiling_height_m, 1)} m ／
+            ドア控除 ＝ 控除ドア幅 {fmt(room.door_length_m)} m × ドア高 {fmt(s.door_height_m, 1)} m（{room.door_count} 箇所）
             {room.opening_length_m > 0.005 && <> ／ 壁なし長 {fmt(room.opening_length_m)} m は含めない</>}
           </div>
         </div>

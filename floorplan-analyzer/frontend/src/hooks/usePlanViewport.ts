@@ -44,13 +44,16 @@ export function usePlanViewport({ canvasRef, selected, selectedId, imageWidth: W
     }
   }, [awaitingFit, selected]);
 
+  // フィット表示中だけ、部屋の切替でスクロール位置と倍率を初期化する。
+  // 全体表示で拡大・パンした状態で部屋を選んでも、表示位置は動かさない (選んだ部屋が画面外へ飛ばないように)。
+  // スクロールバーの出入りによる幅変化でも移動位置・倍率はリセットしない。
   useEffect(() => {
+    if (!fitRoom) return;
     if (canvasRef.current) {
       canvasRef.current.scrollTop = 0;
       canvasRef.current.scrollLeft = 0;
     }
-    if (fitRoom) setZoom(100);
-  // スクロールバーの出入りによる幅変化では移動位置・倍率をリセットしない。
+    setZoom(100);
   }, [fitRoom, selected?.id]);
 
   // 表示範囲 (viewBox): 全体 or 選択部屋の周囲
