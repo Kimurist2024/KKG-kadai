@@ -78,20 +78,8 @@ async def request_recognition(key, model, image_url):
         'text': {'format': {'type': 'json_schema', 'name': 'floorplan', 'strict': True,
                             'schema': Recognition.model_json_schema()}},
     }
-    async def send():
-        async with httpx.AsyncClient(timeout=httpx.Timeout(90, connect=10)) as client:
-            async with client.stream('POST', 'https://api.openai.com/v1/responses',
-                                     headers={'Authorization': 'Bearer ' + key}, json=payload) as response:
-                if response.status_code != 200:
-                    raise HTTPException(502, 'AI サービスへの接続に失敗しました。管理者に設定を確認してください')
-                raw = bytearray()
-                async for chunk in response.aiter_bytes():
-                    raw.extend(chunk)
-                    if len(raw) > MAX_RESPONSE_BYTES:
-                        raise HTTPException(502, 'AI の応答が上限を超えました')
-                return json.loads(raw)
     try:
-        data = await asyncio.wait_for(send(), timeout=95)
+        data = await asyncio.wait_for(_send_recognition_request(key, payload), timeout=95)
         if data.get('status') != 'completed':
             raise HTTPException(502, 'AI の認識が完了しませんでした。より単純な図面で試してください')
         texts = []
@@ -108,6 +96,26 @@ async def request_recognition(key, model, image_url):
         raise HTTPException(504, 'AI の応答が時間内に届きませんでした')
     except (httpx.HTTPError, ValueError, KeyError, TypeError, AttributeError):
         raise HTTPException(502, 'AI の応答を読み取れませんでした')
+
+
+async def _send_recognition_request(key, payload):
+    """Responses API の応答を上限付きで読み込む。"""
+    async with httpx.AsyncClient(timeout=httpx.Timeout(90, connect=10)) as client:
+        async with client.stream('POST', 'https://api.openai.com/v1/responses',
+                                 headers={'Authorization': 'Bearer ' + key}, json=payload) as response:
+            if response.status_code != 200:
+                raise HTTPException(502, 'AI サービスへの接続に失敗しました。管理者に設定を確認してください')
+            raw = bytearray()
+            async for chunk in response.aiter_bytes():
+                raw.extend(chunk)
+                if len(raw) > MAX_RESPONSE_BYTES:
+                    raise HTTPException(502, 'AI の応答が上限を超えました')
+            return json.loads(raw)
+
+
+def _scaled_vertex(point, width, height):
+    """0〜1の認識座標を元画像のpx座標へ変換する。"""
+    return Vertex(x=point.x * width, y=point.y * height)
 
 
 @router.post('/api/recognize', response_model=RecognizeResponse)
@@ -128,16 +136,15 @@ async def recognize(file: UploadFile = File(...), x_ai_token: str = Header(defau
         raise HTTPException(502, 'AI の座標データが不正です。別の画像で試してください')
     if not draft.rooms:
         raise HTTPException(422, '部屋を認識できませんでした。鮮明な平面図またはマスク JSON を使用してください')
-    def vertex(p):
-        return Vertex(x=p.x * width, y=p.y * height)
     contours = []
     for room in draft.rooms:
         contours.append(Contour(id=len(contours) + 1, label_id=1, room_name=room.name or None,
-                                vertices=[vertex(p) for p in room.vertices], color='#7c83db', isLine=False))
+                                vertices=[_scaled_vertex(p, width, height) for p in room.vertices], color='#7c83db', isLine=False))
     for label, lines, color in ((2, draft.walls, '#dc2626'), (3, draft.doors, '#16a34a')):
         for line in lines:
             contours.append(Contour(id=len(contours) + 1, label_id=label, isLine=True, color=color,
-                                    vertices=[vertex(line.start), vertex(line.end)]))
+                                    vertices=[_scaled_vertex(line.start, width, height),
+                                              _scaled_vertex(line.end, width, height)]))
     notices = [REVIEW_WARNING] + draft.warnings
     mask = MaskFile(contours=contours, image_width=width, image_height=height,
                     image_data=ImageData(base64=encoded, mime_type='image/png'),

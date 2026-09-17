@@ -126,6 +126,17 @@ def _input_topology_valid(mask: MaskFile) -> bool:
     return True
 
 
+def _collect_line_node_points(geometry, node_points: set[Point]) -> None:
+    """Shapely の線形状からノード座標を再帰的に収集する。"""
+    if geometry.is_empty:
+        return
+    if geometry.geom_type == "LineString":
+        node_points.update((float(x), float(y)) for x, y in geometry.coords)
+    elif hasattr(geometry, "geoms"):
+        for part in geometry.geoms:
+            _collect_line_node_points(part, node_points)
+
+
 def _node_rings(rings: Sequence[_Ring]) -> None:
     """補正前の全境界を交点と部分重なり端点で分割する。"""
     source_lines = [
@@ -138,16 +149,7 @@ def _node_rings(rings: Sequence[_Ring]) -> None:
     merged = unary_union(source_lines)
     node_points: set[Point] = set()
 
-    def collect(geometry) -> None:
-        if geometry.is_empty:
-            return
-        if geometry.geom_type == "LineString":
-            node_points.update((float(x), float(y)) for x, y in geometry.coords)
-        elif hasattr(geometry, "geoms"):
-            for part in geometry.geoms:
-                collect(part)
-
-    collect(merged)
+    _collect_line_node_points(merged, node_points)
     tolerance = 1e-7
     for ring in rings:
         noded: List[Point] = []
@@ -281,6 +283,35 @@ def _regularize_ring(ring: _Ring, direction: _Direction) -> List[Point]:
     return current
 
 
+def _find_group_root(parent: List[int], value: int) -> int:
+    """経路圧縮付きで頂点グループの代表を返す。"""
+    while parent[value] != value:
+        parent[value] = parent[parent[value]]
+        value = parent[value]
+    return value
+
+
+def _union_vertex_groups(
+    parent: List[int],
+    members: Dict[int, List[int]],
+    refs: Sequence[Tuple[int, int]],
+    rings: Sequence[_Ring],
+    left: int,
+    right: int,
+) -> None:
+    """完全連結の距離上限を満たす頂点グループを併合する。"""
+    a, b = _find_group_root(parent, left), _find_group_root(parent, right)
+    if a == b:
+        return
+    combined = members[a] + members[b]
+    points = [rings[refs[item][0]].points[refs[item][1]] for item in combined]
+    if max(math.hypot(x[0] - y[0], x[1] - y[1]) for x in points for y in points) > NODE_SNAP_PX:
+        return
+    parent[b] = a
+    members[a] = combined
+    del members[b]
+
+
 def _snap_shared_vertices(rings: Sequence[_Ring]) -> None:
     refs: List[Tuple[int, int]] = [
         (ring_index, vertex_index)
@@ -289,24 +320,6 @@ def _snap_shared_vertices(rings: Sequence[_Ring]) -> None:
     ]
     parent = list(range(len(refs)))
     members: Dict[int, List[int]] = {index: [index] for index in range(len(refs))}
-
-    def find(value: int) -> int:
-        while parent[value] != value:
-            parent[value] = parent[parent[value]]
-            value = parent[value]
-        return value
-
-    def union(left: int, right: int) -> None:
-        a, b = find(left), find(right)
-        if a == b:
-            return
-        combined = members[a] + members[b]
-        points = [rings[refs[item][0]].points[refs[item][1]] for item in combined]
-        if max(math.hypot(x[0] - y[0], x[1] - y[1]) for x in points for y in points) > NODE_SNAP_PX:
-            return
-        parent[b] = a
-        members[a] = combined
-        del members[b]
 
     for left, (left_ring, left_vertex) in enumerate(refs):
         lp = rings[left_ring].points[left_vertex]
@@ -317,7 +330,7 @@ def _snap_shared_vertices(rings: Sequence[_Ring]) -> None:
                 continue
             rp = rings[right_ring].points[right_vertex]
             if math.hypot(lp[0] - rp[0], lp[1] - rp[1]) <= NODE_SNAP_PX:
-                union(left, right)
+                _union_vertex_groups(parent, members, refs, rings, left, right)
     for group in list(members.values()):
         if len(group) < 2:
             continue
@@ -375,6 +388,21 @@ def _valid_changes(mask: MaskFile, rings: Sequence[_Ring]) -> Tuple[bool, float,
     return True, max_ratio, None
 
 
+def _collect_atomic_edges(geometry, atomic: List[Tuple[Point, Point]]) -> None:
+    """noding 済み線形状から向きを正規化した原子辺を収集する。"""
+    if geometry is None or geometry.is_empty:
+        return
+    if geometry.geom_type == "LineString":
+        coords = list(geometry.coords)
+        for start, end in zip(coords, coords[1:]):
+            a, b = (float(start[0]), float(start[1])), (float(end[0]), float(end[1]))
+            if a != b:
+                atomic.append((min(a, b), max(a, b)))
+    elif hasattr(geometry, "geoms"):
+        for part in geometry.geoms:
+            _collect_atomic_edges(part, atomic)
+
+
 def _build_graph(rings: Sequence[_Ring]) -> Tuple[PlanarGraph, Dict[Tuple[int, str, int], List[int]]]:
     """全境界線を一度 noding し、T字接合と部分重なりも原子辺に分割する。"""
     sources: List[Tuple[_Ring, int, LineString, Tuple[int, str, int]]] = []
@@ -390,20 +418,7 @@ def _build_graph(rings: Sequence[_Ring]) -> Tuple[PlanarGraph, Dict[Tuple[int, s
     merged = unary_union([source[2] for source in sources]) if sources else None
     atomic: List[Tuple[Point, Point]] = []
 
-    def collect(geometry) -> None:
-        if geometry is None or geometry.is_empty:
-            return
-        if geometry.geom_type == "LineString":
-            coords = list(geometry.coords)
-            for start, end in zip(coords, coords[1:]):
-                a, b = (float(start[0]), float(start[1])), (float(end[0]), float(end[1]))
-                if a != b:
-                    atomic.append((min(a, b), max(a, b)))
-        elif hasattr(geometry, "geoms"):
-            for part in geometry.geoms:
-                collect(part)
-
-    collect(merged)
+    _collect_atomic_edges(merged, atomic)
     atomic = sorted(set(atomic))
     node_points = sorted({point for edge in atomic for point in edge})
     node_ids = {point: index + 1 for index, point in enumerate(node_points)}
