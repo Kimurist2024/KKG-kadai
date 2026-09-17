@@ -54,6 +54,11 @@ class Interval:
         return max(0.0, self.end - self.start)
 
 
+def _interval_sort_key(interval: Interval) -> Tuple[float, float]:
+    """区間の安定ソート順を返す。"""
+    return interval.start, interval.end
+
+
 def project_segments_onto_edge(
     edge_start: Point,
     edge_end: Point,
@@ -154,7 +159,7 @@ def _project_segment(
 def merge_intervals(intervals: Iterable[Interval], gap_tolerance_px: float = 0.0) -> List[Interval]:
     """重なり・近接 (gap <= gap_tolerance_px) する区間を併合する。"""
     merged: List[Interval] = []
-    for iv in sorted(intervals, key=lambda i: (i.start, i.end)):
+    for iv in sorted(intervals, key=_interval_sort_key):
         if merged and iv.start <= merged[-1].end + gap_tolerance_px:
             last = merged[-1]
             last.end = max(last.end, iv.end)
@@ -187,7 +192,7 @@ def clip_intervals(a: Iterable[Interval], b: Iterable[Interval]) -> List[Interva
     b の重複時は従来の全比較を使い、EPS 以下の断片を除く順序も維持する。
     非重複 b の走査はソート後 O(len(a) + len(b) + 候補交差数)。
     """
-    b_list = sorted(b, key=lambda iv: (iv.start, iv.end))
+    b_list = sorted(b, key=_interval_sort_key)
     if _intervals_are_disjoint(b_list):
         result = _clip_disjoint_intervals(a, b_list)
     else:
@@ -204,7 +209,7 @@ def _clip_disjoint_intervals(a: Iterable[Interval], b_list: Sequence[Interval]) 
     """非重複時だけ使えるカーソル走査を総当たりの処理から分ける。"""
     result: List[Interval] = []
     cursor = 0
-    for ia in sorted(a, key=lambda iv: (iv.start, iv.end)):
+    for ia in sorted(a, key=_interval_sort_key):
         while cursor < len(b_list) and b_list[cursor].end <= ia.start:
             cursor += 1
         for index in range(cursor, len(b_list)):
@@ -220,7 +225,7 @@ def _clip_disjoint_intervals(a: Iterable[Interval], b_list: Sequence[Interval]) 
 def _clip_overlapping_intervals(a: Iterable[Interval], b_list: Sequence[Interval]) -> List[Interval]:
     """重複時の全比較を独立させ、非重複を前提とする分岐を取り除く。"""
     result: List[Interval] = []
-    for ia in sorted(a, key=lambda iv: (iv.start, iv.end)):
+    for ia in sorted(a, key=_interval_sort_key):
         for ib in b_list:
             lo, hi = max(ia.start, ib.start), min(ia.end, ib.end)
             if hi - lo > EPS_PX:
@@ -247,14 +252,16 @@ def complement_intervals(intervals: Iterable[Interval], edge_length: float) -> L
     return out
 
 
+def _orientation(a: Point, b: Point, c: Point) -> float:
+    """a→b に対するcの有向面積（外積）。"""
+    return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
+
+
 def _segments_intersect(p1: Point, p2: Point, q1: Point, q2: Point) -> bool:
     """線分 p1p2 と q1q2 が交差するか (端点接触は交差とみなさない)。"""
 
-    def orient(a: Point, b: Point, c: Point) -> float:
-        return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
-
-    d1, d2 = orient(q1, q2, p1), orient(q1, q2, p2)
-    d3, d4 = orient(p1, p2, q1), orient(p1, p2, q2)
+    d1, d2 = _orientation(q1, q2, p1), _orientation(q1, q2, p2)
+    d3, d4 = _orientation(p1, p2, q1), _orientation(p1, p2, q2)
     return (d1 * d2 < -EPS_PX) and (d3 * d4 < -EPS_PX)
 
 

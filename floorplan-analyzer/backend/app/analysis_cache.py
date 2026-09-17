@@ -62,7 +62,7 @@ class GeometryCache:
 cache = GeometryCache()
 
 
-def get_geometry(mask, geometry_key, compute):
+def get_geometry(mask, geometry_key, compute, *compute_args):
     """輪郭と幾何計算条件をキーに結果を取得する。"""
     # 穴・id・名前・元の面積等もキーに含める。画像と表示メタデータは再利用しない。
     source = mask.model_dump_json(exclude={"image_data", "timestamp", "image_width", "image_height"})
@@ -70,7 +70,7 @@ def get_geometry(mask, geometry_key, compute):
     stored = cache.get(key)
     if stored is not None:
         return json.loads(stored)
-    geometry = compute()
+    geometry = compute(*compute_args)
     # 各リクエストの画像情報・日時・設定は materialize で付け直す。
     geometry["response"].pop("image")
     geometry["response"].pop("timestamp")

@@ -104,6 +104,11 @@ def _parse_mask(raw: bytes) -> MaskFile:
         ) from e
 
 
+def _parse_and_analyze(raw: bytes, settings: AnalysisSettings) -> AnalyzeResponse:
+    """JSON解析と幾何計算を同じワーカースレッドで実行する。"""
+    return analyze(_parse_mask(raw), settings)
+
+
 @app.get("/", include_in_schema=False)
 def root() -> dict:
     """API サーバー直下を開いた人向けの案内 (画面はフロントエンド側)。"""
@@ -132,7 +137,7 @@ async def analyze_upload(
 ) -> AnalyzeResponse:
     raw = await file.read(MAX_UPLOAD_BYTES + 1)  # 上限を超える分は読み込まない
     # JSON 解析と幾何計算は同期処理なので、イベントループを塞がないようスレッドプールで実行
-    return await run_in_threadpool(lambda: analyze(_parse_mask(raw), settings))
+    return await run_in_threadpool(_parse_and_analyze, raw, settings)
 
 
 @app.post("/api/analyze/json", response_model=AnalyzeResponse)

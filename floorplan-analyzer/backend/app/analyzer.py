@@ -472,23 +472,24 @@ def analyze_uncached(mask: MaskFile, settings: Optional[AnalysisSettings] = None
     return _analyze_core(mask, settings)
 
 
+def _compute_geometry(mask: MaskFile, settings: AnalysisSettings) -> dict:
+    """キャッシュ用に単位縮尺のpx・px²幾何結果を計算する。"""
+    unit = AnalysisSettings(scale_px=1, scale_m=1, ceiling_height_m=1,
+                            door_height_m=0, tolerance_px=settings.tolerance_px,
+                            geometry_mode=settings.geometry_mode,
+                            boundary_reference=settings.boundary_reference)
+    response, pairs = _analyze_core(mask, unit, geometry_only=True)
+    return {"response": response.model_dump(mode="json"), "pairs": pairs}
+
+
 def analyze(mask: MaskFile, settings: Optional[AnalysisSettings] = None) -> AnalyzeResponse:
     """API から使う解析入口。幾何結果を再利用し、今回の縮尺・高さで換算する。"""
     from .analysis_cache import get_geometry, materialize
 
     settings = settings or AnalysisSettings()
-    def compute():
-        # 単位縮尺で px・px² の幾何結果を保存する。高さは射影や形状判定に影響しない。
-        unit = AnalysisSettings(scale_px=1, scale_m=1, ceiling_height_m=1,
-                                door_height_m=0, tolerance_px=settings.tolerance_px,
-                                geometry_mode=settings.geometry_mode,
-                                boundary_reference=settings.boundary_reference)
-        response, pairs = _analyze_core(mask, unit, geometry_only=True)
-        return {"response": response.model_dump(mode="json"), "pairs": pairs}
-
     geometry_key = ":".join((float(settings.tolerance_px).hex(), settings.geometry_mode,
                              settings.boundary_reference, "manhattan_shared_v1"))
-    return materialize(get_geometry(mask, geometry_key, compute), mask, settings)
+    return materialize(get_geometry(mask, geometry_key, _compute_geometry, mask, settings), mask, settings)
 
 
 def clear_geometry_cache():
