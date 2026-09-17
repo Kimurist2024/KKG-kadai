@@ -14,6 +14,8 @@ def room_polygon(room):
     outer = Polygon(shell)
     if not outer.is_valid or outer.area <= 0:
         raise ValueError("外周が不正です: " + explain_validity(outer))
+    if not holes:
+        return outer, []
     for hole in holes:
         hole_polygon = Polygon(hole)
         if not hole_polygon.is_valid or hole_polygon.area <= 0:
