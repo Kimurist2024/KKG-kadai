@@ -7,7 +7,6 @@ import { fmt } from "./format";
 import { useAnalysis } from "./hooks/useAnalysis";
 import AiImportPanel from "./components/AiImportPanel";
 import UploadPanel from "./components/UploadPanel";
-import SettingsPanel from "./components/SettingsPanel";
 import FloorPlanView from "./components/FloorPlanView";
 import RoomTable from "./components/RoomTable";
 import RoomDetail from "./components/RoomDetail";
@@ -33,7 +32,7 @@ const EMPTY_OVERRIDES: Record<number, string> = {};
 
 /** 解析状態と画面の選択状態をつなぎ、図面・結果表・算出根拠・警告を統合する。 */
 export default function App() {
-  const { pending, cancelPending, file, isSample, imageUrl, appliedSettings, result, status, updatedAt, loadFile, loadSample, reanalyze } = useAnalysis();
+  const { file, isSample, imageUrl, appliedSettings, result, status, updatedAt, loadFile, loadSample } = useAnalysis();
   // 画面の見た目に関する状態
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [hoverId, setHoverId] = useState<number | null>(null);
@@ -42,7 +41,6 @@ export default function App() {
   const [hoverSegments, setHoverSegments] = useState<number[]>([]);   // 一時的な強調 (ホバー/フォーカス)
   const [pinnedSegments, setPinnedSegments] = useState<number[]>([]); // 確定選択 (クリック。図面に戻っても保持)
   const [layers, setLayers] = useState<Layers>({ image: true, rooms: true, walls: true, doors: true, labels: true });
-  const [showSettings, setShowSettings] = useState(false);
   // UI 上での表示名の上書き (JSON は変更しない)。読み込んだファイルに紐づけ、別ファイルには適用しない
   const [nameOverrides, setNameOverrides] = useState<{ fileKey: string; map: Record<number, string> }>({ fileKey: "", map: {} });
   const fileKey = file ? `${file.name}:${file.size}:${file.lastModified}` : "";
@@ -53,14 +51,14 @@ export default function App() {
 
   // 表示用の結果: 部屋名の上書きを反映。名前を付けた部屋は「未設定」扱いから外す (警告・タグも消す)
   const view: AnalyzeResponse | null = useMemo(() => {
-    if (!result || pending) return null;
+    if (!result) return null;
     if (!Object.keys(overrides).length) return result;
     return {
       ...result,
       rooms: result.rooms.map((r) => (overrides[r.id] ? { ...r, name: overrides[r.id], room_name: overrides[r.id] } : r)),
       warnings: result.warnings.filter((w) => !(w.code === "unnamed_room" && w.contour_id !== null && overrides[w.contour_id])),
     };
-  }, [result, overrides, pending]);
+  }, [result, overrides]);
 
   // 解析完了の通知を数秒だけ表示
   useEffect(() => {
@@ -160,39 +158,19 @@ export default function App() {
       </header>
 
       <section className="panel">
-        <UploadPanel fileName={pending?.file.name ?? file?.name ?? null} isSample={isSample && !pending} loading={loading} onFile={handleFile} onLoadSample={() => { selectRoom(null); void loadSample(); }} compact />
-        <AiImportPanel key={`${fileKey}:${pending?.id ?? ""}`} onFile={handleFile} disabled={loading || !!pending} />
-        {pending ? (
-          <section className="scale-review" aria-labelledby="scale-review-heading">
-            <h2 id="scale-review-heading">この図面の縮尺を確認</h2>
-            <p><b>{pending.file.name}</b> の面積はまだ算出していません。図面の基準寸法と、その区間の元画像上の距離を入力してください。画面上で縮小表示された距離とは異なります。</p>
-            <p className="muted">前の図面の縮尺は引き継ぎません。縮尺が 5% ずれると床面積は約 10% ずれます。</p>
-            {pending.imageUrl && <div className="scale-preview"><img src={pending.imageUrl} alt="縮尺確認用の図面" /></div>}
-            <SettingsPanel key={pending.id} applied={appliedSettings} disabled={loading} onApply={reanalyze} confirmScale />
-            <button type="button" className="btn" onClick={cancelPending}>この図面の読み込みを取り消す</button>
-          </section>
-        ) : <section className="workspace-section" aria-labelledby="conditions-heading">
-        <h2 id="conditions-heading" className="section-heading">現在の図面の計算条件</h2>
+        <UploadPanel fileName={file?.name ?? null} isSample={isSample} loading={loading} onFile={handleFile} onLoadSample={() => { selectRoom(null); void loadSample(); }} compact />
+        <AiImportPanel key={fileKey} onFile={handleFile} disabled={loading} />
+        <section className="workspace-section" aria-labelledby="conditions-heading">
+        <h2 id="conditions-heading" className="section-heading">課題指定の計算条件（固定）</h2>
         <div className="conditions">
           <span className="conditions-label">適用中の計算条件</span>
           <span className="cond-chip">天井高 <b>{appliedSettings.ceiling_height_m} m</b></span>
           <span className="cond-chip">ドア高 <b>{appliedSettings.door_height_m} m</b></span>
           <span className="cond-chip">スケール <b>{appliedSettings.scale_px} px ＝ {appliedSettings.scale_m} m</b></span>
-          <span className="cond-chip muted-chip">許容誤差 <b>{appliedSettings.tolerance_px} px</b></span>
-          <span className="cond-chip muted-chip">幾何 <b>{appliedSettings.geometry_mode === "regularized_shared" ? "自動補正" : "元座標"}</b></span>
-          <span className="spacer" />
-          <button type="button" className="btn btn-link" aria-expanded={showSettings} onClick={() => setShowSettings((v) => !v)}>
-            {showSettings ? "計算条件を閉じる" : "計算条件を変更"}
-          </button>
         </div>
-        {showSettings && <SettingsPanel applied={appliedSettings} disabled={!file || loading} onApply={reanalyze} />}
-        {view?.geometry_processing && <div className="status" role="status">
-          <strong>{view.geometry_processing.applied_mode === "regularized_shared" ? "幾何補正を適用済み" : view.geometry_processing.applied_mode === "raw_fallback" ? "安全のため元座標で計算" : "補正不要"}</strong>
-          <p>最大移動 {view.geometry_processing.max_displacement_px.toFixed(3)} px・共有境界 {view.geometry_processing.graph?.shared_edge_count ?? 0} 本</p>
-        </div>}
-        </section>}
+        </section>
         {loading && <div className="status loading" role="status" aria-live="polite">解析中…{view ? "（前回の結果を表示中）" : ""}</div>}
-        {!pending && !loading && flashDone && <div className="status done" role="status" aria-live="polite">結果を更新しました</div>}
+        {!loading && flashDone && <div className="status done" role="status" aria-live="polite">結果を更新しました</div>}
         {status.state === "error" && <div className="status error" role="alert">エラー: {status.message}</div>}
 
       </section>

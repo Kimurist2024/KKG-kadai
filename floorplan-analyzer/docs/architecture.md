@@ -18,7 +18,7 @@ flowchart LR
   P --> F[FastAPI]
   F -->|画像・Structured Outputs| O[OpenAI API]
   O --> V[座標・構造の検証]
-  V --> H[輪郭の照合・縮尺確認]
+  V --> H[輪郭の照合・課題の固定条件で解析]
   H --> G[FastAPI 幾何計算]
   G --> R[図面・面積・根拠・CSV]
 ```

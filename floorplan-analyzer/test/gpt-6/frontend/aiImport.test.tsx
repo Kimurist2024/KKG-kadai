@@ -31,7 +31,7 @@ test("sending requires consent; draft cannot enter analysis until reviewed", asy
   fireEvent.click(start);
   await screen.findByRole("img", { name: "元画像に重ねた AI の認識候補" });
   expect(recognizeImage).toHaveBeenCalledWith(expect.any(File), "site-token", expect.any(AbortSignal));
-  const proceed = screen.getByRole("button", { name: "この認識結果で縮尺確認へ" }) as HTMLButtonElement;
+  const proceed = screen.getByRole("button", { name: "この認識結果を解析" }) as HTMLButtonElement;
   expect(proceed.disabled).toBe(true);
   expect(onFile).not.toHaveBeenCalled();
   fireEvent.click(screen.getByLabelText("認識した部屋・壁・ドアの輪郭を図面と照合しました"));
