@@ -1,24 +1,24 @@
 # 平面図 面積・壁面積 解析アプリ
 
-> `main` ブランチには説明資料を掲載しています。アプリ本体は [feature/kimura](https://github.com/Kimurist2024/KKG-kadai/tree/feature/kimura) を参照してください。以下の起動手順は同ブランチをチェックアウトし、`floorplan-analyzer/` を作業ディレクトリとして実行します（`.claude/scripts/` のコマンドはリポジトリ直下で実行）。
+> `main` ブランチには説明資料だけを置いています。アプリ本体は [feature/kimura](https://github.com/Kimurist2024/KKG-kadai/tree/feature/kimura) にあります。以下の起動手順は同ブランチをチェックアウトし、`floorplan-analyzer/` で実行してください（`.claude/scripts/` のコマンドだけはリポジトリ直下で実行します）。
 
-公開サイト: https://floorplan-analyzer-taupe.vercel.app （2026-09-18 に API 疎通を確認。画像 AI は無効。今回の確認では公開環境の解析処理・画面操作は再検証していません）
+公開サイト: https://floorplan-analyzer-taupe.vercel.app （2026-09-18 に API の疎通を確認しました。画像 AI は無効です。この確認では、公開環境での解析処理と画面操作までは再検証していません）
 
-**部屋・壁・ドアマスク JSON** から、部屋ごとの **床面積・周長・壁面積** を算出する Web アプリです。
-提出用の画面は JSON アップロードと固定条件での解析に絞っています。画像 AI の入力欄は表示しません。
+**部屋・壁・ドアのマスク JSON** を読み込み、部屋ごとの **床面積・周長・壁面積** を算出する Web アプリです。
+提出用の画面は、JSON のアップロードと固定条件での解析に絞りました。画像 AI の入力欄は表示していません。
 
-- フロントエンド: Next.js 16.3.5 App Router / React 19.3.0 / TypeScript 5.9.3（`frontend/package-lock.json` の固定値）。図面は SVG で描画します。
+- フロントエンド: Next.js 16.3.5 App Router / React 19.3.0 / TypeScript 5.9.3（`frontend/package-lock.json` で固定）。図面は SVG で描画しています。
 - バックエンド: Python / FastAPI / Pydantic 2 / Shapely 2.0 系。Uvicorn で起動し、座標から面積を計算します。
-- 公開用設定: Vercel Services で Next.js と FastAPI を分離。`/api/*` は FastAPI、それ以外は Next.js に振り分けます。
-- 別の配置方法: Docker Compose と AWS ECS Fargate 用 Terraform を同梱。ローカル・Compose・AWS では Next.js の API プロキシを使います。
-- 画像 AI: HTTPX 経由の OpenAI Responses API 呼び出しを任意機能として保持。通常画面には入力欄がなく、JSON 解析には AI 設定は不要です。
+- 公開用の設定: Vercel Services で Next.js と FastAPI を分け、`/api/*` は FastAPI、それ以外は Next.js に振り分けています。
+- 別の配置方法: Docker Compose と、AWS ECS Fargate 用の Terraform を同梱しました。ローカル・Compose・AWS では Next.js の API プロキシを通します。
+- 画像 AI: HTTPX 経由で OpenAI Responses API を呼ぶ機能を任意機能として残しています。通常画面には入力欄がなく、JSON 解析に AI の設定は要りません。
 
-部屋選択時の表示処理の改善と計測結果は [性能検証](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/selection-performance.md) を参照してください。
-面積・壁・扉の計算高速化と変更前後の全項目比較は [アルゴリズム性能検証](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/validation/algorithm-performance/report.md) を参照してください。
-直前の実装を基準にした最新の高速化・浮動小数点の完全一致検証・論文調査は [計算結果を変えない高速化](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/validation/exact-speed/exact-speed.md) にあります。100倍の目標は未達です。
-追加の5倍高速化に向けた [端点イベント走査の実測](floorplan-analyzer/docs/validation/interval-sweep/interval-sweep.md) では、人工的な1,024頂点の輪郭で初回解析が7.9〜11.1倍になりました。同梱図面はほぼ同速で、全入力で5倍の目標は未達です。
+部屋を選んだときの表示処理の改善と、その計測結果は [性能検証](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/selection-performance.md) を参照してください。
+面積・壁・扉の計算を速くした際の、変更前後の全項目比較は [アルゴリズム性能検証](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/validation/algorithm-performance/report.md) を参照してください。
+直前の実装を基準にした最新の高速化と、浮動小数点まで完全に一致することの検証、論文調査は [計算結果を変えない高速化](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/validation/exact-speed/exact-speed.md) に書きました。目標にしていた100倍には届いていません。
+さらに5倍を目指した [端点イベント走査の実測](floorplan-analyzer/docs/validation/interval-sweep/interval-sweep.md) では、人工的な1,024頂点の輪郭で初回解析が7.9〜11.1倍になりました。ただし同梱図面ではほぼ同じ速さで、すべての入力で5倍という目標も未達です。
 
-応募要件との対応と動作確認の範囲は [技術構成と検証状況](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/architecture.md)、AWS の手順は [インフラ手順](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/infra/deployment.md) を参照してください。
+課題要件との対応と、動作確認をどこまで行ったかは [技術構成と検証状況](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/architecture.md)、AWS の手順は [インフラ手順](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/infra/deployment.md) を参照してください。
 
 ![概要画面](floorplan-analyzer/docs/images/screenshot_overview.png)
 ![部屋を選択した画面](floorplan-analyzer/docs/images/screenshot_room_detail.png)
@@ -27,33 +27,33 @@
 
 ## 1. 起動・操作
 
-Python 3.12・Node.js 22 を推奨します（CI・Docker と同じ構成。Node.js の指定下限は20.9）。以下は `floorplan-analyzer/` で実行してください。
+Python 3.12 と Node.js 22 を推奨します（CI・Docker と同じ構成です。Node.js の下限は20.9にしています）。以下は `floorplan-analyzer/` で実行してください。
 
 ```bash
 ./scripts/start.sh   # 起動完了後、http://localhost:5173 を開く
 ./scripts/stop.sh    # 停止
 ```
 
-起動時は8000/5173番を使用中のプロセスを停止し、依存関係のセットアップとサーバー起動を行います。独立した処理は並列化しています。JSON解析にAIキーは不要です。
+起動スクリプトは、8000番と5173番を使っているプロセスを止めてから、依存関係のセットアップとサーバー起動を行います。互いに依存しない処理は並列にしました。JSON解析にAIのキーは不要です。
 
-1. 初回は同梱サンプルを表示します。操作説明は画面上部の「はじめての方へ」から確認できます。
-2. 自分のJSONを選択またはドロップすると、固定条件で解析します。
-3. 部屋を図面・表から選ぶと、面積・周長と辺ごとの内訳を確認できます。
-4. 拡大・ドラッグ・レイヤー切替で図面を確認し、CSVで結果を保存できます。
+1. 初回は同梱のサンプルを表示します。操作の説明は画面上部の「はじめての方へ」から読めます。
+2. 手持ちのJSONを選ぶかドロップすると、固定条件で解析します。
+3. 図面か表から部屋を選ぶと、面積・周長と辺ごとの内訳を確認できます。
+4. 拡大・ドラッグ・レイヤー切替で図面を確かめ、結果はCSVで保存できます。
 
-計算条件は **天井高2.4m、ドア高2.0m、96.7px＝1.365m** です。表示倍率は計算値に影響しません。通常画面では画像AI入力と幾何補正を無効にしています。
+計算条件は **天井高2.4m、ドア高2.0m、96.7px＝1.365m** に固定しています。画面の表示倍率は計算値に影響しません。通常画面では画像AIの入力と幾何補正を無効にしました。
 
-ローカルのAPI疎通確認は `http://127.0.0.1:8000/api/health`、仕様は `http://127.0.0.1:8000/docs` です。8000番にはアプリ画面はありません。コンテナ起動は `docker compose up --build`（画面は `http://localhost:3000`）。Compose はホストへバックエンドの8000番を公開しません。
+ローカルでのAPIの疎通確認は `http://127.0.0.1:8000/api/health`、仕様は `http://127.0.0.1:8000/docs` で見られます。8000番にアプリの画面はありません。コンテナで動かす場合は `docker compose up --build` で、画面は `http://localhost:3000` です。Compose ではバックエンドの8000番をホストに公開していません。
 
 ## 2. 構成と役割
 
-- `frontend/`：Next.js・React・TypeScript。図面、結果表、計算式、CSVを担当。
-- `backend/app/`：FastAPI。入力検証と幾何計算を一元化。
+- `frontend/`：Next.js・React・TypeScript。図面、結果表、計算式、CSVを担当します。
+- `backend/app/`：FastAPI。入力検証と幾何計算をここに集めています。
 - `test/gpt-6/`：フロント・バックのテスト。`backend/benchmarks/`：性能比較。
-- `sample/`：同梱図面。`docs/`：設計・参考文献・検証記録。
+- `sample/`：同梱の図面。`docs/`：設計・参考文献・検証記録。
 - `infra/terraform/`：AWS構成。`scripts/`：起動・停止ツール。
 
-ブラウザは同一オリジンの `/api/*` に通信します。環境による経路の違いは次のとおりです。
+ブラウザは同一オリジンの `/api/*` に通信します。環境ごとの経路は次のとおりです。
 
 | 環境 | API の経路 | 設定の根拠 |
 |---|---|---|
@@ -62,37 +62,37 @@ Python 3.12・Node.js 22 を推奨します（CI・Docker と同じ構成。Node
 | Compose | Next.js :3000 → backend:8000 | `compose.yaml` |
 | AWS（構成を同梱） | HTTPS ALB → Next.js :3000 → 同じタスクの FastAPI :8000 | `infra/terraform/app/main.tf` |
 
-プロキシの接続先はサーバー側の `API_PROXY_TARGET` で指定します。旧単一Function用の `api/index.py` は互換用に残っていますが、現在の Vercel Services 設定では使用しません。アプリ直下の `requirements.txt` は `backend/requirements.txt` を参照します。
+プロキシの接続先はサーバー側の `API_PROXY_TARGET` で指定します。旧単一Function用の `api/index.py` は互換のために残していますが、現在の Vercel Services 設定では使っていません。アプリ直下の `requirements.txt` は `backend/requirements.txt` を参照しています。
 
-数値はバックエンドで計算し、表示時だけ丸めます。元画像はブラウザでも取り出して表示しますが、アップロードするJSON自体は画像データを含めてバックエンドに送信します。解析レスポンスには画像を含めません。座標・区間計算はPython、多角形の穴・重複・和集合はShapely/GEOSが担当します。
+数値はすべてバックエンドで計算し、丸めるのは表示するときだけです。元画像はブラウザ側でも取り出して表示しますが、アップロードするJSON自体は画像データを含めたままバックエンドへ送ります。解析レスポンスには画像を含めていません。座標と区間の計算はPython、多角形の穴・重複・和集合はShapely/GEOSに任せています。
 
-主要APIは `POST /api/analyze`（multipartの `file`）と `POST /api/analyze/json`（JSONボディ）です。部屋別・全体の集計に加え、各辺の区間と根拠ID、警告を返します。ファイル版は不正JSONを400、容量超過を413で通知し、形式・設定の検証エラーは422です。通常画面の条件は固定ですが、APIには条件指定・研究用幾何補正の設定が残っています。
+主要なAPIは `POST /api/analyze`（multipartの `file`）と `POST /api/analyze/json`（JSONボディ）の2つです。部屋別・全体の集計に加えて、各辺の区間と根拠になる線分のID、警告を返します。ファイル版は不正なJSONを400、容量超過を413で返し、形式や設定の検証エラーは422です。通常画面の条件は固定ですが、API側には条件指定と研究用の幾何補正の設定を残しています。
 
-GitHub Actions は Python/フロントエンドのテスト・本番ビルド・Compose疎通・Terraform検証を定義しています。AWS更新は main 対象の手動実行で、CI成功と環境設定が必要です。現在の説明資料だけの main では実行できず、コード・workflow の統合が前提です。構成ファイルの存在は AWS での稼働確認を意味しません。
+GitHub Actions には、Pythonとフロントエンドのテスト、本番ビルド、Composeの疎通、Terraformの検証を定義しています。AWSの更新は main を対象にした手動実行で、CIの成功と環境設定が前提です。説明資料しかない今の main では実行できず、コードと workflow を統合してからになります。構成ファイルがあることと、AWSで動作確認したこととは別です。
 
-詳しい責務は [ARCHITECTURE](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/ARCHITECTURE.md)、開発手順は [CONTRIBUTING](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/CONTRIBUTING.md)、環境変数・配置は [技術構成](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/architecture.md) と [インフラ手順](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/infra/deployment.md) を参照してください。
+それぞれの責務は [ARCHITECTURE](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/ARCHITECTURE.md)、開発手順は [CONTRIBUTING](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/CONTRIBUTING.md)、環境変数と配置は [技術構成](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/architecture.md) と [インフラ手順](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/infra/deployment.md) を参照してください。
 
 ## 3. 面積計算の考え方
 
 ### 床面積・周長
 
-入力を部屋（`isLine` が真でない輪郭）、壁（線分・`label_id=2`）、ドア（線分・`label_id=3`）へ分類します。未命名の部屋も対象です。
+入力はまず、部屋（`isLine` が真でない輪郭）、壁（線分・`label_id=2`）、ドア（線分・`label_id=3`）に分けます。名前のない部屋も対象にしています。
 
-床面積は、頂点の外積を順番に足す **シューレースの公式** で求めます。穴の面積は差し引き、周長は外周と穴の各辺の長さを合計します。長さには `1.365/96.7`、面積にはその二乗を掛けて実寸へ換算します。JSON記載の面積をそのまま採用せず、頂点から再計算します。
+床面積は、頂点の外積を順に足していく **シューレースの公式** で求めます。穴の面積は差し引き、周長は外周と穴それぞれの辺の長さを合計します。実寸への換算は、長さに `1.365/96.7` を、面積にはその二乗を掛けます。JSONに書かれている面積はそのまま使わず、頂点から計算し直しています。
 
 ### 壁面積・ドア控除
 
-輪郭と壁線は完全には一致しないため、部屋の各辺へ線分を投影し、「辺のどの範囲に壁があるか」を区間として求めます。
+輪郭と壁線は完全には重ならないので、部屋の各辺に線分を投影して「辺のどの範囲に壁があるか」を区間として求めることにしました。
 
-1. **対応付け**：角度差10°以内、壁線の両端が辺の延長線から10px以内なら射影し、辺の外側を切り落とします。
-2. **壁区間の整理**：重複を併合し、極短ノイズを除去してから、小さな隙間と端点のずれを補完します。
-3. **開口の特定**：辺全体から壁あり区間を除いた部分を「壁なし」とします。
-4. **ドア控除**：ドアごとに射影し、壁と重なる区間だけを控除します。両側の壁の隙間とドアが対応する場合は壁区間を補完し、警告します。
+1. **対応付け**：角度差が10°以内で、壁線の両端が辺の延長線から10px以内なら射影し、辺からはみ出した部分を切り落とします。
+2. **壁区間の整理**：重なりを併合し、極端に短いノイズを除いてから、小さな隙間と端点のずれを補います。
+3. **開口の特定**：辺全体から壁のある区間を除いた残りを「壁なし」とします。
+4. **ドア控除**：ドアごとに射影し、壁と重なる区間だけを控除します。両側の壁の隙間とドアが対応する場合は壁区間を補い、警告を出します。
 5. **集計**：各辺の結果を部屋ごとに合計します。
 
 `壁面積 = 壁あり長[m] × 2.4m − 控除ドア幅[m] × 2.0m`
 
-「×2」はドアの枚数ではなく高さです。ドア上部0.4m分は壁として残ります。採用した線分IDと区間を保持し、図面・表・計算式から根拠を追える設計です。ドアを先にまとめず、壁との交差を個別に取ることで、対応しないドアのIDが混ざるのを防ぎます。
+「×2」はドアの枚数ではなく高さです。ドアの上部0.4m分は壁として残ります。採用した線分のIDと区間を保持しているので、図面・表・計算式のどこからでも根拠をたどれます。ドアを先にまとめず、壁との交差を1本ずつ取っているのは、対応しないドアのIDが混ざるのを防ぐためです。
 
 ## 4. R-treeによる高速化
 
@@ -101,15 +101,15 @@ GitHub Actions は Python/フロントエンドのテスト・本番ビルド・
 
 図の読み方：① 橙の輪郭の下辺が計算対象で、破線はその周囲の検索範囲です。A・B は壁そのものではなく、線分をまとめた領域です。② B は領域ごと、a3 は個別の外接長方形が重ならないため除外し、a1・a2 が候補に残ります。③ 同じ候補を精密に判定し、平行で近い a1 を採用、垂直な a2 を角度で除外します。配置・縮尺・木の分岐は説明用の模式図です。
 
-辺がE本、壁・ドア線分がN本なら、全件比較はE×N組になります。これを減らすため、Shapelyの **STRtree（R-tree系の空間インデックス）** を使います。
+辺がE本、壁・ドアの線分がN本あると、全件比較はE×N組になります。これを減らすために、Shapelyの **STRtree（R-tree系の空間インデックス）** を使いました。
 
-各線分をx軸・y軸に平行な長方形で囲み、近い長方形を大きな長方形にまとめて階層化します。検索範囲と上位の長方形が重ならなければ、その中の線分を一本ずつ調べる必要がありません。遠い線分の集団をまとめて除外する仕組みです。
+各線分をx軸・y軸に平行な長方形で囲み、近い長方形を大きな長方形にまとめて階層にします。検索範囲と上位の長方形が重ならなければ、その中の線分を一本ずつ調べる必要はありません。遠い線分の集団をまとめて外せる、という仕組みです。
 
-検索の基準は部屋の中心ではなく、計算対象の1本の辺です。その外接長方形を上下左右に10pxと微小な誤差対策分だけ広げ、x・y両方向で重なる候補を探します。これは候補の絞り込みにすぎず、最終的には角度・垂直距離・射影区間で対応を判定します。斜めの辺にも同じ手順を使います。
+検索の基準は部屋の中心ではなく、計算対象の1本の辺です。その外接長方形を上下左右に10pxと微小な誤差対策分だけ広げ、x・y両方向で重なる候補を探します。ここでやっているのは候補の絞り込みだけで、最終的な対応は角度・垂直距離・射影区間で判定します。斜めの辺にも同じ手順を使います。
 
 検索にかかる時間は通常O(log N＋k)（kは候補数）が目安ですが、線分が密集した配置ではほぼ全件が候補として残ります。木の構築や候補の並べ替えにも時間がかかるため、最悪の場合まで速くなるとは限りません。壁・ドアがそれぞれ64本未満のときは、木を作らずに全件を確認します。候補は元の入力順に並べ直してから処理し、計算の順序を変えないようにしています。
 
-同じ入力の幾何結果は最大8件・16MiB・5分間、プロセス内で再利用します。追加の端点イベント走査では重複区間や多頂点輪郭の不要な比較を減らします。ビームサーチのように候補を上位だけに打ち切る近似は使いません。速度は比較元・入力・キャッシュ条件で変わるため、実測の範囲は冒頭の検証資料に分けて記録しています。
+同じ入力に対する幾何結果は、最大8件・16MiB・5分間の範囲でプロセス内に保持して再利用します。端点イベント走査を加えて、重複区間や頂点の多い輪郭での不要な比較も減らしました。ビームサーチのように候補を上位だけに打ち切る近似は使っていません。速度は比較元・入力・キャッシュの条件で変わるので、実測した範囲は冒頭の検証資料に分けて記録しています。
 
 ## 5. 輪郭の基準と限界
 
@@ -134,9 +134,9 @@ GitHub Actions は Python/フロントエンドのテスト・本番ビルド・
 
 ## 6. 検証・AIの活用
 
-同梱11部屋の合計は **床面積48.75m²、壁面積155.54m²** です。LD＋Kは27.52m²で、図面記載27.22m²と約1%異なります。境界基準や認識ずれが原因の候補ですが未確定で、近い数値だけでは精度を保証できません。
+同梱の11部屋を合計すると **床面積48.75m²、壁面積155.54m²** になります。LD＋Kは27.52m²で、図面に書かれた27.22m²とは約1%の差があります。境界の基準や認識ずれが原因の候補ですが確定はできておらず、数値が近いというだけで精度を保証することはできません。
 
-UIは図面・表・辺番号を連動させ、警告から対象を確認できる構成です。ズーム、ドラッグ、CSV、狭い画面とキーボード操作に対応します。計算はサンプル、境界条件、変更前後の比較で検証し、高速化時も数値・ID・警告・配列順を確認します。
+UIは図面・表・辺番号を連動させ、警告から対象へたどれるようにしました。ズーム、ドラッグ、CSV、狭い画面とキーボード操作に対応しています。計算はサンプル、境界条件、変更前後の比較で検証し、高速化のときも数値・ID・警告・配列の順序が変わっていないことを確認しました。
 
 初期プロンプトの要旨と設計上の工夫（原文未確認のため、課題文・設計記録から再構成）：
 
@@ -162,13 +162,13 @@ flowchart TD
     V --> H["課題要件と照合し、人が採否を判断"]
 ```
 
-共通プロンプトは `.claude/scripts/`、役割は `.claude/agents/`、検討・レビュー記録は `floorplan-analyzer/docs/reviews/` に保存しています。未実施の検証を成功扱いにはしません。
+共通プロンプトは `.claude/scripts/`、役割は `.claude/agents/`、検討やレビューの記録は `floorplan-analyzer/docs/reviews/` に残しています。実施していない検証を成功扱いにはしていません。
 
-初回は `floorplan-analyzer/` で `backend/.venv/bin/python -m pip install -r backend/requirements-dev.txt` を実行し、テスト用依存も導入してください（仮想環境は起動スクリプトで作成）。その後、リポジトリ直下で検証します。
+初回は `floorplan-analyzer/` で `backend/.venv/bin/python -m pip install -r backend/requirements-dev.txt` を実行し、テスト用の依存も入れてください（仮想環境は起動スクリプトが作ります）。その後、リポジトリ直下で検証します。
 
 ```bash
 .claude/scripts/verify.sh quick  # pytest・型検査・Vitest
 .claude/scripts/verify.sh all    # 上記と本番ビルド
 ```
 
-通常のコード変更は作業ブランチで検証し、レビュー後に `feature/kimura` へ統合します。mainへの反映はユーザーの明示的な指示で行います。詳細は [開発手順](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/orchestration.md)、参考文献・追加検証は [資料一覧](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/documents.md) を参照してください。
+通常のコード変更は作業ブランチで検証し、レビューを経て `feature/kimura` に統合しています。mainへの反映は私が手動で行います。詳細は [開発手順](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/orchestration.md)、参考文献と追加の検証は [資料一覧](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/documents.md) を参照してください。
