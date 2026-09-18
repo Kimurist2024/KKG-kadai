@@ -1,184 +1,170 @@
-# 平面図解析プロジェクト
+# 平面図 面積・壁面積 解析アプリ
 
-部屋・壁・扉の輪郭を含む JSON から、部屋ごとの床面積・周長・壁面積を計算する Web アプリです。
-図面と結果表を連動させ、どの辺・線分を根拠に計算したか確認できます。
-画面は JSON 入力と課題指定の固定条件での解析に絞り、画像 AI の入力欄は表示しません。CSV 出力は利用できます。
+> `main` ブランチには説明資料を掲載しています。アプリ本体は [feature/kimura](https://github.com/Kimurist2024/KKG-kadai/tree/feature/kimura) を参照してください。以下の起動手順は同ブランチをチェックアウトし、`floorplan-analyzer/` を作業ディレクトリとして実行します（`.claude/scripts/` のコマンドはリポジトリ直下で実行）。
 
-フロントエンドは **Next.js / React / TypeScript**、バックエンドは **FastAPI / Python** です。
-数値の計算はバックエンド、図面・表・計算式の表示や CSV 出力はフロントエンドが担当します。
+公開サイト: https://floorplan-analyzer-taupe.vercel.app （2026-09-18 に API 疎通を確認。画像 AI は無効。今回の確認では公開環境の解析処理・画面操作は再検証していません）
 
-## フォルダ・ファイル構成
+**部屋・壁・ドアマスク JSON** から、部屋ごとの **床面積・周長・壁面積** を算出する Web アプリです。
+提出用の画面は JSON アップロードと固定条件での解析に絞っています。画像 AI の入力欄は表示しません。
 
-主要なファイルを示します。アプリ本体は `floorplan-analyzer/` にあります。
+- フロントエンド: Next.js 16.3.5 App Router / React 19.3.0 / TypeScript 5.9.3（`frontend/package-lock.json` の固定値）。図面は SVG で描画します。
+- バックエンド: Python / FastAPI / Pydantic 2 / Shapely 2.0 系。Uvicorn で起動し、座標から面積を計算します。
+- 公開用設定: Vercel Services で Next.js と FastAPI を分離。`/api/*` は FastAPI、それ以外は Next.js に振り分けます。
+- 別の配置方法: Docker Compose と AWS ECS Fargate 用 Terraform を同梱。ローカル・Compose・AWS では Next.js の API プロキシを使います。
+- 画像 AI: HTTPX 経由の OpenAI Responses API 呼び出しを任意機能として保持。通常画面には入力欄がなく、JSON 解析には AI 設定は不要です。
 
-```text
-課題（共有用）/
-├── README.md                         # 全体構成・アルゴリズムの工夫（このファイル）
-├── .github/workflows/
-│   ├── ci.yml                        # テスト・ビルドの自動実行
-│   └── deploy.yml                    # AWS への手動デプロイ
-├── AGENTS.md / .claude/               # 開発エージェントの指示・担当定義
-├── 部屋・壁・ドアマスク.json           # 課題で共有された入力データ
-└── floorplan-analyzer/
-    ├── README.md                     # 起動方法・使い方・API 仕様
-    ├── ARCHITECTURE.md               # 処理の流れ・コードを読む順番
-    ├── CONTRIBUTING.md               # 開発・テストの手順
-    ├── frontend/
-    │   ├── src/
-    │   │   ├── app/
-    │   │   │   ├── page.tsx          # ページの入口
-    │   │   │   ├── layout.tsx        # 共通レイアウト
-    │   │   │   └── api/[...path]/route.ts # FastAPI への中継
-    │   │   ├── App.tsx              # 読込・設定・図面・結果表示の連携
-    │   │   ├── components/
-    │   │   │   ├── UploadPanel.tsx   # JSON の選択・アップロード
-    │   │   │   ├── AiImportPanel.tsx # 画像から輪郭候補を作成
-    │   │   │   ├── FloorPlanView.tsx # 図面・部屋・壁・扉の描画
-    │   │   │   ├── RoomTable.tsx     # 部屋別の結果一覧・CSV 出力
-    │   │   │   └── RoomDetail.tsx    # 選択部屋の計算式・辺ごとの内訳
-    │   │   ├── hooks/
-    │   │   │   ├── useAnalysis.ts   # 解析状態と通信・ファイル切替の管理
-    │   │   │   └── usePlanPan.ts    # 図面のドラッグ移動
-    │   │   ├── api.ts / types.ts    # API 呼出し・入出力の型
-    │   │   ├── viewport.ts          # 表示倍率・フィット範囲の計算
-    │   │   ├── format.ts            # 数値・単位・CSV の整形
-    │   │   ├── warnings.ts          # 警告の分類・表示用情報
-    │   │   └── styles.css           # 画面のスタイル
-    │   ├── public/                 # 配信用サンプル
-    │   └── package.json / Dockerfile
-    ├── test/gpt-6/              # テストを集約（frontend/・backend/）
-    ├── backend/
-    │   ├── app/
-    │   │   ├── main.py             # API の入口・リクエスト検証
-    │   │   ├── schemas.py          # 入力・計算条件・結果のデータ定義
-    │   │   ├── analyzer.py         # 部屋・辺の解析と全体集計
-    │   │   ├── geometry.py         # 面積・射影・区間の計算
-    │   │   ├── topology.py         # 外周・穴の検証と重複領域の変換
-    │   │   ├── spatial.py          # STRtree による候補検索
-    │   │   ├── analysis_cache.py   # 幾何結果の再利用・実寸への再換算
-    │   │   └── ai.py / ai_schemas.py # 画像 AI の呼出し・候補の検証
-    │   ├── benchmarks/            # 性能計測と変更前の固定実装
-    │   └── requirements*.txt / Dockerfile
-    ├── scripts/
-    │   ├── start.sh / stop.sh      # ローカル環境の起動・停止
-    │   └── validation/            # 外部図面の検算・レポート生成
-    ├── config/env.example         # 環境変数の設定例
-    ├── sample/                    # 同梱の解析サンプル
-    ├── docs/
-    │   ├── README.md              # 資料一覧
-    │   ├── images/                # 説明用の画像
-    │   ├── validation/            # 検証結果・計測データ
-    │   ├── reviews/               # 過去のレビュー記録
-    │   └── legacy/                # 過去の設定資料
-    ├── infra/terraform/           # AWS インフラの定義
-    ├── compose.yaml               # フロント・バックをコンテナで起動
-    ├── vercel.json                # Vercel のサービス・ルーティング設定
-    ├── api/index.py / requirements.txt # 旧単一 Function 構成の互換用
-    └── start.sh / stop.sh          # 従来の起動・停止コマンドとの互換用
+部屋選択時の表示処理の改善と計測結果は [性能検証](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/selection-performance.md) を参照してください。
+面積・壁・扉の計算高速化と変更前後の全項目比較は [アルゴリズム性能検証](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/validation/algorithm-performance/report.md) を参照してください。
+直前の実装を基準にした最新の高速化・浮動小数点の完全一致検証・論文調査は [計算結果を変えない高速化](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/validation/exact-speed/exact-speed.md) にあります。100倍の目標は未達です。
+追加の5倍高速化に向けた [端点イベント走査の実測](floorplan-analyzer/docs/validation/interval-sweep/interval-sweep.md) では、人工的な1,024頂点の輪郭で初回解析が7.9〜11.1倍になりました。同梱図面はほぼ同速で、全入力で5倍の目標は未達です。
+
+応募要件との対応と動作確認の範囲は [技術構成と検証状況](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/architecture.md)、AWS の手順は [インフラ手順](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/infra/deployment.md) を参照してください。
+
+![概要画面](floorplan-analyzer/docs/images/screenshot_overview.png)
+![部屋を選択した画面](floorplan-analyzer/docs/images/screenshot_room_detail.png)
+
+---
+
+## 1. 起動・操作
+
+Python 3.12・Node.js 22 を推奨します（CI・Docker と同じ構成。Node.js の指定下限は20.9）。以下は `floorplan-analyzer/` で実行してください。
+
+```bash
+./scripts/start.sh   # 起動完了後、http://localhost:5173 を開く
+./scripts/stop.sh    # 停止
 ```
 
-`test/gpt-6/frontend/` にテスト本体、その下の `fixtures/` に固定データを置いています。
-GitHub Actions のリポジトリルートはこの階層、Vercel のプロジェクトルートは
-`floorplan-analyzer/` です。現在の Vercel 構成では `api/index.py` を経由せず、
-`backend/app/main.py` を起点に FastAPI を実行します。
+起動時は8000/5173番を使用中のプロセスを停止し、依存関係のセットアップとサーバー起動を行います。独立した処理は並列化しています。JSON解析にAIキーは不要です。
 
-この階層の課題 PDF・元 JSON・画像は受領資料、ZIP は作成時点の提出用スナップショットです。
-現在の実装はアプリフォルダを参照してください。課題本文は PDF、提出方法やラベルの補足は `kadai.md` を確認してください。
+1. 初回は同梱サンプルを表示します。操作説明は画面上部の「はじめての方へ」から確認できます。
+2. 自分のJSONを選択またはドロップすると、固定条件で解析します。
+3. 部屋を図面・表から選ぶと、面積・周長と辺ごとの内訳を確認できます。
+4. 拡大・ドラッグ・レイヤー切替で図面を確認し、CSVで結果を保存できます。
 
-## アルゴリズムの工夫
+計算条件は **天井高2.4m、ドア高2.0m、96.7px＝1.365m** です。表示倍率は計算値に影響しません。通常画面では画像AI入力と幾何補正を無効にしています。
 
-処理は **入力検証 → 部屋・壁・扉の分類 → 各辺への対応付け → 部屋別集計 → 重複領域の確認**
-の順に進みます。結果には計算値だけでなく、採用した線分の ID と区間を含めます。
+ローカルのAPI疎通確認は `http://127.0.0.1:8000/api/health`、仕様は `http://127.0.0.1:8000/docs` です。8000番にはアプリ画面はありません。コンテナ起動は `docker compose up --build`（画面は `http://localhost:3000`）。Compose はホストへバックエンドの8000番を公開しません。
 
-### 1. 頂点から面積・周長を再計算する
+## 2. 構成と役割
 
-`geometry.py` でシューレースの公式により床面積を、隣接頂点間の距離の合計により周長を求めます。
-JSON に記載された面積をそのまま採用せず、再計算した床面積との差が 1 px² を超える場合は警告します。
+- `frontend/`：Next.js・React・TypeScript。図面、結果表、計算式、CSVを担当。
+- `backend/app/`：FastAPI。入力検証と幾何計算を一元化。
+- `test/gpt-6/`：フロント・バックのテスト。`backend/benchmarks/`：性能比較。
+- `sample/`：同梱図面。`docs/`：設計・参考文献・検証記録。
+- `infra/terraform/`：AWS構成。`scripts/`：起動・停止ツール。
 
-- 床面積：`（外周面積 − 穴の面積の合計）× (m/px)²`
-- 周長：`（外周長 ＋ 穴の周長の合計）× (m/px)`
-- 実寸換算：`m/px = 基準の実寸 [m] ÷ 基準のピクセル距離 [px]`
+ブラウザは同一オリジンの `/api/*` に通信します。環境による経路の違いは次のとおりです。
 
-画面からの解析は天井高 2.4 m・ドア高 2.0 m・96.7 px = 1.365 m に固定しています。
-画面のズーム倍率は表示だけに使い、実寸換算には影響させません。
-
-### 2. 壁・扉を辺上の区間に変換する
-
-部屋の輪郭と壁線分は数 px ずれていることがあります。
-そこで線分の完全一致を求めず、辺との角度が 10° 以内で、両端が辺の直線から許容距離以内にある
-線分を辺上へ射影します。射影した区間は辺の始点から終点までの範囲に切り詰めます。
-長い壁が複数の部屋にまたがっていても、各部屋に対応する部分を取り出せます。
-
-壁区間は **重なりの併合 → 極短ノイズの除去 → 許容誤差以内の隙間の併合 → 端点への補完**
-の順に処理します。ノイズ除去を先に行うことで、短い断片が補完によって壁扱いされるのを防ぎます。
-許容誤差以下の小さな開口も埋まるため、許容誤差の設定による限界は残ります。
-
-### 3. 壁のない開口と扉の控除を分ける
-
-辺全体から壁区間を除いた部分を「壁なし区間」とし、壁面積に含めません。
-扉は壁区間との共通部分だけを控除します。
-扉ごとに交差を求めてから併合するため、対応しない扉の ID が隣の扉に混ざりません。
-
-```text
-辺の壁面積 = 壁あり長 × 天井高 − 控除対象の扉幅 × 扉高
-部屋の壁面積 = 各辺の壁あり面積の合計 − 各辺の扉控除面積の合計
-```
-
-扉部分で壁線が途切れた入力では、扉の両端が隙間の両側の壁に対応する場合だけ、
-隙間を壁区間として補完してから扉面積を控除します。これにより扉上部の壁を計上します。
-補完箇所は結果に残し、警告・図面表示で確認できます。
-有効な壁がない場合や、部屋に対応する壁が少ない場合も警告します。
-共有壁は各部屋の内壁として両面を計上し、窓は入力にないため控除しません。
-
-### 4. 穴・重複を元の座標で扱う
-
-`topology.py` と `analyzer.py` で Shapely を使い、外周・穴の妥当性、部屋同士の交差、
-全部屋の和集合を計算します。メッシュ近似や領域の移動は行いません。
-自己交差・外周にはみ出す穴などを含む部屋は、自動で形を修正せず警告して集計から除外します。
-
-重複があっても部屋別面積は変更せず、次の値を併記します。
-
-- 部屋別面積の合計
-- 和集合の面積（重複を除いた床面積）
-- 両者の差（重複計上分）
-
-三重以上の重複に備え、重複計上分はペアごとの交差面積の合計ではなく、和集合との差で求めます。
-重複箇所は紫斜線で表示し、どの部屋に属するか人が確認できるようにしています。
-
-### 5. 同じ計算を減らして高速化する
-
-| 工夫 | 実装箇所 | 減らす処理・維持する条件 |
+| 環境 | API の経路 | 設定の根拠 |
 |---|---|---|
-| 扉の射影結果を再利用 | `analyzer.py` | 扉補完と控除で同じ射影を繰り返さない |
-| 区間を開始位置順に走査 | `geometry.py` | 交差しない区間をポインタで読み飛ばす。相手側区間が重複するときは全比較に戻す |
-| STRtree で候補を絞る | `spatial.py` | 壁・扉と部屋の全組合せを減らす。最終的な角度・距離・交差の判定は維持する |
-| 幾何結果をキャッシュ | `analysis_cache.py` | 同じ輪郭・許容誤差なら、縮尺や高さの変更時に換算・集計だけをやり直す |
+| ローカル | Next.js :5173 → FastAPI :8000 | `scripts/start.sh`、`frontend/src/app/api/[...path]/route.ts` |
+| Vercel | Services のルーティング → FastAPI（Next.js のプロキシを通さない） | `vercel.json` |
+| Compose | Next.js :3000 → backend:8000 | `compose.yaml` |
+| AWS（構成を同梱） | HTTPS ALB → Next.js :3000 → 同じタスクの FastAPI :8000 | `infra/terraform/app/main.tf` |
 
-少数の線分・部屋ではインデックス構築の負担を避けて全件比較します。
-キャッシュはプロセス内で最大 8 件・16 MiB・5 分間に制限し、画像本体は保存しません。
-別インスタンス・期限切れ・輪郭や許容誤差の変更時は再計算します。
-浮動小数点の丸め差を避けるため、キャッシュ利用時も加算・乗算の順序を通常計算に揃えています。
+プロキシの接続先はサーバー側の `API_PROXY_TARGET` で指定します。旧単一Function用の `api/index.py` は互換用に残っていますが、現在の Vercel Services 設定では使用しません。アプリ直下の `requirements.txt` は `backend/requirements.txt` を参照します。
 
-### 6. 計測と結果比較で変更を確認する
+数値はバックエンドで計算し、表示時だけ丸めます。元画像はブラウザでも取り出して表示しますが、アップロードするJSON自体は画像データを含めてバックエンドに送信します。解析レスポンスには画像を含めません。座標・区間計算はPython、多角形の穴・重複・和集合はShapely/GEOSが担当します。
 
-2026-09-14 UTC のローカル計測では、550 部屋の人工入力の初回解析が
-**1,627.138 ms → 371.615 ms**、高さ変更時は **1,631.991 ms → 99.503 ms** に短縮しました（中央値）。
-一方、11 部屋のサンプルの初回解析はキャッシュ準備のため **3.000 ms → 4.152 ms** に増えています。
-小規模入力で各手法が必ず速くなるわけではありません。
+主要APIは `POST /api/analyze`（multipartの `file`）と `POST /api/analyze/json`（JSONボディ）です。部屋別・全体の集計に加え、各辺の区間と根拠ID、警告を返します。ファイル版は不正JSONを400、容量超過を413で通知し、形式・設定の検証エラーは422です。通常画面の条件は固定ですが、APIには条件指定・研究用幾何補正の設定が残っています。
 
-これはプロセス内の解析時間で、HTTP 通信・画面描画・クラウドの起動時間を含みません。
-550 部屋のデータはサンプルを離れた位置へ複製した人工入力です。
-高速化前後の 40 レスポンス比較では、数値 1,015,292 項目の差は 0 で、警告・ID・配列順も一致しました。
-計測条件、生データ、再現手順は [アルゴリズム性能検証](floorplan-analyzer/docs/validation/algorithm-performance/report.md)
-に記録しています。可読性整理後の追加比較は [ARCHITECTURE](floorplan-analyzer/ARCHITECTURE.md) を参照してください。
+GitHub Actions は Python/フロントエンドのテスト・本番ビルド・Compose疎通・Terraform検証を定義しています。AWS更新は main 対象の手動実行で、CI成功と環境設定が必要です。現在の説明資料だけの main では実行できず、コード・workflow の統合が前提です。構成ファイルの存在は AWS での稼働確認を意味しません。
 
-## 起動・開発・詳細資料
+詳しい責務は [ARCHITECTURE](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/ARCHITECTURE.md)、開発手順は [CONTRIBUTING](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/CONTRIBUTING.md)、環境変数・配置は [技術構成](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/architecture.md) と [インフラ手順](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/infra/deployment.md) を参照してください。
 
-| 目的 | 入口 |
-|---|---|
-| 起動方法・操作・API 仕様 | [アプリ README](floorplan-analyzer/README.md) |
-| 処理の流れ・コードを読む順番 | [ARCHITECTURE](floorplan-analyzer/ARCHITECTURE.md) |
-| 開発・テスト・変更手順 | [CONTRIBUTING](floorplan-analyzer/CONTRIBUTING.md) |
-| 穴・重複・扉補完の仕様 | [領域の拡張](floorplan-analyzer/docs/geometry-upgrade.md) |
-| 設計・検証・過去の記録 | [資料一覧](floorplan-analyzer/docs/README.md) |
-| コンテナ・AWS デプロイ | [インフラ手順](floorplan-analyzer/infra/README.md) |
+## 3. 面積計算の考え方
+
+### 床面積・周長
+
+入力を部屋（`isLine` が真でない輪郭）、壁（線分・`label_id=2`）、ドア（線分・`label_id=3`）へ分類します。未命名の部屋も対象です。
+
+床面積は、頂点の外積を順番に足す **シューレースの公式** で求めます。穴の面積は差し引き、周長は外周と穴の各辺の長さを合計します。長さには `1.365/96.7`、面積にはその二乗を掛けて実寸へ換算します。JSON記載の面積をそのまま採用せず、頂点から再計算します。
+
+### 壁面積・ドア控除
+
+輪郭と壁線は完全には一致しないため、部屋の各辺へ線分を投影し、「辺のどの範囲に壁があるか」を区間として求めます。
+
+1. **対応付け**：角度差10°以内、壁線の両端が辺の延長線から10px以内なら射影し、辺の外側を切り落とします。
+2. **壁区間の整理**：重複を併合し、極短ノイズを除去してから、小さな隙間と端点のずれを補完します。
+3. **開口の特定**：辺全体から壁あり区間を除いた部分を「壁なし」とします。
+4. **ドア控除**：ドアごとに射影し、壁と重なる区間だけを控除します。両側の壁の隙間とドアが対応する場合は壁区間を補完し、警告します。
+5. **集計**：各辺の結果を部屋ごとに合計します。
+
+`壁面積 = 壁あり長[m] × 2.4m − 控除ドア幅[m] × 2.0m`
+
+「×2」はドアの枚数ではなく高さです。ドア上部0.4m分は壁として残ります。採用した線分IDと区間を保持し、図面・表・計算式から根拠を追える設計です。ドアを先にまとめず、壁との交差を個別に取ることで、対応しないドアのIDが混ざるのを防ぎます。
+
+## 4. R-treeによる高速化
+
+
+![同じ線分a1・a2・a3を、配置図からR-treeの候補検索、最終判定まで追う流れ](floorplan-analyzer/docs/images/rtree-candidate-search-v2.png)
+
+図の読み方：① 橙の輪郭の下辺が計算対象で、破線はその周囲の検索範囲です。A・B は壁そのものではなく、線分をまとめた領域です。② B は領域ごと、a3 は個別の外接長方形が重ならないため除外し、a1・a2 が候補に残ります。③ 同じ候補を精密に判定し、平行で近い a1 を採用、垂直な a2 を角度で除外します。配置・縮尺・木の分岐は説明用の模式図です。
+
+辺がE本、壁・ドア線分がN本なら、全件比較はE×N組になります。これを減らすため、Shapelyの **STRtree（R-tree系の空間インデックス）** を使います。
+
+各線分をx軸・y軸に平行な長方形で囲み、近い長方形を大きな長方形にまとめて階層化します。検索範囲と上位の長方形が重ならなければ、その中の線分を一本ずつ調べる必要がありません。遠い線分の集団をまとめて除外する仕組みです。
+
+検索の基準は部屋の中心ではなく、計算対象の1本の辺です。その外接長方形を上下左右に10pxと微小な誤差対策分だけ広げ、x・y両方向で重なる候補を探します。これは候補の絞り込みにすぎず、最終的には角度・垂直距離・射影区間で対応を判定します。斜めの辺にも同じ手順を使います。
+
+検索にかかる時間は通常O(log N＋k)（kは候補数）が目安ですが、線分が密集した配置ではほぼ全件が候補として残ります。木の構築や候補の並べ替えにも時間がかかるため、最悪の場合まで速くなるとは限りません。壁・ドアがそれぞれ64本未満のときは、木を作らずに全件を確認します。候補は元の入力順に並べ直してから処理し、計算の順序を変えないようにしています。
+
+同じ入力の幾何結果は最大8件・16MiB・5分間、プロセス内で再利用します。追加の端点イベント走査では重複区間や多頂点輪郭の不要な比較を減らします。ビームサーチのように候補を上位だけに打ち切る近似は使いません。速度は比較元・入力・キャッシュ条件で変わるため、実測の範囲は冒頭の検証資料に分けて記録しています。
+
+## 5. 輪郭の基準と限界
+
+[図が表示されない場合はこちら](floorplan-analyzer/docs/images/room-boundary-wall-reference-v2.png)
+
+![部屋の輪郭が内法・壁芯を通る場合と認識ずれの比較](floorplan-analyzer/docs/images/room-boundary-wall-reference-v2.png)
+
+この図は概念図です。同梱データの輪郭基準と実際の壁厚は未確定です。
+
+- **内法**：室内側の床面積を求めるなら、原則として壁厚補正は不要。
+- **壁芯**：内法へ変換するには壁厚が必要。壁のある辺を室内側へ動かし、角を再構成する。
+- **認識ずれ**：まず壁との対応と基準を確認する。一律の移動では誤差を増やす場合がある。
+
+壁芯から内法への変換と認識誤差の修正は別です。現在の通常画面は入力輪郭で計算し、壁厚による床面積補正は行いません。10pxの許容距離は壁厚ではありません。研究用の補正実装は [幾何補正の説明](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/geometry-regularization.md) にあります。
+
+そのほか、次の制約があります。
+
+- 共有壁は部屋ごとの内壁として両面計上します。窓は控除対象外です。
+- 小さな隙間を補完するため、実際の開口を埋める可能性があります。近接した平行辺では同じ線分が両方に対応する場合があります。
+- 自己交差・面積0・不正な穴は警告付きで除外します。部屋間の重複は警告し、部屋別面積は変更せず和集合面積を併記します。
+- 壁不足の警告や対応率20%未満は確認の目安です。壁面積0や警告なしが実図面の正しさを保証するわけではありません。
+
+## 6. 検証・AIの活用
+
+同梱11部屋の合計は **床面積48.75m²、壁面積155.54m²** です。LD＋Kは27.52m²で、図面記載27.22m²と約1%異なります。境界基準や認識ずれが原因の候補ですが未確定で、近い数値だけでは精度を保証できません。
+
+UIは図面・表・辺番号を連動させ、警告から対象を確認できる構成です。ズーム、ドラッグ、CSV、狭い画面とキーボード操作に対応します。計算はサンプル、境界条件、変更前後の比較で検証し、高速化時も数値・ID・警告・配列順を確認します。
+
+初期プロンプトの要旨と設計上の工夫（原文未確認のため、課題文・設計記録から再構成）：
+
+「JSONから部屋別の面積・周長・壁面積を計算・可視化して」と依頼する構成です。画面・API・幾何計算の責務を分け、数値計算はPythonに集約。AIの提案は課題要件とテストで確認し、採否を判断します。
+
+```mermaid
+flowchart TD
+    P["依頼の要旨：JSONから面積を計算・可視化"] --> D["設計：表示と計算の責務を分離"]
+    subgraph APP["アプリの構造"]
+        U["画面：入力・図面・結果表示"] -->|"JSONを送信"| A["API：入力検証・計算の呼び出し"]
+        A --> G["Python：幾何計算"]
+        G -->|"数値・根拠・警告"| A
+        A -->|"解析結果"| U
+    end
+    D -.-> U
+    D -.-> A
+    D -.-> G
+    APP --> V["テスト・レビューで検証"]
+    V --> H["課題要件と照合し、人が採否を判断"]
+```
+
+共通プロンプトは `.claude/scripts/`、役割は `.claude/agents/`、検討・レビュー記録は `floorplan-analyzer/docs/reviews/` に保存しています。未実施の検証を成功扱いにはしません。
+
+初回は `floorplan-analyzer/` で `backend/.venv/bin/python -m pip install -r backend/requirements-dev.txt` を実行し、テスト用依存も導入してください（仮想環境は起動スクリプトで作成）。その後、リポジトリ直下で検証します。
+
+```bash
+.claude/scripts/verify.sh quick  # pytest・型検査・Vitest
+.claude/scripts/verify.sh all    # 上記と本番ビルド
+```
+
+通常のコード変更は作業ブランチで検証し、レビュー後に `feature/kimura` へ統合します。mainへの反映はユーザーの明示的な指示で行います。詳細は [開発手順](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/orchestration.md)、参考文献・追加検証は [資料一覧](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/documents.md) を参照してください。

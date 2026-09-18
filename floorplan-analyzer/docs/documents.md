@@ -11,9 +11,9 @@
 | 同梱サンプルの部屋別結果 | [サンプルデータでの結果](validation/sample-results.md) |
 | 外部図面に対する計算精度 | [外部図面検証](validation/REPORT.md) |
 | 公開環境の確認 | [Vercelデプロイ記録](vercel-deployment.md) |
-| AWS環境の構築と更新 | [インフラ手順](../infra/README.md) |
+| AWS環境の構築と更新 | [インフラ手順](../infra/deployment.md) |
 | エージェントの役割 | [開発オーケストレーション](orchestration.md) |
-| 過去の設計レビュー | [reviews/](reviews/README.md) |
+| 過去の設計レビュー | [reviews/](reviews/review-index.md) |
 | 配置変更の対応表 | [フォルダ整理](structure.md) |
 
 `images/` は説明用スクリーンショット、`validation/` は入力資料・計測結果・生データ、`legacy/` は過去の資料です。日時付きの検証は、その時点の実装に対する結果として読んでください。

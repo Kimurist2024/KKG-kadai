@@ -7,4 +7,4 @@
 - [第2回レビュー](review_gpt6_codex_2.md)
 - [第3回レビュー](review_gpt6_codex_3.md)
 
-現在の構成は [ARCHITECTURE](../../ARCHITECTURE.md)、資料一覧は [docs/README](../README.md) を参照してください。
+現在の構成は [ARCHITECTURE](../../ARCHITECTURE.md)、資料一覧は [資料一覧](../documents.md) を参照してください。

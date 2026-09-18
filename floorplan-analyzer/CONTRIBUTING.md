@@ -1,6 +1,6 @@
 # 開発ガイド
 
-まず [README](README.md) で起動し、[ARCHITECTURE](ARCHITECTURE.md) で変更対象の責務を確認します。以下は `floorplan-analyzer/` から実行します。
+まず [README](../README.md) で起動し、[ARCHITECTURE](ARCHITECTURE.md) で変更対象の責務を確認します。以下は `floorplan-analyzer/` から実行します。
 
 ## 開発環境
 

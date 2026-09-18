@@ -2,7 +2,7 @@
 
 ユーザー指定（2026-09-14）: computer use は禁止。ブラウザ・ネイティブアプリの UI 自動操作を行わず、サブエージェントにも委譲しない。検証はコード、CLI、HTTP API、コンポーネントテストで進める。以下や個別担当のブラウザ検証指示よりこの指定を優先する。ユーザーが明示的に解除するまで継続する。
 
-実装は `floorplan-analyzer/`。作業前に `floorplan-analyzer/README.md` と `floorplan-analyzer/docs/orchestration.md` を読む。
+実装は `floorplan-analyzer/`。作業前にリポジトリ直下の `README.md` と `floorplan-analyzer/docs/orchestration.md` を読む。
 
 ユーザーは UI・アルゴリズム・Web リサーチの 3 担当によるオーケストレーションを希望している。独立した具体的な作業がある場合、利用可能なサブエージェントへ委譲する。小さな単独作業に全担当を起動しない。
 
