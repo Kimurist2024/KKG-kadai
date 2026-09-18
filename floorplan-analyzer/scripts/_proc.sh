@@ -49,16 +49,21 @@ proc_stop_start_instance() { # proc_stop_start_instance <grace 秒> <start.sh �
   proc_stop "$grace" $tree
 }
 
-# このアプリのディレクトリで動いている start.sh の pid（自分自身と自分の祖先は除く）
+# このアプリで動いている別の start.sh の pid（自分自身・自分の祖先・自分の子孫は除く）
+# ps のコマンド文字列は、空白を含むパスで起動されると途中で分断されるので照合に使わない。
+# シェルのプロセスに絞ったうえで、(1) 作業ディレクトリがこのアプリ、(2) このアプリの scripts/start.sh を
+# 開いている（bash は実行中のスクリプトを開いたままにする）ことで判定する。
 proc_other_starts() { # proc_other_starts <アプリの絶対パス>
-  local app="$1" pid chain=" " p=$$
+  local app="$1" pid skip=" " p=$$
   while [ -n "$p" ] && [ "$p" -gt 1 ]; do
-    chain="$chain$p "
+    skip="$skip$p "
     p="$(ps -o ppid= -p "$p" 2>/dev/null | tr -d ' ')"
   done
-  for pid in $(ps -eo pid=,command= | awk '$2 ~ /(^|\/)(ba)?sh$/ && $3 ~ /scripts\/start\.sh$/ { print $1 }'); do
-    case "$chain" in *" $pid "*) continue ;; esac
-    if [ "$(proc_cwd "$pid")" = "$app" ]; then echo "$pid"; fi
+  for pid in $(proc_descendants $$); do skip="$skip$pid "; done
+  for pid in $(ps -eo pid=,comm= | awk '$2 ~ /(^|\/)-?(ba)?sh$/ { print $1 }'); do
+    case "$skip" in *" $pid "*) continue ;; esac
+    [ "$(proc_cwd "$pid")" = "$app" ] || continue
+    if lsof -a -p "$pid" -Fn 2>/dev/null | grep -qxF "n$app/scripts/start.sh"; then echo "$pid"; fi
   done
 }
 
