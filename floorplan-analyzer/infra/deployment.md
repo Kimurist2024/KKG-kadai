@@ -3,8 +3,8 @@
 Terraform で、Next.js フロントエンドと FastAPI バックエンド向けの小規模な ECS Fargate 環境を構築します。`.github/workflows/` は、`floorplan-analyzer/` と同じ階層の**リポジトリ直下**に配置します。この構成による AWS リソースの作成やイメージの公開はまだ行っていません。
 
 ```text
-Browser → HTTPS ALB → frontend:3000 → localhost:8000 backend → OpenAI
-                       └── one Fargate task, two containers ──┘
+ブラウザ → HTTPS ALB → frontend:3000 → localhost:8000 backend → OpenAI
+                       └── 一つの Fargate タスク、二つのコンテナ ──┘
 ```
 
 VPC には、異なるアベイラビリティゾーンにある二つのパブリックサブネットと、インターネットゲートウェイを配置します。タスクには、ECR、Secrets Manager、ログ、外向きの HTTPS 通信に使うパブリック IPv4 アドレスを割り当て、NAT ゲートウェイを不要にしています。タスクのセキュリティグループは、**ALB のセキュリティグループからのみ**ポート3000への受信を許可します。ポート8000は外部に公開しません。ALB は HTTP を HTTPS にリダイレクトするため、検証済みの既存 ACM 証明書が必要です。通常時のサービスは一つのタスク（0.5 vCPU / 1 GiB）で、ローリングデプロイ中は最大二つのタスクとなるため、複数タスクによる高可用性構成ではありません。ALB、Fargate、パブリック IPv4、ログ、シークレットには料金が発生します。
