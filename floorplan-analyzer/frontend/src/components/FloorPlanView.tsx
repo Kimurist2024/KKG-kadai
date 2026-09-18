@@ -17,6 +17,8 @@ interface Props {
   hoverEdge: number | null;
   selectedEdge: number | null;
   highlightSegmentIds: number[];
+  /** 強調する重複（result.overlaps の番号）。小さな重複でも図面上で見つけられるよう輪で囲む */
+  highlightOverlap?: number | null;
   onSelect: (id: number | null) => void;
   onHover: (id: number | null) => void;
   onHoverEdge: (index: number | null) => void;
@@ -31,6 +33,7 @@ export default function FloorPlanView(props: Props) {
     result, imageUrl, layers, onLayersChange, selectedId, hoverId, hoverEdge, selectedEdge,
     highlightSegmentIds, onSelect, onHover, onHoverEdge, onSelectEdge,
   } = props;
+  const highlightOverlap = props.highlightOverlap ?? null;
   const overlapPattern = useId();
   const { width: W, height: H } = result.image;
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -132,7 +135,21 @@ export default function FloorPlanView(props: Props) {
               );
             })}
 
-          {layers.rooms && result.overlaps?.flatMap((overlap, i) => overlap.regions.map((region, j) => <path key={`overlap-${i}-${j}`} data-overlap="true" d={regionPath(region.vertices, region.holes)} fillRule="evenodd" fill={`url(#${overlapPattern})`} stroke="#a21caf" strokeWidth={unitsPerPx} pointerEvents="none" />))}
+          {layers.rooms && result.overlaps?.flatMap((overlap, i) => overlap.regions.map((region, j) => <path key={`overlap-${i}-${j}`} data-overlap="true" d={regionPath(region.vertices, region.holes)} fillRule="evenodd" fill={`url(#${overlapPattern})`} stroke="#a21caf" strokeWidth={(i === highlightOverlap ? 2.5 : 1) * unitsPerPx} pointerEvents="none" />))}
+          {layers.rooms && highlightOverlap !== null && (() => {
+            // 重複は 0.01 m² 前後と小さいことが多い。白フチ付きの輪で囲み、背景や部屋の塗りの上でも位置が分かるようにする
+            const points = result.overlaps?.[highlightOverlap]?.regions.flatMap((region) => region.vertices) ?? [];
+            if (!points.length) return null;
+            const xs = points.map((p) => p.x), ys = points.map((p) => p.y);
+            const left = Math.min(...xs), right = Math.max(...xs), top = Math.min(...ys), bottom = Math.max(...ys);
+            const r = Math.max(Math.hypot(right - left, bottom - top) / 2 + 6 * unitsPerPx, 14 * unitsPerPx);
+            return (
+              <g data-overlap-focus="true" pointerEvents="none">
+                <circle cx={(left + right) / 2} cy={(top + bottom) / 2} r={r} fill="none" stroke="#fff" strokeWidth={5 * unitsPerPx} />
+                <circle cx={(left + right) / 2} cy={(top + bottom) / 2} r={r} fill="none" stroke="#a21caf" strokeWidth={2.5 * unitsPerPx} />
+              </g>
+            );
+          })()}
 
           {/* 壁・ドア (検出線分) */}
           {layers.walls && <DetectedSegmentLayer segments={result.walls} highlight={highlight} unitsPerPx={unitsPerPx} color={WALL_COLOR} strokeWidth={3} highlightedStrokeWidth={7} haloWidth={12} opacity={0.9} keyPrefix="w" titleKind="壁" />}

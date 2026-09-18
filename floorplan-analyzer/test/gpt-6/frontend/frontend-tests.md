@@ -13,6 +13,7 @@
 | `format.test.ts` | 数値の表示書式 |
 | `fixtures/sample-result.json` | 既存サンプルの解析結果 |
 | `initialLoad.test.tsx` | 初期表示でサンプルを読み込まないこと、`?sample=1` とボタン押下でだけ読み込むこと |
+| `overlapCheck.test.tsx` | 確認事項の「部屋の重複」の要約・並び順・表示と、図面での強調（hover と部屋チップ） |
 
 `frontend/` から実行します。
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { AnalyzeResponse, Layers, Warning, WarningCode } from "./types";
 import { isWallWarning } from "./warnings";
@@ -67,12 +67,18 @@ export default function App() {
     return () => clearTimeout(t);
   }, [updatedAt]);
 
+  // 確認事項の「部屋の重複」と図面の連動。行に合わせている間（hover）と、部屋名を押した後（pinned）に図面で強調する。
+  const [hoverOverlap, setHoverOverlap] = useState<number | null>(null);
+  const [pinnedOverlap, setPinnedOverlap] = useState<number | null>(null);
+
   const selectRoom = useCallback((id: number | null) => {
     setSelectedId(id);
     setSelectedEdge(null);
     setHoverEdge(null);
     setHoverSegments([]);
     setPinnedSegments([]);
+    setHoverOverlap(null);
+    setPinnedOverlap(null);
   }, []);
 
   const handleFile = useCallback(
@@ -145,6 +151,19 @@ export default function App() {
   };
   const hasWarnOnly = warningGroups.some((g) => WARNING_LABELS[g.code].severity === "warn");
 
+  // 部屋の重複: 面積の大きい順に並べ、最大に対する比をバーで示す。index は図面側の強調に使う元の番号。
+  const overlapRows = useMemo(() => {
+    const overlaps = view?.overlaps ?? [];
+    const max = Math.max(0, ...overlaps.map((o) => o.area_m2));
+    return overlaps
+      .map((overlap, index) => ({ overlap, index, ratio: max > 0 ? overlap.area_m2 / max : 0 }))
+      .sort((a, b) => b.overlap.area_m2 - a.overlap.area_m2 || a.index - b.index);
+  }, [view]);
+  const roomName = (id: number) => view?.rooms.find((r) => r.id === id)?.name ?? `#${id}`;
+  const overlapTotal = view?.summary.overlap_floor_area_m2 ?? 0;
+  const overlapShare = view && view.summary.total_floor_area_m2 > 0 ? (overlapTotal / view.summary.total_floor_area_m2) * 100 : null;
+  const overlapSummary = `重複計上 ${fmt(overlapTotal)} m²${overlapShare !== null ? `（床面積合計の ${fmt(overlapShare, 1)}%）` : ""}・最大 ${fmt(overlapRows[0]?.overlap.area_m2 ?? 0)} m²`;
+
   const wallWarnings = view?.warnings.filter(isWallWarning) ?? [];
   const hasChecks = warningGroups.length > 0 || wallWarnings.length > 0 || !!view?.overlaps?.length;
   const selectedRoom = view?.rooms.find((r) => r.id === selectedId) ?? null;
@@ -205,6 +224,7 @@ export default function App() {
                 hoverEdge={hoverEdge}
                 selectedEdge={selectedEdge}
                 highlightSegmentIds={hoverSegments.length ? hoverSegments : pinnedSegments}
+                highlightOverlap={hoverOverlap ?? pinnedOverlap}
                 onSelect={selectRoom}
                 onHover={setHoverId}
                 onHoverEdge={setHoverEdge}
@@ -227,11 +247,20 @@ export default function App() {
               <p className="section-description">表示中の図面に対する検出結果です。対象箇所と入力データを確認してください。</p>
               <div className="result-checks-scroll" role="region" aria-label="確認事項のスクロール領域" tabIndex={0}>
               {!!view?.overlaps?.length && <details className="status warn overlap-check">
-                <summary><span className="check-title">重複箇所を図面で確認</span><span className="check-description">部屋の組み合わせ・重複面積・対象への移動</span></summary>
-                <p>紫の斜線が重複部分です。部屋別の面積は変更せず、合計から重複計上分 {fmt(view.summary.overlap_floor_area_m2 ?? 0)} m² を除いた値を併記しています。どの部屋に属するか確認してください。</p>
-                <ul>{view.overlaps.map((overlap, i) => <li key={i}>{overlap.room_ids.map(id => view.rooms.find(r => r.id === id)?.name ?? `#${id}`).join(" / ")}：{fmt(overlap.area_m2)} m²
-                  {overlap.room_ids.map(id => <button type="button" className="btn btn-link" key={id} onClick={() => { selectRoom(id); scrollTo(planRef); }}>部屋 #{id} を確認</button>)}
-                </li>)}</ul>
+                <summary><span className="check-title">部屋の重複 {view.overlaps.length} か所</span><span className="check-description">{overlapSummary}</span></summary>
+                <p>紫の斜線が重複部分です。部屋別の面積はそのままにして、合計から重複計上分を除いた値を併記しています。行に合わせると図面上の位置を輪で示し、部屋名を押すとその部屋を選んで図面へ移動します。</p>
+                <ul className="overlap-list">{overlapRows.map(({ overlap, index, ratio }) => (
+                  <li key={index} className="overlap-row" onMouseEnter={() => setHoverOverlap(index)} onMouseLeave={() => setHoverOverlap(null)} onFocus={() => setHoverOverlap(index)} onBlur={() => setHoverOverlap(null)}>
+                    <span className="overlap-pair">{overlap.room_ids.map((id, n) => (
+                      <Fragment key={id}>
+                        {n > 0 && <span className="overlap-times" aria-hidden="true">×</span>}
+                        <button type="button" className="room-chip" aria-label={`${roomName(id)}（部屋 #${id}）を選んで図面で確認`} onClick={() => { selectRoom(id); setPinnedOverlap(index); scrollTo(planRef); }}>{roomName(id)}<small>#{id}</small></button>
+                      </Fragment>
+                    ))}</span>
+                    <span className="overlap-area">{overlap.area_m2 < 0.005 ? "0.01 m² 未満" : `${fmt(overlap.area_m2)} m²`}</span>
+                    <span className="overlap-bar" aria-hidden="true"><i style={{ width: `${Math.max(4, ratio * 100)}%` }} /></span>
+                  </li>
+                ))}</ul>
               </details>}
               {wallWarnings.length > 0 && (
                 <div className="status warn" role="alert">
