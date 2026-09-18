@@ -100,7 +100,9 @@ APIの疎通確認は `http://127.0.0.1:8000/api/health`、仕様・リクエス
 
 ## 5. 輪郭の基準と限界
 
-![部屋の輪郭が内法・壁芯を通る場合と認識ずれの比較](floorplan-analyzer/docs/images/room-boundary-wall-reference.png)
+[図が表示されない場合はこちら](floorplan-analyzer/docs/images/room-boundary-wall-reference-v2.png)
+
+![部屋の輪郭が内法・壁芯を通る場合と認識ずれの比較](floorplan-analyzer/docs/images/room-boundary-wall-reference-v2.png)
 
 この図は概念図です。同梱データの輪郭基準と実際の壁厚は未確定です。
 
