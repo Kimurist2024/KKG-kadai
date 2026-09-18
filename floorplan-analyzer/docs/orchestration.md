@@ -60,7 +60,7 @@ build は TypeScript の型検査を含む。仮想環境がなければ README 
 
 ## 1 サイクルの手順
 
-作業は必ず `work/<話題>` ブランチで行い、`feature/kimura` に PR を出す。**`main` には AI が一切触れない**（反映はユーザーが動作確認してから手動で行う）。
+作業は必ず `work/<話題>` ブランチで行い、`feature/kimura` に PR を出す。**`cycle-finish.sh` は `main` に触れない。** `main` への反映はユーザーの指示があるときだけ司令塔が手動で行う（2026-09-18 指定）。`main` は README と、それが参照する `docs/` のファイルだけを置く説明用ブランチなので、アプリ本体はマージせず、`feature/kimura` から該当ファイルだけを直接コミットする。
 
 ```bash
 .claude/scripts/cycle-start.sh <話題>            # feature/kimura の最新から作業ブランチを作る
