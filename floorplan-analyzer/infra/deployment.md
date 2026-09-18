@@ -1,28 +1,28 @@
-# AWS deployment
+# AWS へのデプロイ
 
-Terraform creates a small ECS Fargate deployment for the Next.js frontend and FastAPI backend. `.github/workflows/` belongs at the **repository root**, alongside `floorplan-analyzer/`. This setup has not created AWS resources or published images.
+Terraform で、Next.js フロントエンドと FastAPI バックエンド向けの小規模な ECS Fargate 環境を構築します。`.github/workflows/` は、`floorplan-analyzer/` と同じ階層の**リポジトリ直下**に配置します。この構成による AWS リソースの作成やイメージの公開はまだ行っていません。
 
 ```text
 Browser → HTTPS ALB → frontend:3000 → localhost:8000 backend → OpenAI
                        └── one Fargate task, two containers ──┘
 ```
 
-The VPC has two public subnets in different availability zones and an internet gateway. Tasks receive a public IPv4 address for ECR, Secrets Manager, logs, and outbound HTTPS, avoiding a NAT gateway. Their security group permits inbound port 3000 **only from the ALB security group**. Port 8000 is not exposed externally. The ALB redirects HTTP to HTTPS; an existing validated ACM certificate is required. The steady-state service has one task (0.5 vCPU / 1 GiB), with up to two during rolling deployment, so this is not a multi-task high-availability setup. ALB, Fargate, public IPv4, logs and secrets incur charges.
+VPC には、異なるアベイラビリティゾーンにある二つのパブリックサブネットと、インターネットゲートウェイを配置します。タスクには、ECR、Secrets Manager、ログ、外向きの HTTPS 通信に使うパブリック IPv4 アドレスを割り当て、NAT ゲートウェイを不要にしています。タスクのセキュリティグループは、**ALB のセキュリティグループからのみ**ポート3000への受信を許可します。ポート8000は外部に公開しません。ALB は HTTP を HTTPS にリダイレクトするため、検証済みの既存 ACM 証明書が必要です。通常時のサービスは一つのタスク（0.5 vCPU / 1 GiB）で、ローリングデプロイ中は最大二つのタスクとなるため、複数タスクによる高可用性構成ではありません。ALB、Fargate、パブリック IPv4、ログ、シークレットには料金が発生します。
 
-## Prerequisites
+## 前提条件
 
-- Terraform 1.10+, AWS CLI v2, Docker with buildx; Node.js 22 / Python 3.12 for local verification.
-- AWS credentials with permission to provision the resources (the GitHub deploy role intentionally cannot provision infrastructure).
-- A validated ACM certificate in the selected region and a domain you can point at the ALB.
-- Two existing Secrets Manager secrets in the same region/account, containing **plain strings**, not JSON: the OpenAI API key and an application AI access token. Create their values outside Terraform. Terraform accepts ARNs only; it never reads secret values into state. With a customer-managed KMS key, set `secrets_kms_key_arn` and allow the execution role in the key policy.
-- An existing ECS service-linked role, or provisioning credentials that allow AWS to create it. If necessary, an administrator runs `aws iam create-service-linked-role --aws-service-name ecs.amazonaws.com` once per account.
-- A GitHub repository with this workspace layout. Set the required `openai_model` to a vision model supported by the application and enabled for your OpenAI account. No model is selected automatically.
+- Terraform 1.10+、AWS CLI v2、buildx を備えた Docker が必要です。ローカル検証には Node.js 22 / Python 3.12 を使用します。
+- リソースの作成権限を持つ AWS 認証情報が必要です（GitHub のデプロイ用ロールには、意図的にインフラの作成権限を付与していません）。
+- 選択したリージョンの検証済み ACM 証明書と、ALB を参照するよう設定できるドメインが必要です。
+- 同じリージョン・アカウントに、OpenAI API キーとアプリケーションの AI アクセストークンを格納した、既存の Secrets Manager シークレットが二つ必要です。値は JSON ではなく**プレーンな文字列**にし、Terraform の外部で作成してください。Terraform が受け取るのは ARN のみで、シークレットの値を状態ファイルに読み込むことはありません。カスタマー管理の KMS キーを使う場合は、`secrets_kms_key_arn` を設定し、キーポリシーで実行ロールを許可してください。
+- 既存の ECS サービスリンクロール、または AWS にその作成を許可するプロビジョニング用認証情報が必要です。必要に応じて、管理者がアカウントごとに一度 `aws iam create-service-linked-role --aws-service-name ecs.amazonaws.com` を実行します。
+- このワークスペース構成の GitHub リポジトリが必要です。必須の `openai_model` には、アプリケーションが対応し、利用する OpenAI アカウントで有効になっている画像対応モデルを設定してください。モデルは自動では選択されません。
 
-## First deployment: ECR → images → application
+## 初回デプロイ：ECR → イメージ → アプリケーション
 
-All commands below start in `floorplan-analyzer/`. Two independent Terraform states remove the dependency cycle: `bootstrap` creates only the image repositories; `app` references them after images exist. No `-target` is needed.
+以下のコマンドはすべて `floorplan-analyzer/` から実行します。独立した二つの Terraform 状態により、依存関係の循環を解消しています。`bootstrap` はイメージリポジトリのみを作成し、`app` はイメージが存在する状態でそれらを参照します。`-target` は不要です。
 
-1. Initialize and create the registries with your own AWS credentials:
+1. 自分の AWS 認証情報で初期化し、レジストリを作成します。
 
    ```bash
    terraform -chdir=infra/terraform/bootstrap init
@@ -30,9 +30,9 @@ All commands below start in `floorplan-analyzer/`. Two independent Terraform sta
    terraform -chdir=infra/terraform/bootstrap apply bootstrap.tfplan
    ```
 
-   Both roots default to `ap-northeast-1` and `floorplan-analyzer`. If you change `aws_region` or `project_name`, supply the same values to both roots using their own `terraform.tfvars` files.
+   両方のルート構成の既定値は `ap-northeast-1` と `floorplan-analyzer` です。`aws_region` または `project_name` を変更する場合は、それぞれの `terraform.tfvars` ファイルを使い、両方に同じ値を指定してください。
 
-2. Build and push the **committed revision** using a full commit SHA. Run from a clean checkout; never reuse the tag for changed source. ECR tags are immutable.
+2. 完全なコミット SHA を使い、**コミット済みのリビジョン**をビルドしてプッシュします。未コミットの変更がないチェックアウトから実行し、ソースを変更した後に同じタグを再利用しないでください。ECR のタグは変更不可です。
 
    ```bash
    export AWS_REGION=ap-northeast-1
@@ -44,9 +44,9 @@ All commands below start in `floorplan-analyzer/`. Two independent Terraform sta
    docker buildx build --platform linux/amd64 --push -t "$BACKEND_REPOSITORY:$IMAGE_TAG" backend
    ```
 
-3. Copy `infra/terraform/app/terraform.tfvars.example` to `terraform.tfvars` in the same directory and replace **all** placeholder ARNs, repository names and image URIs. `frontend_image` / `backend_image` require full commit SHA tags or image digests. Set `github_repository` to the exact case-sensitive `owner/repository`.
+3. `infra/terraform/app/terraform.tfvars.example` を同じディレクトリの `terraform.tfvars` にコピーし、プレースホルダーの ARN、リポジトリ名、イメージ URI を**すべて**置き換えてください。`frontend_image` / `backend_image` には、完全なコミット SHA のタグまたはイメージダイジェストが必要です。`github_repository` には、大文字・小文字も含めて正確な `owner/repository` を設定してください。
 
-   An AWS account has at most one OIDC provider for `token.actions.githubusercontent.com`. If one exists, set `github_oidc_provider_arn` to reuse it. Otherwise, Terraform creates it. The role trusts only the exact repository plus the configured GitHub environment, with audience `sts.amazonaws.com`.
+   AWS アカウント内の `token.actions.githubusercontent.com` 用 OIDC プロバイダーは最大一つです。既存のものがある場合は、`github_oidc_provider_arn` を設定して再利用します。ない場合は Terraform が作成します。ロールは、指定したリポジトリと設定済みの GitHub 環境が完全に一致し、対象者が `sts.amazonaws.com` である場合のみ信頼します。
 
    ```bash
    terraform -chdir=infra/terraform/app init
@@ -54,31 +54,31 @@ All commands below start in `floorplan-analyzer/`. Two independent Terraform sta
    terraform -chdir=infra/terraform/app apply app.tfplan
    ```
 
-4. Point a domain covered by the ACM certificate to the `alb_dns_name` output (Route 53 alias using `alb_zone_id`, or a subdomain CNAME). DNS and certificate issuance are intentionally external prerequisites. Verify `https://YOUR_DOMAIN/api/health` returns `{"status":"ok"}` and the UI opens. The ALB DNS hostname itself is not covered by your certificate; do not disable TLS verification.
+4. ACM 証明書の対象ドメインを、出力値 `alb_dns_name` に向けてください（`alb_zone_id` を使う Route 53 のエイリアス、またはサブドメインの CNAME）。DNS の設定と証明書の発行は、意図的に構成外の前提条件としています。`https://YOUR_DOMAIN/api/health` が `{"status":"ok"}` を返し、UI が開くことを確認してください。ALB 自体の DNS ホスト名は利用する証明書の対象外です。TLS 検証を無効にしないでください。
 
-## GitHub configuration and delivery
+## GitHub の設定とデプロイ
 
-Create the GitHub environment `production` (or your chosen `github_environment`). Restrict its deployment branches to `main`; configure required reviewers if your repository plan supports them. The workflow also rejects deployment from other branches. If you use a different environment name, set the **repository-level** variable `DEPLOY_ENVIRONMENT` to that exact name.
+GitHub 環境 `production`（または任意の `github_environment`）を作成します。デプロイ可能なブランチを `main` に制限し、リポジトリのプランが対応していれば必須レビュアーを設定してください。ワークフローでも他のブランチからのデプロイを拒否します。異なる環境名を使う場合は、**リポジトリレベル**の変数 `DEPLOY_ENVIRONMENT` に、その名前を正確に設定してください。
 
-Set these GitHub repository or environment **variables** (no long-lived AWS keys):
+次の GitHub リポジトリまたは環境の**変数**を設定してください（長期有効な AWS キーは使用しません）。
 
-| Variable | Value |
+| 変数 | 値 |
 |---|---|
-| `AWS_REGION` | Region used by both Terraform roots |
-| `AWS_DEPLOY_ROLE_ARN` | app output `github_deploy_role_arn` |
-| `ECS_CLUSTER` | app output `ecs_cluster` |
-| `ECS_SERVICE` | app output `ecs_service` |
-| `ECR_FRONTEND` | bootstrap output `frontend_repository_url`, without tag |
-| `ECR_BACKEND` | bootstrap output `backend_repository_url`, without tag |
-| `APP_URL` | `https://YOUR_DOMAIN` without trailing slash |
+| `AWS_REGION` | 両方の Terraform ルート構成で使用するリージョン |
+| `AWS_DEPLOY_ROLE_ARN` | app の出力値 `github_deploy_role_arn` |
+| `ECS_CLUSTER` | app の出力値 `ecs_cluster` |
+| `ECS_SERVICE` | app の出力値 `ecs_service` |
+| `ECR_FRONTEND` | bootstrap の出力値 `frontend_repository_url`（タグなし） |
+| `ECR_BACKEND` | bootstrap の出力値 `backend_repository_url`（タグなし） |
+| `APP_URL` | 末尾のスラッシュを除いた `https://YOUR_DOMAIN` |
 
-`CI` runs pytest, frontend typecheck/tests/build, a Linux AMD64 Docker Compose build/start with health and sample-upload smoke checks, and Terraform formatting/validation on pull requests and pushes. It does not access AWS credentials. `Deploy to AWS` is manual (`workflow_dispatch`): select `main`. It runs the same CI first, obtains short-lived AWS credentials through OIDC, builds/pushes SHA-tagged images, copies the current task definition with updated image URIs, rolls the service out, waits for stability, verifies the active revision (detecting automatic rollback), then checks the HTTPS health endpoint through the frontend proxy. Rerunning the same commit reuses any existing immutable ECR images. No secret values are given to GitHub or included in Docker build arguments.
+`CI` は、プルリクエストとプッシュ時に、pytest、フロントエンドの型検査・テスト・ビルド、Linux AMD64 向け Docker Compose のビルド・起動とヘルスチェック・サンプルアップロードのスモークテスト、Terraform のフォーマット検査・検証を実行します。AWS 認証情報にはアクセスしません。`Deploy to AWS` は手動実行（`workflow_dispatch`）で、`main` を選択します。最初に同じ CI を実行し、OIDC 経由で短期有効な AWS 認証情報を取得して、SHA タグ付きイメージをビルド・プッシュします。その後、現在のタスク定義をイメージ URI を更新してコピーし、サービスをローリング更新して安定するまで待機します。有効なリビジョンを検証して自動ロールバックを検出し、最後にフロントエンドのプロキシ経由で HTTPS のヘルスエンドポイントを確認します。同じコミットを再実行した場合、既存の変更不可な ECR イメージがあれば再利用します。シークレットの値は GitHub に渡さず、Docker のビルド引数にも含めません。
 
-The deploy role can push only to the two project repositories, update only this ECS service, and pass only its execution/task roles to ECS. `RegisterTaskDefinition` is scoped to this project task family. `GetAuthorizationToken` and `DescribeTaskDefinition` require wildcard resource scope. The application task role has no AWS permissions; the execution role can pull these images, write its logs, and fetch the two specified secrets.
+デプロイ用ロールは、プロジェクトの二つのリポジトリへのプッシュ、この ECS サービスの更新、その実行ロール・タスクロールの ECS への引き渡しのみを許可します。`RegisterTaskDefinition` の対象は、このプロジェクトのタスクファミリーに限定します。`GetAuthorizationToken` と `DescribeTaskDefinition` では、リソースの範囲にワイルドカードが必要です。アプリケーションのタスクロールには AWS 権限を付与しません。実行ロールは、これらのイメージの取得、自身のログの書き込み、指定した二つのシークレットの取得が可能です。
 
-## Infrastructure changes, rotation and rollback
+## インフラの変更、ローテーション、ロールバック
 
-Terraform owns infrastructure and a baseline task definition. GitHub owns the service's active task revision after creation (`ignore_changes = [task_definition]` prevents Terraform from rolling back an image deployment). Therefore changing environment variables, secrets ARNs, CPU/memory, or container configuration in Terraform requires an **explicit rollout** after apply. First set the Terraform image variables to the currently desired SHA/digests, apply, then run with operator credentials:
+Terraform はインフラと基準となるタスク定義を管理します。サービス作成後の有効なタスクリビジョンは GitHub が管理します（`ignore_changes = [task_definition]` により、Terraform がデプロイ済みのイメージを巻き戻すことを防ぎます）。そのため、Terraform で環境変数、シークレットの ARN、CPU・メモリ、コンテナ設定を変更した場合は、適用後に**明示的なローリング更新**が必要です。まず Terraform のイメージ変数を、その時点で使用したい SHA・ダイジェストに設定して適用し、運用者の認証情報で次を実行してください。
 
 ```bash
 export ECS_CLUSTER=$(terraform -chdir=infra/terraform/app output -raw ecs_cluster)
@@ -88,13 +88,13 @@ aws ecs update-service --cluster "$ECS_CLUSTER" --service "$ECS_SERVICE" --task-
 aws ecs wait services-stable --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE"
 ```
 
-Updating the value of an existing secret requires new tasks (`aws ecs update-service ... --force-new-deployment`); running containers do not receive changed values automatically. Do not print or commit the token. Rolling back means selecting a previously healthy task definition ARN with `update-service`, waiting, and checking the public health endpoint. The ECS circuit breaker rolls back failed deployments automatically where a previous successful deployment exists. Keep known-good ECR images for rollback; no automatic image deletion policy is configured.
+既存のシークレットの値を更新した場合は、新しいタスクが必要です（`aws ecs update-service ... --force-new-deployment`）。稼働中のコンテナには、変更後の値は自動で反映されません。トークンを出力したりコミットしたりしないでください。ロールバックでは、以前正常に稼働していたタスク定義の ARN を `update-service` で選び、待機してから公開ヘルスエンドポイントを確認します。ECS のサーキットブレーカーは、過去に成功したデプロイがある場合、失敗したデプロイを自動でロールバックします。ロールバック用に正常動作が確認できた ECR イメージを保持してください。イメージの自動削除ポリシーは設定していません。
 
-The rollout health check verifies API reachability, not model quality or an authenticated paid OpenAI request. Exercise the AI feature separately with an authorized token and representative input after deployment.
+ローリング更新時のヘルスチェックは API への到達性を検証するもので、モデルの品質や認証付きの有料 OpenAI リクエストを検証するものではありません。デプロイ後に、有効なトークンと代表的な入力を使って AI 機能を別途確認してください。
 
-## State and validation
+## 状態管理と検証
 
-The example uses local state by default and never commits state, `.terraform/`, variable values, or plan files. Preserve both independent states securely. For a team, use an existing private encrypted, versioned S3 bucket with separate keys and state locking. Add a local `backend.tf` in each root before `init` (use a different key for `app`):
+この例では既定でローカルの状態ファイルを使い、状態ファイル、`.terraform/`、変数の値、プランファイルはコミットしません。独立した両方の状態ファイルを安全に保管してください。チームで使う場合は、非公開で暗号化とバージョニングを有効にした既存の S3 バケットを使い、別々のキーと状態ロックを設定してください。`init` の前に、各ルート構成にローカルの `backend.tf` を追加します（`app` には異なるキーを使ってください）。
 
 ```hcl
 terraform {
@@ -108,23 +108,23 @@ terraform {
 }
 ```
 
-For an already-initialized root, migrate with `terraform init -migrate-state`. State and plan files still reveal infrastructure identifiers and must be protected even though secrets are not read. CI uses `init -backend=false` and only validates syntax/provider configuration; it does not run a live plan or test AWS permissions, quotas, certificate status or resource availability. Commit both `.terraform.lock.hcl` files. Terraform/provider downloads are required for validation.
+初期化済みのルート構成は、`terraform init -migrate-state` で移行します。シークレットを読み込まなくても、状態ファイルとプランファイルにはインフラの識別子が含まれるため、保護が必要です。CI は `init -backend=false` を使い、構文とプロバイダー設定のみを検証します。実環境に対するプランの実行や、AWS 権限、クォータ、証明書の状態、リソースの利用可否のテストは行いません。両方の `.terraform.lock.hcl` ファイルをコミットしてください。検証には Terraform とプロバイダーのダウンロードが必要です。
 
-To remove a deployment, review `terraform destroy` in `app` first. ECR repositories deliberately refuse deletion when nonempty (`force_delete = false`); decide image retention separately before removing `bootstrap`. Existing secrets, ACM certificates and external state buckets are not managed or deleted by these roots.
+デプロイ環境を削除する場合は、まず `app` の `terraform destroy` を確認してください。ECR リポジトリは、空でない場合に意図的に削除を拒否します（`force_delete = false`）。`bootstrap` を削除する前に、イメージの保持方針を別途決めてください。既存のシークレット、ACM 証明書、外部の状態保存用バケットは、これらのルート構成では管理も削除もしません。
 
-## Verification performed in this workspace
+## このワークスペースで実施した検証
 
-- Terraform 1.10.5: `fmt -check -recursive` passed; `init -backend=false` and `validate` passed for both roots using the signed AWS provider 6.64.0. Both lockfiles are included.
-- actionlint 1.7.12: both workflows passed (`-shellcheck=`; ShellCheck was not installed). All 14 workflow shell blocks also passed `bash -n`.
-- Docker is not installed here, so the Compose build/start and smoke checks are implemented in CI but have not run locally. No repository push, GitHub Actions run, AWS plan/apply, or live deployment has occurred.
+- Terraform 1.10.5：`fmt -check -recursive` に合格しました。署名済みの AWS プロバイダー 6.64.0 を使い、両方のルート構成で `init -backend=false` と `validate` に合格しました。両方のロックファイルを同梱しています。
+- actionlint 1.7.12：両方のワークフローの検査に合格しました（`-shellcheck=`。ShellCheck は未インストールでした）。ワークフロー内のシェルブロック14個も、すべて `bash -n` に合格しました。
+- この環境には Docker がインストールされていないため、Compose のビルド・起動とスモークテストは CI に実装していますが、ローカルでは実行していません。リポジトリへのプッシュ、GitHub Actions の実行、AWS のプラン・適用、実環境へのデプロイはいずれも行っていません。
 
-## Official references
+## 公式の参考資料
 
-Confirmed 2026-09-14:
+確認日：2026-09-14
 
-- [AWS Fargate networking](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-task-networking.html): task public IP, localhost communication and image-pull connectivity.
-- [AWS ECS Secrets Manager environment variables](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/secrets-envvar-secrets-manager.html): execution-role permissions and restart requirements.
-- [GitHub OIDC with AWS](https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-aws): audience and exact repository/environment subject restrictions.
-- [Terraform S3 backend](https://developer.hashicorp.com/terraform/language/backend/s3): state encryption and S3 lockfile configuration.
+- [AWS Fargate のネットワーク](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-task-networking.html)：タスクのパブリック IP、localhost 通信、イメージ取得時の接続についてです。
+- [AWS ECS の Secrets Manager を使った環境変数](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/secrets-envvar-secrets-manager.html)：実行ロールの権限と再起動の要件についてです。
+- [GitHub の AWS 向け OIDC](https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-aws)：対象者と、リポジトリ・環境が完全に一致するサブジェクトの制限についてです。
+- [Terraform の S3 バックエンド](https://developer.hashicorp.com/terraform/language/backend/s3)：状態ファイルの暗号化と S3 ロックファイルの設定についてです。
 
-- [AWS ECS service authorization reference](https://docs.aws.amazon.com/pt_br/service-authorization/latest/reference/list_amazonelasticcontainerservice.html): task-family scope for registration and unscoped describe permission (the English example policy page has an older broader registration example).
+- [AWS ECS のサービス認可リファレンス](https://docs.aws.amazon.com/pt_br/service-authorization/latest/reference/list_amazonelasticcontainerservice.html)：登録時のタスクファミリーへの範囲制限と、リソースの範囲を限定しない参照権限についてです（英語版のポリシー例のページには、登録範囲がより広い古い例が掲載されています）。

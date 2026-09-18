@@ -1,6 +1,6 @@
-# Algorithm performance regression benchmark
+# アルゴリズムの性能回帰ベンチマーク
 
-Run from `backend/`:
+`backend/` から実行してください。
 
 ```sh
 .venv/bin/python -m benchmarks.performance --phase baseline
@@ -8,36 +8,16 @@ Run from `backend/`:
 .venv/bin/python -m pytest -q tests/test_performance_equivalence.py
 ```
 
-`baseline/` is a frozen copy of the application immediately before the requested
-optimization on 2026-09-14. Do not update it to match the implementation under
-test. It deliberately retains its own Pydantic schemas and relative imports.
-`stages/stage1`, `stage2`, `stage3` preserve intermediate implementations.
-They are development-only modules, never imported by `app/`.
+`baseline/` は、依頼された最適化を行う直前の、2026-09-14 時点のアプリケーションを凍結したコピーです。テスト対象の実装に合わせて更新しないでください。独自の Pydantic スキーマと相対インポートを意図的に保持しています。
+`stages/stage1`、`stage2`、`stage3` には途中段階の実装を保存しています。
+これらは開発専用のモジュールで、`app/` からインポートすることはありません。
 
-Results are written to `docs/validation/algorithm-performance/`. Raw millisecond
-samples, nearest-rank p95, median, runtime versions, and baseline file hashes are
-included. Run performance measurement without concurrent builds/tests/other
-benchmarks. `final.json` is the authoritative same-run comparison of baseline,
-intermediate stages and final implementation. Initial `baseline.json` is retained
-as historical pre-change measurement; `stages.json` was an exploratory run and
-had concurrent equivalence work, so is not used for speedup claims.
+結果は `docs/validation/algorithm-performance/` に出力します。ミリ秒単位の生の測定値、最近順位法による p95、中央値、実行環境のバージョン、変更前のファイルのハッシュを含みます。性能測定は、ビルド・テスト・他のベンチマークを同時に実行せずに行ってください。
+`final.json` は、変更前・途中段階・最終実装を同じ実行で比較した結果であり、評価の基準とします。初回の `baseline.json` は変更前の測定履歴として保持しています。`stages.json` は探索的な測定で、同時に同等性の検証作業を行っていたため、高速化の根拠には使用しません。
 
-Input parsing/Pydantic input validation, HTTP and response JSON serialization are
-excluded. Creating the full response model inside `analyze` is included. No warm
-cache key bypass is used: cache lookup costs are timed. Cold includes cache clear
-and full call. Warm scale/height calls start from geometry primed at default
-settings. Baseline/stages are uncached. These are local measurements, not a
-measurement of Vercel or end-user click latency.
+入力の解析・Pydantic による入力検証、HTTP、レスポンスの JSON シリアライズは測定対象外です。`analyze` 内でのレスポンスモデル全体の構築は含みます。キャッシュが準備済みの場合もキー処理を省略せず、キャッシュ検索のコストを計測します。コールド時は、キャッシュのクリアと呼び出し全体を含みます。ウォーム時の縮尺・高さ変更の呼び出しは、既定設定で幾何情報をキャッシュした状態から開始します。変更前・途中段階の実装にはキャッシュがありません。これらはローカル測定であり、Vercel やエンドユーザーのクリック操作の遅延を測定したものではありません。
 
-Fixtures: the shipped 11-room sample, existing handmade hole/door-gap demo, and
-10/50 translated copies of all sample contours (110/550 rooms). Copies receive
-unique contour IDs and are spaced 1200px horizontally/800px vertically; holes
-are also translated if present. Copies retain source area/perimeter metadata.
-Repeated room names exercise suffix and warning order stability. These are
-synthetic scaling workloads, not 110/550 independently collected floor plans.
+テストデータは、同梱の11部屋のサンプル、既存の手作りの穴・ドア隙間デモ、およびサンプルの全輪郭を平行移動して作った10/50組のコピー（110/550部屋）です。コピーには一意の輪郭 ID を付け、水平方向1200px・垂直方向800pxの間隔で配置します。穴がある場合は穴も平行移動します。コピーには元の面積・周長のメタデータを保持します。部屋名の重複により、接尾辞と警告の順序が安定していることを検証します。これらは規模拡大を模した人工的な負荷であり、個別に収集した110/550件の平面図ではありません。
 
-Comparison checks every output field recursively, including order of polygon
-vertices, rooms, intervals, IDs and warnings. Strings/integers/types match exactly.
-Floats are compared at `abs_tol=1e-10`, `rel_tol=1e-12`, with actual maximum
-absolute/relative errors and number of bitwise-different values recorded, so a
-nonzero tolerated difference is never presented as exact equality.
+比較では、多角形の頂点、部屋、区間、ID、警告の順序を含め、すべての出力フィールドを再帰的に確認します。文字列・整数・型は完全一致を確認します。
+浮動小数点数は `abs_tol=1e-10`、`rel_tol=1e-12` で比較し、実際の最大絶対誤差・最大相対誤差と、ビット単位で異なる値の個数を記録します。そのため、許容範囲内でもゼロでない差を完全一致として示すことはありません。
