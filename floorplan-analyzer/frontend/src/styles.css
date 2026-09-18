@@ -68,8 +68,7 @@ code { background: #f1f5f9; padding: 1px 4px; border-radius: 4px; font-size: 12p
 .dropzone-body { max-width: 640px; margin: 0 auto; }
 .dropzone-icon.big { font-size: 40px; }
 .dropzone-title { font-size: 20px; font-weight: 700; margin: 10px 0 6px; line-height: 1.4; }
-.dropzone-lead { max-width: 34em; margin: 0 auto 18px; color: var(--muted); font-size: 14px; }
-.dropzone-hint { color: var(--muted); font-size: 12.5px; line-height: 1.8; margin: 16px 0 0; }
+.dropzone-lead { max-width: 34em; margin: 0 auto 22px; color: var(--text); font-size: 16px; }
 .dropzone-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 .dropzone-details { margin-top: 14px; font-size: 12.5px; color: var(--muted); }
 .dropzone-details summary { cursor: pointer; }
@@ -389,14 +388,18 @@ table.rooms tbody tr.selected td:first-child { border-left-width: 3px; }
    ドロップ領域 1 枚を主役にし、できること・計算条件はその下に静かに置く */
 .app.app-landing { max-width: 880px; padding-top: 40px; gap: 20px; }
 .landing { display: flex; flex-direction: column; gap: 24px; }
-.landing .dropzone { padding: 44px 24px 28px; border: 2px dashed #b9c0c9; border-radius: 12px; background: #fafbfc; }
+.landing .dropzone { padding: 56px 24px 36px; border: 2px dashed #b9c0c9; border-radius: 12px; background: #fafbfc; }
+/* 強調するのは見出しと主ボタンだけ。ほかは通常の太さ・読める大きさにする */
+.landing .dropzone-title { font-size: 28px; margin: 14px 0 8px; }
+.landing .btn-lg { padding: 12px 22px; font-size: 16px; }
+.landing .dropzone-details { margin-top: 20px; font-size: 13px; }
 .landing .dropzone.dragging { border-color: var(--primary); background: var(--accent-bg); }
 .landing .dropzone-icon.big { color: var(--primary); }
-.landing-points { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-.landing-points li { padding-left: 12px; border-left: 2px solid var(--border); }
-.landing-points b { display: block; font-size: 14px; }
-.landing-points span { display: block; margin-top: 2px; color: var(--muted); font-size: 12.5px; }
-.landing .workspace-section { margin-top: 0; padding: 16px 0 0; border: 0; border-top: 1px solid var(--border); border-radius: 0; }
+/* 初期画面の計算条件は 1 行: 小さなラベルと、値を強調したチップだけ */
+.landing .workspace-section { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px 14px; margin-top: 0; padding: 0; border: 0; }
+.landing .workspace-section .section-heading { font-size: 14px; font-weight: 500; color: var(--muted); }
+.landing .conditions { margin-top: 0; gap: 8px; }
+.landing .cond-chip { padding: 5px 12px; font-size: 14px; }
 .formula-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; color: var(--muted); font-size: 12.5px; }
 .formula-list small { font-size: inherit; }
 @media (max-width: 600px) {
@@ -404,5 +407,4 @@ table.rooms tbody tr.selected td:first-child { border-left-width: 3px; }
   .landing .dropzone { padding: 32px 16px 24px; }
   .landing .dropzone-actions { flex-direction: column; }
   .landing .dropzone-actions .btn { width: 100%; }
-  .landing-points { grid-template-columns: 1fr; }
 }
