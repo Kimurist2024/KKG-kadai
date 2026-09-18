@@ -46,12 +46,14 @@ export default function UploadPanel({ fileName, loading, onFile, onLoadSample, c
       {compact ? (
         <div className="dropzone-compact-row">
           <span className="dropzone-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 3H5v18h14V8zM14 3v5h5M8 12h8M8 16h8" /></svg></span>
-          <span className="dropzone-file">{fileName ?? "ファイル未選択"}</span>
+          <span className="dropzone-file">{fileName ?? (loading ? "サンプル図面を読み込み中…" : "ファイル未選択")}</span>
+          {/* 初回の自動読込中は「待てばよい」ことを、完了後はドロップでも読み込めることを伝える */}
+          <span className="muted small dropzone-drop-hint">{loading ? "完了すると図面と結果表が下に表示されます" : "JSON をこの行にドロップしても読み込めます"}</span>
           <span className="spacer" />
           <button type="button" className="btn btn-primary" disabled={loading} onClick={() => inputRef.current?.click()}>
             {fileName ? "別の JSON を選択" : "JSON ファイルを選択"}
           </button>
-          {isSample ? <span className="cond-chip">サンプル表示中</span> : <button type="button" className="btn btn-secondary" disabled={loading} onClick={onLoadSample}>
+          {isSample ? <span className="file-badge">サンプル表示中</span> : !loading && <button type="button" className="btn btn-secondary" onClick={onLoadSample}>
             サンプルを読み込む
           </button>}
         </div>

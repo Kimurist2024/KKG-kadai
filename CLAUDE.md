@@ -12,12 +12,13 @@
 
 ## モデルと実行主体の方針（2026-09-15 ユーザー指定、同日更新）
 
-- **すべて Opus 5 で動かす**（`.claude/settings.json` の `opus[1m]`）。司令塔・全サブエージェント・案出し（設計の選択肢出し、改善点の洗い出し）も Opus。
-- **Fable 5.1 は使わない**（使用制限のため）。ユーザーが明示的に解除するまで `/model fable` へ切り替えない。
-- **コーディング作業はすべて Codex (gpt-6-astra) に委譲する**: ラッパー `.claude/scripts/codex-task.sh <dir> <medium|high> "<プロンプト>"`。`ui-designer` / `algorithm-engineer` は Edit/Write を持たず、仕様化 → Codex 実行 → 検証 → 報告を担う。
+- **既定モデルは Opus 5**（`.claude/settings.json` の `opus[1m]`）。司令塔・アルゴリズム担当・調査担当・案出し（設計の選択肢出し、改善点の洗い出し）は Opus。UI 担当だけは次項のとおり Fable。
+- **UI（`frontend/src/`）の実装は Claude Fable 5.1 が直接編集する**（ユーザー指定 2026-09-17）。司令塔が Fable で動いているときは本人が、そうでなければ `ui-designer`（`model: fable`、Edit/Write あり）に任せる。UI を Codex に委譲しない。
+- **backend（`backend/`）のコーディングは Codex (gpt-6-astra) に委譲する**: ラッパー `.claude/scripts/codex-task.sh <dir> <medium|high> "<プロンプト>"`。`algorithm-engineer` は Edit/Write を持たず、仕様化 → Codex 実行 → 検証 → 報告を担う。
   - `high`: アルゴリズム変更、複数ファイルにまたがる設計判断、状態管理の競合が絡む UI 変更
   - `medium`: テスト追加、単一コンポーネントの表示調整、小さな修正
-- 司令塔自身も原則コードを直接編集せず Codex に任せる。例外は `types.ts` / `api.ts` の同期など数行の統合作業と設定ファイル。
+- 司令塔は backend を直接編集せず Codex に任せる。例外は `types.ts` / `api.ts` の同期など数行の統合作業と設定ファイル。UI は上記のとおり Fable が直接編集してよい。
+- レビューは `review.sh` で Codex が実装とは別セッションで行う。UI は別モデル（Fable が書き Codex が審査）、backend は同じ Codex の別コンテキストによる審査。
 - 検証（pytest / npm test / typecheck / build）は Codex の自己申告に頼らず、担当エージェントまたは司令塔が再実行する。
 
 ## 1 サイクルの完了条件
