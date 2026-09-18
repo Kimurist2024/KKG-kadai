@@ -14,6 +14,6 @@ backend/.venv/bin/python scripts/validation/run_validation.py
 backend/.venv/bin/python scripts/validation/build_report.py
 ```
 
-検証スクリプトは `docs/validation/sources/` の画像を読み、`docs/validation/` の結果を上書きします。過去の結果を保管してから再実行してください。性能ベンチマークはPythonパッケージとして `backend/benchmarks/` に置き、実行方法はそのREADMEを参照します。
+検証スクリプトは `docs/validation/sources/` の画像を読み、`docs/validation/` の結果を上書きします。過去の結果を保管してから再実行してください。性能ベンチマークはPythonパッケージとして `backend/benchmarks/` に置き、実行方法は[ベンチマーク手順](../backend/benchmarks/benchmarks.md)を参照します。
 
 アプリ直下の `start.sh` / `stop.sh` は既存コマンドとの互換用です。処理を変更するときは、このフォルダの実体を編集します。
