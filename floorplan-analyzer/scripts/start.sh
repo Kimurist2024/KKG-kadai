@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 # バックエンド (8000) とフロントエンド (5173) を並列で準備・起動する。
-# 既にポートを使っているプロセスがあれば先に停止する。Ctrl+C で両方止まる。
+# 前回の start.sh が残っていれば子孫ごと停止し、ポートを使っているプロセスも停止してから起動する。Ctrl+C で両方止まる。
 set -euo pipefail
 cd "$(dirname "$0")/.."
+# shellcheck source=scripts/_proc.sh
+. scripts/_proc.sh
+APP_DIR="$(pwd -P)"
+STOP_GRACE="${STOP_GRACE:-5}"   # TERM で終わらないプロセスを KILL に切り替えるまでの秒数
 BACK_PORT="${BACK_PORT:-8000}"
 FRONT_PORT="${FRONT_PORT:-5173}"
 BACK_RELOAD="${BACK_RELOAD:-1}"
@@ -14,34 +18,30 @@ FRONT_SETUP_PID=""
 BACK_READY_PID=""
 FRONT_READY_PID=""
 
-stop_pid() {
-  [ -n "$1" ] || return 0
-  kill "$1" 2>/dev/null || true
-}
-
 cleanup() {
   status=$?
   trap - EXIT INT TERM
-  stop_pid "$BACK_SETUP_PID"
-  stop_pid "$FRONT_SETUP_PID"
-  stop_pid "$BACK_READY_PID"
-  stop_pid "$FRONT_READY_PID"
-  stop_pid "$BACK_PID"
-  stop_pid "$FRONT_PID"
-  wait 2>/dev/null || true
+  # 自分が起動したものを子孫ごと止める。next dev の親は SIGTERM で終わらないことがあるので、
+  # 無期限に wait せず、STOP_GRACE 秒で KILL に切り替える（古い起動が溜まるのを防ぐ）。
+  # shellcheck disable=SC2046
+  proc_stop "$STOP_GRACE" $(proc_descendants $$)
   exit "$status"
 }
 trap cleanup EXIT INT TERM
+
+# ポートを握るプロセスだけを止めると、前回の start.sh と next dev の親が残り続ける。先に前回の起動を子孫ごと止める。
+for other in $(proc_other_starts "$APP_DIR"); do
+  echo "前回の start.sh (PID $other) とその子プロセスを停止します"
+  proc_stop_start_instance "$STOP_GRACE" "$other"
+done
 
 free_port() {
   local pids
   pids=$(lsof -tiTCP:"$1" -sTCP:LISTEN 2>/dev/null || true)
   if [ -n "$pids" ]; then
-    echo "ポート $1 を使用中のプロセス ($pids) を停止します"
-    kill $pids 2>/dev/null || true
-    sleep 1
-    pids=$(lsof -tiTCP:"$1" -sTCP:LISTEN 2>/dev/null || true)
-    [ -n "$pids" ] && kill -9 $pids 2>/dev/null || true
+    echo "ポート $1 を使用中のプロセス ($(echo $pids | tr '\n' ' ')) を停止します"
+    # shellcheck disable=SC2086
+    proc_stop "$STOP_GRACE" $pids
   fi
 }
 
