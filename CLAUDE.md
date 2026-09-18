@@ -8,7 +8,7 @@
 
 ユーザー指定（2026-09-14）: computer use 禁止。ブラウザ・ネイティブアプリの UI 自動操作はサブエージェントも含めて実行しない。コード・CLI・HTTP API・コンポーネントテストで検証する。ユーザーの明示的な解除まで、個別担当のブラウザ検証指示より優先する。
 
-実装本体は `floorplan-analyzer/`（frontend: Next.js/React/TS、backend: Python/FastAPI）。詳細は `floorplan-analyzer/README.md`。
+実装本体は `floorplan-analyzer/`（frontend: Next.js/React/TS、backend: Python/FastAPI）。詳細はリポジトリ直下の `README.md`。
 
 ## モデルと実行主体の方針（2026-09-15 ユーザー指定、同日更新）
 

@@ -64,7 +64,7 @@ AI 呼び出しは `store: false`、自動再試行なし、時間上限付き�
 
 Docker は非 root ユーザーで起動します。Next.js は standalone ビルドで配布し、実行時の `API_PROXY_TARGET` によりバックエンドを切り替えます。Compose はブラウザ向けの 3000 ポートだけをホストの loopback に公開します。
 
-AWS は ALB の HTTPS → Fargate 内の Next.js → 同じタスク内の FastAPI という構成です。秘密値は既存の Secrets Manager から FastAPI に注入し、Terraform へは値ではなく ARN を渡します。初回配置、DNS、証明書、GitHub OIDC 設定とロールバックは [infra/README.md](../infra/README.md) を参照してください。
+AWS は ALB の HTTPS → Fargate 内の Next.js → 同じタスク内の FastAPI という構成です。秘密値は既存の Secrets Manager から FastAPI に注入し、Terraform へは値ではなく ARN を渡します。初回配置、DNS、証明書、GitHub OIDC 設定とロールバックは [インフラ手順](../infra/deployment.md) を参照してください。
 
 GitHub に登録するルートは、`.github/` と `floorplan-analyzer/` が並ぶワークスペース直下を想定しています。アプリフォルダだけをリポジトリのルートにする場合は、workflow の配置とパスを変更する必要があります。
 

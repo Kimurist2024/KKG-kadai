@@ -47,7 +47,7 @@
 - ローカル: `scripts/start.sh` → FastAPI `app.main:app` とNext.js。
 - Docker: `compose.yaml` → 各サービスのDockerfile。Next.jsからFastAPIへ中継。
 - Vercel: `vercel.json` のServices設定。`/api/*` は直接バックエンドへ、それ以外はフロントエンドへ。
-- AWS: `infra/terraform/` と `../.github/workflows/`。手順は [infra/README.md](infra/README.md)。
+- AWS: `infra/terraform/` と `../.github/workflows/`。手順は [インフラ手順](infra/deployment.md)。
 
 `api/index.py` とルートの `requirements.txt` は以前の単一Function方式の互換用です。現在のVercel Services設定では使用しません。ルートの `start.sh` / `stop.sh` も従来コマンド用の委譲先で、実処理は `scripts/` にあります。
 
