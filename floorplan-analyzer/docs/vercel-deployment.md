@@ -1,6 +1,20 @@
 # Vercel デプロイ記録
 
-## 最新: 2026-09-17（feature/kimura 69c083f、UI 改善サイクル 1〜2 を反映）
+## 最新: 2026-09-18（feature/kimura 9c8b32b、画像 AI の削除と初回解析の高速化を反映）
+
+- 公開 URL: https://floorplan-analyzer-taupe.vercel.app（別名 https://floorplan-analyzer-kimu4.vercel.app）
+- Deployment: `dpl_FVhwhathYJG9igkjmFQvGUgC3tDX`（READY / production）
+- 固有 URL: https://floorplan-analyzer-8gv6rfa84-kimu4.vercel.app（Deployment Protection のため直接アクセスはログインが必要。公開 URL は不要）
+- Inspector: https://vercel.com/kimu4/floorplan-analyzer/FVhwhathYJG9igkjmFQvGUgC3tDX
+- 実行: `floorplan-analyzer/` で `npx vercel@59 deploy --prod --scope kimu4 --yes`（Vercel CLI 59.23.1）。作業ツリーは feature/kimura の 9c8b32b で未コミットの変更なし
+- HTTP での確認（computer use は不使用。ブラウザでの画面操作は未確認）:
+  - `/` 200、`/guide` 200 で今回の文言（「要確認」が出ていない部屋も確認対象に含める旨）を含む
+  - `/api/health` は `{"status":"ok"}`。削除した画像 AI の `/api/recognize` は 404
+  - `/api/analyze` に同梱サンプルを multipart 送信して 200（往復約 1.3 秒。コールドスタートを含む）。部屋 11・壁線 21・ドア線 9・警告 20 件（`room_overlap` / `unnamed_room`）でローカルと一致
+- 公開環境とローカル（macOS arm64 / Python 3.9）の応答を全フィールド比較: 構造・文字列・ID・警告文・配列順はすべて一致。数値 1,705 個のうち 26 個が末尾の桁だけ異なり、最大の相対差は 4.01e-14（`summary.overlap_floor_area_m2`）。小数第 3 位で丸めると差は 0 個で、画面表示と CSV には影響しない。床面積合計は公開 48.75334707816534 / ローカル 48.75334707816535、壁面積合計は公開 155.53741974532744 / ローカル 155.53741974532747。実行環境（OS・CPU・Python・GEOS のビルド）の違いによる浮動小数点の末尾差で、ローカルでは変更前の凍結実装と現行の cold / warm / キャッシュ無効がすべて同じ値になることを確認済み
+- 含まれる変更（前回 69c083f 以降でアプリに影響するもの）: 端点イベント走査による高速化（#14）、画像 AI 機能の削除（#28）、使い方ページの文言（#33）、初回解析の高速化（#35）。開発サーバー専用の `allowedDevOrigins`（#36）は本番ビルドに影響しない
+
+## 2026-09-17 の記録（feature/kimura 69c083f、UI 改善サイクル 1〜2 を反映）
 
 - 公開 URL: https://floorplan-analyzer-taupe.vercel.app（別名 https://floorplan-analyzer-kimu4.vercel.app）
 - Deployment: `dpl_HxUt8omQi6FEbLD6NCiRoAa3SbSB`（READY / production）
