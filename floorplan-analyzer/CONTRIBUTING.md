@@ -34,6 +34,8 @@ npm --prefix frontend test
 npm --prefix frontend run build
 ```
 
+まとめて実行するときはリポジトリ直下で `.claude/scripts/verify.sh quick`（pytest・型検査・Vitest）か `verify.sh all`（さらに本番ビルド）を使います。各ステップの全出力と JUnit XML は `.claude/logs/verify/<実行時刻>/` に保存され、コンソールには結果・所要時間・要約が 1 行ずつ出ます。失敗したステップだけログの末尾とパスが表示されます。詳しくは [テストの入口](test/testing.md) を参照してください。
+
 計算速度を変更するときは、同じ入力・設定で結果と時間の両方を比較します。
 
 ```bash
