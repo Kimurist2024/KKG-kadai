@@ -71,3 +71,29 @@ test("keyboard focus keeps the ring even when the mouse leaves; it clears only w
   fireEvent.blur(second, { relatedTarget: document.body }); // 行の外へ
   expect(ring()).toBeNull();
 });
+
+test("pressing a room name pins the overlap with a darker, thicker outline; hovering other rows only previews", () => {
+  const { container, rows } = openOverlaps();
+  const focus = () => container.querySelector<SVGGElement>('[data-overlap-focus="true"]');
+  const haloWidth = () => Number(focus()!.querySelector('[data-overlap-halo="true"]')!.getAttribute("stroke-width"));
+  fireEvent.mouseEnter(rows[0]);
+  expect(focus()!.getAttribute("data-emphasis")).toBe("preview");
+  const previewWidth = haloWidth();
+  expect(focus()!.querySelector('[data-overlap-halo="true"]')!.getAttribute("stroke")).toBe("#a21caf");
+  fireEvent.mouseLeave(rows[0]);
+
+  fireEvent.click(within(rows[0]).getByRole("button", { name: "玄関（部屋 #11）を選んで図面で確認" }));
+  expect(focus()!.getAttribute("data-emphasis")).toBe("strong");
+  expect(haloWidth()).toBeGreaterThan(previewWidth * 2); // 選択中の辺の線（6〜8px）の両側にはみ出す太さ
+  expect(focus()!.querySelector('[data-overlap-halo="true"]')!.getAttribute("stroke")).toBe("#701a75");
+  expect(rows[0].classList.contains("is-pinned")).toBe(true);
+  expect(rows[0].getAttribute("aria-current")).toBe("true");
+  expect(rows[1].classList.contains("is-pinned")).toBe(false);
+
+  fireEvent.mouseEnter(rows[1]); // 別の行はプレビューだけ
+  expect(focus()!.getAttribute("data-emphasis")).toBe("preview");
+  fireEvent.mouseLeave(rows[1]);
+  expect(focus()!.getAttribute("data-emphasis")).toBe("strong"); // 離すと固定中の重複に戻る
+  fireEvent.mouseEnter(rows[0]); // 固定中の行に乗せても弱めない
+  expect(focus()!.getAttribute("data-emphasis")).toBe("strong");
+});

@@ -20,6 +20,8 @@ interface Props {
   highlightSegmentIds: number[];
   /** 強調する重複（result.overlaps の番号）。小さな重複でも図面上で見つけられるよう輪で囲む */
   highlightOverlap?: number | null;
+  /** 重複の強調の強さ。preview = 行に合わせている間の半透明の縁取り、strong = 部屋名を押して固定したときの濃く太い縁取り */
+  overlapEmphasis?: "preview" | "strong";
   onSelect: (id: number | null) => void;
   onHover: (id: number | null) => void;
   onHoverEdge: (index: number | null) => void;
@@ -35,6 +37,7 @@ export default function FloorPlanView(props: Props) {
     highlightSegmentIds, onSelect, onHover, onHoverEdge, onSelectEdge,
   } = props;
   const highlightOverlap = props.highlightOverlap ?? null;
+  const strongOverlap = props.overlapEmphasis === "strong";
   const overlapPattern = useId();
   const { width: W, height: H } = result.image;
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -144,15 +147,19 @@ export default function FloorPlanView(props: Props) {
 
           {layers.rooms && highlightOverlap !== null && (() => {
             // 重複は壁沿いの幅 1〜2px の細い帯になることが多い。外接円で囲むと巨大になって位置が分からなくなるので、
-            // 重複の形そのものを太い半透明の縁取りでなぞる。壁・ドアの線に隠れないよう、それらより上に描く（クリックは透過）。
+            // 重複の形そのものを縁取りでなぞる。壁・ドアの線より上、選択中の辺（番号バッジを隠さないため）より下に描く。
+            // preview: 行に合わせている間の半透明の縁取り。
+            // strong : 部屋名を押して固定したとき。部屋が選択されると辺の線（壁 6px・ドア 8px）が上に重なるので、
+            //          その両側にはみ出す太さ（16px）と濃い色にして、選択中でも重複の位置が分かるようにする。
             const regions = result.overlaps?.[highlightOverlap]?.regions ?? [];
             if (!regions.length) return null;
             const ring = overlapRing(regions.flatMap((region) => region.vertices), unitsPerPx);
+            const color = strongOverlap ? "#701a75" : "#a21caf";
             return (
-              <g data-overlap-focus="true" pointerEvents="none" fill="none" strokeLinejoin="round" strokeLinecap="round">
-                {regions.map((region, j) => <path key={`under-${j}`} d={regionPath(region.vertices, region.holes)} stroke="#fff" strokeOpacity={0.75} strokeWidth={10 * unitsPerPx} />)}
-                {regions.map((region, j) => <path key={`halo-${j}`} data-overlap-halo="true" d={regionPath(region.vertices, region.holes)} stroke="#a21caf" strokeOpacity={0.6} strokeWidth={7 * unitsPerPx} />)}
-                {ring && <circle data-overlap-ring="true" cx={ring.cx} cy={ring.cy} r={ring.r} stroke="#a21caf" strokeWidth={2 * unitsPerPx} />}
+              <g data-overlap-focus="true" data-emphasis={strongOverlap ? "strong" : "preview"} pointerEvents="none" fill="none" strokeLinejoin="round" strokeLinecap="round">
+                {regions.map((region, j) => <path key={`under-${j}`} d={regionPath(region.vertices, region.holes)} stroke="#fff" strokeOpacity={strongOverlap ? 0.9 : 0.75} strokeWidth={(strongOverlap ? 22 : 10) * unitsPerPx} />)}
+                {regions.map((region, j) => <path key={`halo-${j}`} data-overlap-halo="true" d={regionPath(region.vertices, region.holes)} stroke={color} strokeOpacity={strongOverlap ? 1 : 0.6} strokeWidth={(strongOverlap ? 16 : 7) * unitsPerPx} />)}
+                {ring && <circle data-overlap-ring="true" cx={ring.cx} cy={ring.cy} r={ring.r} stroke={color} strokeWidth={(strongOverlap ? 3.5 : 2) * unitsPerPx} />}
               </g>
             );
           })()}
