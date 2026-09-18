@@ -19,7 +19,7 @@
 | `backend/app/topology.py` | 穴を含む多角形の検証・構築 |
 | `backend/app/spatial.py` | STRtreeによる候補の絞り込み |
 | `backend/app/analysis_cache.py` | 幾何結果の保存と縮尺・高さの再計算 |
-| `test/gpt-6/backend/` | 計算・API・キャッシュ・AI応答の回帰テスト |
+| `test/gpt-6/backend/` | 計算・API・キャッシュの回帰テスト |
 | `backend/benchmarks/` | 性能計測コードと変更前・段階別の固定実装 |
 | `scripts/` | 起動・停止、検証レポートの生成 |
 | `config/` | 利用者がコピーして設定する環境変数の例 |

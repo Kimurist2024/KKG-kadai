@@ -153,5 +153,3 @@ export interface Layers {
   doors: boolean;
   labels: boolean;
 }
-
-/** 画像認識が返す確認前の輪郭。面積や縮尺の確定値ではない。 */

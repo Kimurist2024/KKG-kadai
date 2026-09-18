@@ -6,7 +6,7 @@
 test/
 └── gpt-6/
     ├── frontend/   # 表示・操作・API中継・固定データ
-    └── backend/    # 幾何計算・解析API・AI応答・結果一致
+    └── backend/    # 幾何計算・解析API・結果一致
 ```
 
 `floorplan-analyzer/` から実行します。
