@@ -191,11 +191,6 @@ flowchart TD
 ### 公式ドキュメント
 
 - [pydantic_core.to_json](https://docs.pydantic.dev/latest/api/pydantic_core/#pydantic_core.to_json)：Pydantic の JSON 書き出し関数の仕様。キャッシュの書き出しに使いました。
-- [Next.js の配置](https://nextjs.org/docs/app/getting-started/deploying)：本番ビルドと配置方法の確認に使いました。
-- [AWS Fargate のネットワーク](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-task-networking.html)：タスクのパブリック IP、localhost 通信、イメージ取得時の接続の確認に使いました。
-- [GitHub の AWS 向け OIDC](https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-aws)：デプロイ用ロールをリポジトリと環境に限定する設定の確認に使いました。
-- [Terraform の S3 バックエンド](https://developer.hashicorp.com/terraform/language/backend/s3)：状態ファイルの暗号化とロックの設定の確認に使いました。
-- [AWS ECS のサービス認可リファレンス](https://docs.aws.amazon.com/pt_br/service-authorization/latest/reference/list_amazonelasticcontainerservice.html)：タスク定義の登録権限をタスクファミリーに限定する設定の確認に使いました。
 - [OpenAI 公式 AGENTS.md ガイド](https://learn.chatgpt.com/docs/agent-configuration/agents-md)：Codex 向けの指示ファイルの書き方の仕様。開発ハーネスの設定に使いました。
 
 ### 検証に使った外部図面
