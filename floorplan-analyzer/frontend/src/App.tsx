@@ -173,9 +173,11 @@ export default function App() {
   const hasChecks = warningGroups.length > 0 || wallWarnings.length > 0 || !!view?.overlaps?.length;
   const selectedRoom = view?.rooms.find((r) => r.id === selectedId) ?? null;
   const loading = status.state === "loading";
+  // 初期画面（まだ何も読み込んでいない状態）。読み幅に絞って中央に寄せ、枠の入れ子を作らない
+  const landing = !view && !file && !loading;
 
   return (
-    <main className="app">
+    <main className={`app${landing ? " app-landing" : ""}`}>
       <header className="header">
         <div>
           <h1>平面図 面積・壁面積 解析</h1>
@@ -196,8 +198,15 @@ export default function App() {
         )}
       </header>
 
-      <section className="panel">
+      <section className={landing ? "landing" : "panel"}>
         <UploadPanel fileName={file?.name ?? null} isSample={isSample} loading={loading} onFile={handleFile} onLoadSample={() => { selectRoom(null); void loadSample(); }} compact={!!file || loading} />
+        {landing && (
+          <ul className="landing-points" aria-label="解析するとできること">
+            <li><b>部屋ごとに算出</b><span>床面積・周長・壁面積を、頂点座標から計算します</span></li>
+            <li><b>図面と表が連動</b><span>部屋や辺を選ぶと、根拠の壁・ドアまでたどれます</span></li>
+            <li><b>CSV で保存</b><span>部屋別の結果と注意事項をそのまま書き出せます</span></li>
+          </ul>
+        )}
         <section className="workspace-section" aria-labelledby="conditions-heading">
         <h2 id="conditions-heading" className="section-heading">課題指定の計算条件（固定）</h2>
         <div className="conditions">
@@ -205,8 +214,12 @@ export default function App() {
           <span className="cond-chip">ドア高 <b>{fmt(appliedSettings.door_height_m, 1)} m</b></span>
           <span className="cond-chip" title={`図面上の ${appliedSettings.scale_px} px を ${appliedSettings.scale_m} m として換算します。縮尺の異なる図面では実寸と一致しません`}>スケール <b>{appliedSettings.scale_px} px ＝ {appliedSettings.scale_m} m</b></span>
         </div>
-        {/* 課題の中心となる式を、条件チップの直下で常時読めるようにする（使い方ページと同じ文言） */}
-        <p className="section-description conditions-note">課題の指定値で固定しています（入力・変更は不要。JSON を選ぶとこの条件で即時解析）。壁面積 ＝ 壁長 × 天井高 {fmt(appliedSettings.ceiling_height_m, 1)} m − 控除ドア幅 × ドア高 {fmt(appliedSettings.door_height_m, 1)} m（壁が検出されない区間は含めない）／ 床面積 ＝ 頂点座標の面積 × (m/px)²</p>
+        {/* 課題の中心となる式を、条件チップの直下で常時読めるようにする（使い方ページと同じ文言）。1 行の長文にせず、説明と式を分ける */}
+        <p className="section-description conditions-note">課題の指定値で固定しています（入力・変更は不要。JSON を選ぶとこの条件で即時解析）。</p>
+        <ul className="formula-list">
+          <li>壁面積 ＝ 壁長 × 天井高 {fmt(appliedSettings.ceiling_height_m, 1)} m − 控除ドア幅 × ドア高 {fmt(appliedSettings.door_height_m, 1)} m<small>（壁が検出されない区間は含めない）</small></li>
+          <li>床面積 ＝ 頂点座標の面積 × (m/px)²</li>
+        </ul>
         </section>
         {loading && <div className="status loading" role="status" aria-live="polite">解析中…{view ? "（前回の結果を表示中）" : ""}</div>}
         {!loading && flashDone && <div className="status done" role="status" aria-live="polite">結果を更新しました</div>}
@@ -331,7 +344,7 @@ export default function App() {
       )}
 
       <footer className="footer muted">
-        床面積: 頂点座標のシューレース公式 × スケール² ／ 壁面積: 辺上に検出された壁区間の長さ × 天井高 − ドア幅 × ドア高（壁のない区間は除外）
+        数値はすべて頂点座標から計算し、丸めるのは表示するときだけです。計算式の詳細は「はじめての方へ」にあります。
       </footer>
     </main>
   );

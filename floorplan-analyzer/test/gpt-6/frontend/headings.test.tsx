@@ -15,6 +15,7 @@ test("main landmark and section headings name the visualization, the table and t
   vi.stubGlobal("ResizeObserver", class { observe() {} disconnect() {} });
   const { container } = render(<App />);
   expect(screen.getByRole("main")).toBeTruthy();
+  expect(screen.getByRole("main").classList.contains("app-landing")).toBe(false); // 結果表示では通常の幅に戻る
   expect(container.querySelector("main.app header")).not.toBeNull();
   expect(container.querySelector("main.app footer")).not.toBeNull();
   expect(screen.getByRole("heading", { name: "図面（可視化結果）" }).tagName).toBe("H2");
