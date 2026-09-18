@@ -1,9 +1,13 @@
 import json
 import pathlib
+import sys
 
 import pytest
 
-SAMPLE = pathlib.Path(__file__).resolve().parents[3] / "sample" / "sample_mask.json"
+APP = pathlib.Path(__file__).resolve().parents[3]
+# アプリ直下からの明示的なテストパスでも backend/pytest.ini に依存せず収集する。
+sys.path.insert(0, str(APP / "backend"))
+SAMPLE = APP / "sample" / "sample_mask.json"
 
 
 @pytest.fixture(autouse=True)

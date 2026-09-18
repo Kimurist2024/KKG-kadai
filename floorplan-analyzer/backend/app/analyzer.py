@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional, Tuple, Union
 
+from shapely import area as polygon_areas, intersection, intersects
 from shapely.errors import GEOSException
 from shapely.ops import unary_union
 
@@ -28,7 +29,6 @@ from .schemas import (
     Contour,
     EdgeResult,
     ImageInfo,
-    IntervalOut,
     MaskFile,
     RoomResult,
     OverlapResult,
@@ -77,16 +77,24 @@ def _segment_of(c: Contour) -> Optional[g.Segment]:
     return ((p.x, p.y), (q.x, q.y))
 
 
-def _interval_out(a: g.Point, b: g.Point, iv: g.Interval, mpp: float) -> IntervalOut:
-    s = g.point_at(a, b, iv.start)
-    e = g.point_at(a, b, iv.end)
-    return IntervalOut(
+def _interval_out(a: g.Point, b: g.Point, iv: g.Interval, mpp: float, length: float) -> dict:
+    # 親の EdgeResult が区間・頂点を一括検証する。個々のモデル生成呼出しを省く。
+    # point_at と同じ演算順で、辺長だけを共有する。
+    if length <= g.EPS_PX:
+        s = e = a
+    else:
+        rs, re = iv.start / length, iv.end / length
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        s = (a[0] + dx * rs, a[1] + dy * rs)
+        e = (a[0] + dx * re, a[1] + dy * re)
+    interval_length = iv.length
+    return dict(
         start_px=iv.start,
         end_px=iv.end,
-        start=Vertex(x=s[0], y=s[1]),
-        end=Vertex(x=e[0], y=e[1]),
-        length_px=iv.length,
-        length_m=iv.length * mpp,
+        start=dict(x=s[0], y=s[1]),
+        end=dict(x=e[0], y=e[1]),
+        length_px=interval_length,
+        length_m=interval_length * mpp,
         ids=sorted(iv.ids),
     )
 
@@ -104,6 +112,14 @@ def wall_intervals_on_edge(
     """
     length = g.distance(a, b)
     raw = g.project_segments_onto_edge(a, b, wall_segments, tolerance_px)
+    # 0/1 区間では併合しても同じ区間だけが残る。ノイズ除去→端点補完の順は維持。
+    if not raw:
+        return []
+    if len(raw) == 1:
+        iv = raw[0]
+        if iv.length < min(tolerance_px, length / 2):
+            return []
+        return g.snap_to_edge_ends(raw, length, tolerance_px)
     walls = g.merge_intervals(raw)
     # ノイズ閾値は辺長の半分を上限にする: 輪郭の辺が tol より細かく分割されていても、
     # 辺の大半を覆う壁を「ノイズ」として捨てない (直交壁の角の 1〜2 px の重なりは引き続き除去)
@@ -159,10 +175,11 @@ def analyze_edge(
             if (abs(door.start - left.end) <= settings.tolerance_px + g.EPS_PX
                     and abs(door.end - right.start) <= settings.tolerance_px + g.EPS_PX):
                 inferred.append(g.Interval(left.end, right.start, set(door.ids)))
-    inferred = g.merge_intervals(inferred)
-    # 壁の id と補完根拠のドア id を混ぜず、後者は inferred に残す。
-    walls = g.merge_intervals(walls + [g.Interval(iv.start, iv.end) for iv in inferred])
-    openings = g.complement_intervals(walls, length_px)
+    if inferred:
+        inferred = g.merge_intervals(inferred)
+        # 壁の id と補完根拠のドア id を混ぜず、後者は inferred に残す。
+        walls = g.merge_intervals(walls + [g.Interval(iv.start, iv.end) for iv in inferred])
+    openings = g.complement_intervals(walls, length_px, normalized=True)
     doors = door_intervals_on_edge(a, b, door_segments, walls, settings.tolerance_px, raw_doors)
 
     wall_len_m = g.total_length(walls) * mpp
@@ -175,14 +192,14 @@ def analyze_edge(
         index=index,
         canonical_edge_id=canonical_edge_ids[0] if canonical_edge_ids and len(canonical_edge_ids) == 1 else None,
         canonical_edge_ids=canonical_edge_ids or [],
-        inferred_wall_intervals=[_interval_out(a, b, iv, mpp) for iv in inferred],
-        start=Vertex(x=a[0], y=a[1]),
-        end=Vertex(x=b[0], y=b[1]),
+        inferred_wall_intervals=[_interval_out(a, b, iv, mpp, length_px) for iv in inferred],
+        start=dict(x=a[0], y=a[1]),
+        end=dict(x=b[0], y=b[1]),
         length_px=length_px,
         length_m=length_px * mpp,
-        wall_intervals=[_interval_out(a, b, iv, mpp) for iv in walls],
-        opening_intervals=[_interval_out(a, b, iv, mpp) for iv in openings],
-        door_intervals=[_interval_out(a, b, iv, mpp) for iv in doors],
+        wall_intervals=[_interval_out(a, b, iv, mpp, length_px) for iv in walls],
+        opening_intervals=[_interval_out(a, b, iv, mpp, length_px) for iv in openings],
+        door_intervals=[_interval_out(a, b, iv, mpp, length_px) for iv in doors],
         wall_length_m=wall_len_m,
         opening_length_m=opening_len_m,
         door_length_m=door_len_m,
@@ -215,10 +232,14 @@ def analyze_room(
     offset = 0
     for ring_index, ring in enumerate(rings):
         ring_edges = [(a, ring[(i + 1) % len(ring)]) for i, a in enumerate(ring)]
+        # 壁と扉で検索枠は同じ。浮動小数点の padding も一度だけ計算する。
+        bounds = ([SegmentIndex._bounds(a, b, settings.tolerance_px) for a, b in ring_edges]
+                  if len(ring) <= 64 and (isinstance(wall_segments, SegmentIndex)
+                                         or isinstance(door_segments, SegmentIndex)) else None)
         # 大きな輪郭では候補リストを全辺分保持せず、従来の逐次検索を使う。
-        wall_candidates = (wall_segments.near_many(ring_edges, settings.tolerance_px)
+        wall_candidates = (wall_segments.near_many(ring_edges, settings.tolerance_px, bounds=bounds)
                            if isinstance(wall_segments, SegmentIndex) and len(ring) <= 64 else None)
-        door_candidates = (door_segments.near_many(ring_edges, settings.tolerance_px)
+        door_candidates = (door_segments.near_many(ring_edges, settings.tolerance_px, bounds=bounds)
                            if isinstance(door_segments, SegmentIndex) and len(ring) <= 64 else None)
         for i, a in enumerate(ring):
             b = ring[(i + 1) % len(ring)]
@@ -289,8 +310,8 @@ def _extract_segments(
             SegmentOut(
                 id=c.id,
                 kind=kind,
-                start=Vertex(x=seg[0][0], y=seg[0][1]),
-                end=Vertex(x=seg[1][0], y=seg[1][1]),
+                start=dict(x=seg[0][0], y=seg[0][1]),
+                end=dict(x=seg[1][0], y=seg[1][1]),
                 length_px=length_px,
                 length_m=length_px * mpp,
                 color=c.color,
@@ -332,21 +353,25 @@ def _room_overlaps(polygons, room_results, mpp, warnings, *, geometry_only):
     """
     overlaps = []
     overlap_indices = []
-    for i, j in overlap_pairs(polygons):
-        polygon = polygons[i]
-        other = polygons[j]
-        if not polygon.intersects(other):
-            continue
-        shared = polygon.intersection(other)
-        if shared.area <= g.EPS_PX:
+    # 同じ GEOS の判定を配列で呼び出し、ペアごとの Python ラッパーを省く。
+    # 入力・出力の順序は overlap_pairs の i,j 順をそのまま維持する。
+    candidates = list(overlap_pairs(polygons))
+    hits = intersects([polygons[i] for i, _ in candidates],
+                      [polygons[j] for _, j in candidates])
+    pairs = [pair for pair, hit in zip(candidates, hits) if hit]
+    shared_regions = intersection([polygons[i] for i, _ in pairs],
+                                  [polygons[j] for _, j in pairs])
+    for (i, j), shared, area in zip(pairs, shared_regions, polygon_areas(shared_regions)):
+        shared_area = float(area)
+        if shared_area <= g.EPS_PX:
             continue
         overlap_indices.append((i, j))
         overlaps.append(OverlapResult(room_ids=[room_results[i].id, room_results[j].id],
-            area_m2=shared.area * mpp * mpp, regions=polygon_regions(shared)))
+            area_m2=shared_area * mpp * mpp, regions=polygon_regions(shared)))
         if not geometry_only:
             for a, b in [(i, j), (j, i)]:
                 warnings.append(Warning(code="room_overlap", contour_id=room_results[a].id,
-                    message=f"部屋 '{room_results[a].name}' と '{room_results[b].name}' の床領域が {shared.area * mpp * mpp:.4f} m² 重複しています。部屋別面積は自動で削減していません。"))
+                    message=f"部屋 '{room_results[a].name}' と '{room_results[b].name}' の床領域が {shared_area * mpp * mpp:.4f} m² 重複しています。部屋別面積は自動で削減していません。"))
     union_area = unary_union(polygons).area * mpp * mpp if polygons else 0.0
     return overlaps, overlap_indices, union_area
 
@@ -442,7 +467,7 @@ def _analyze_core(mask: MaskFile, settings: Optional[AnalysisSettings] = None, *
             r.name = f"{r.name} ({seen[r.name]})"
 
     overlaps, overlap_indices, union_area = _room_overlaps(
-        polygons, room_results, mpp, warnings, geometry_only=geometry_only
+        polygons, room_results, 1.0 if geometry_only else mpp, warnings, geometry_only=geometry_only
     )
     total_area = sum(r.floor_area_m2 for r in room_results)
 
@@ -480,13 +505,13 @@ def analyze_uncached(mask: MaskFile, settings: Optional[AnalysisSettings] = None
 
 
 def _compute_geometry(mask: MaskFile, settings: AnalysisSettings) -> dict:
-    """キャッシュ用に単位縮尺のpx・px²幾何結果を計算する。"""
-    unit = AnalysisSettings(scale_px=1, scale_m=1, ceiling_height_m=1,
-                            door_height_m=0, tolerance_px=settings.tolerance_px,
-                            geometry_mode=settings.geometry_mode,
-                            boundary_reference=settings.boundary_reference)
-    response, pairs = _analyze_core(mask, unit, geometry_only=True)
-    return {"response": response.model_dump(mode="json"), "pairs": pairs}
+    """初回の実寸とキャッシュ用幾何結果を一度に計算する。
+
+    warm は *_px を元にすべての長さ・部屋面積を上書きするため、初回の実寸を
+    そのまま保存できる。px² フィールドのない重複・和集合だけは単位縮尺で保持。
+    """
+    response, pairs = _analyze_core(mask, settings, geometry_only=True)
+    return {"response": response, "pairs": pairs}
 
 
 def analyze(mask: MaskFile, settings: Optional[AnalysisSettings] = None) -> AnalyzeResponse:

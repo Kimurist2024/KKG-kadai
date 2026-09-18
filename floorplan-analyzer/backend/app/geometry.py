@@ -78,6 +78,8 @@ def project_segments_onto_edge(
     短い線分は除外され、辺と平行に重なる壁だけが採用される。辺の範囲外は切り落とす。
     ゼロ長の線分は無視する。
     """
+    if not segments:
+        return []
     axes = _edge_axes(edge_start, edge_end)
     if axes is None:
         return []
@@ -193,7 +195,19 @@ def clip_intervals(a: Iterable[Interval], b: Iterable[Interval]) -> List[Interva
     b の重複時は端点イベントで候補を列挙し、EPS 以下の断片を除く順序も維持する。
     非重複 b の走査はソート後 O(len(a) + len(b) + 候補交差数)。
     """
+    # 解析では空または単一区間が多い。単一区間でも従来の比較・max/min 順を守る。
+    if isinstance(a, list) and isinstance(b, list):
+        if not a or not b:
+            return []
+        if len(a) == len(b) == 1:
+            ia, ib = a[0], b[0]
+            if ib.end <= ia.start or ib.start >= ia.end:
+                return []
+            lo, hi = max(ia.start, ib.start), min(ia.end, ib.end)
+            return [Interval(lo, hi, set(ia.ids))] if hi - lo > EPS_PX else []
     b_list = sorted(b, key=_interval_sort_key)
+    if not b_list:
+        return []
     if _intervals_are_disjoint(b_list):
         result = _clip_disjoint_intervals(a, b_list)
     else:
@@ -270,14 +284,15 @@ def _clip_all_pairs(a_list, b_list):
     return result
 
 
-def complement_intervals(intervals: Iterable[Interval], edge_length: float) -> List[Interval]:
+def complement_intervals(intervals: Iterable[Interval], edge_length: float, *, normalized=False) -> List[Interval]:
     """[0, edge_length] のうち intervals に含まれない部分 (= 壁のない開口区間)。
 
     intervals が [0, edge_length] の外にはみ出していても正しく動くよう、先にクリップする。
+    normalized は射影・併合済みで範囲内かつ長さ > EPS の区間列だけに指定する。
     """
     if not math.isfinite(edge_length) or edge_length <= 0:
         return []
-    covered = clip_intervals(intervals, [Interval(0.0, edge_length)])
+    covered = intervals if normalized else clip_intervals(intervals, [Interval(0.0, edge_length)])
     out: List[Interval] = []
     cursor = 0.0
     for iv in covered:

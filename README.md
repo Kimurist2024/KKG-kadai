@@ -16,7 +16,7 @@
 面積・壁・扉の計算を速くしたときの、変更前後の全項目比較は [アルゴリズム性能検証](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/validation/algorithm-performance/report.md) にあります。
 直前の実装を基準にした最新の高速化と、浮動小数点まで完全に一致することの検証、論文調査は [計算結果を変えない高速化](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/validation/exact-speed/exact-speed.md) に書きました。目標にしていた100倍には届いていません。
 さらに5倍を目指した [端点イベント走査の実測](floorplan-analyzer/docs/validation/interval-sweep/interval-sweep.md) では、人工的な1,024頂点の輪郭で初回解析が7.9〜11.1倍になりました。ただし同梱図面ではほぼ同じ速さで、すべての入力で5倍という目標も未達です。
-与えられた同梱の JSON そのもので本当に速くなったかは、変更前（2026-09-14 時点の実装）と現行を交互に101回測って [同梱JSONでの速度確認](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/validation/sample-speed/sample-speed.md) にまとめました。初回解析は 3.02ms → 3.88ms で速くなっておらず（結果をキャッシュに登録する分だけ約0.9ms 遅い）、速くなるのは設定を変えて再解析するとき（2.98ms → 0.91ms、約3.3倍）です。
+与えられた同梱の JSON そのもので本当に速くなったかは、変更前（2026-09-14 時点の実装）と現行を交互に101回測って [同梱JSONでの速度確認](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/validation/sample-speed/sample-speed.md) にまとめました。最初に測った時点では初回解析が 3.02ms → 3.88ms と逆に遅くなっていたため、dict の往復と再検証をやめ、総当たり経路に外接矩形の事前絞り込みを入れて直しました。現在は初回解析 2.89ms → 2.30ms（1.25倍）、設定を変えた再解析 2.90ms → 0.88ms（3.3倍）で、結果は変更前と bit 単位で一致します。
 
 課題要件との対応と、動作確認をどこまで行ったかは [技術構成と検証状況](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/architecture.md)、AWS の手順は [インフラ手順](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/infra/deployment.md) を参照してください。
 
