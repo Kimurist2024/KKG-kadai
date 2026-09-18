@@ -44,7 +44,8 @@ def _hole_rings(room):
 
 def _ring_vertices(ring):
     # Shapely は末尾に始点を重ねる。API の頂点配列にはその閉じ点を含めない。
-    return [Vertex(x=x, y=y) for x, y in list(ring.coords)[:-1]]
+    # PolygonRegion がまとめて Vertex に検証・変換する。
+    return [dict(x=x, y=y) for x, y in list(ring.coords)[:-1]]
 
 
 def polygon_regions(geometry):

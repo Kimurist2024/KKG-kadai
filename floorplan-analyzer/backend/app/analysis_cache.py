@@ -9,7 +9,7 @@ import time
 from collections import OrderedDict
 from pydantic_core import to_json
 
-from .schemas import AnalyzeResponse
+from .schemas import AnalyzeResponse, AnalysisSettings, GeometryProcessing, Vertex, Warning
 
 
 class GeometryCache:
@@ -72,12 +72,10 @@ def get_geometry(mask, geometry_key, compute, *compute_args):
     if stored is not None:
         return json.loads(stored)
     geometry = compute(*compute_args)
-    # 各リクエストの画像情報・日時・設定は materialize で付け直す。
-    geometry["response"].pop("image")
-    geometry["response"].pop("timestamp")
-    geometry["response"].pop("settings")
+    # 画像情報・日時・設定は保存せず、warm の materialize で付け直す。
     # 既存依存のネイティブ serializer を利用。復元は従来の json.loads のまま。
-    stored = to_json(geometry, inf_nan_mode="constants")
+    stored = to_json(geometry, inf_nan_mode="constants",
+                     exclude={"response": {"image", "timestamp", "settings"}})
     cache.put(key, stored)
     return geometry
 
@@ -89,6 +87,8 @@ def materialize(geometry, mask, settings):
     overlap/union の *_m2 もここでは px²。換算前の辞書を繰り返し渡してはいけない。
     浮動小数点の結果を変えないよう、analyzer と加算・乗算の順番を揃える。
     """
+    if isinstance(geometry["response"], AnalyzeResponse):
+        return _materialize_response(geometry["response"], geometry["pairs"], settings)
     data = geometry["response"]
     mpp = settings.meters_per_px
     # 1. 区間 → 辺 → 部屋の順で換算する。先に集約してから掛けると丸め差が出る。
@@ -130,3 +130,33 @@ def materialize(geometry, mask, settings):
                          mime_type=mask.image_data.mime_type if mask.image_data else None,
                          has_image=bool(mask.image_data and mask.image_data.base64))
     return AnalyzeResponse.model_validate(data)
+
+
+def _materialize_response(response, pairs, settings):
+    """cold の検証済み実寸モデルに重複情報を付ける。保存済み bytes は変更しない。
+
+    __dict__ はこの応答だけの計算済み数値の更新に使う。公開スキーマの検証や
+    default は通常のモデル生成時に適用済み。辺・部屋の実寸は core で計算済みで、
+    演算順序は materialize と同じ。重複・和集合だけは保存用 px² から換算する。
+    入力由来の頂点はコピーし、従来の辞書往復と同様に入力から切り離す。
+    """
+    mpp = settings.meters_per_px
+    for room in response.rooms:
+        room.__dict__["vertices"] = [Vertex(x=vertex.x, y=vertex.y) for vertex in room.vertices]
+    # 辞書往復では default も明示フィールドになる。exclude_unset の挙動を維持。
+    for warning in response.warnings:
+        warning.model_fields_set.add("contour_id")
+    if response.geometry_processing is not None:
+        response.geometry_processing = GeometryProcessing.model_validate(
+            response.geometry_processing.model_dump(mode="json"))
+    for overlap, (i, j) in zip(response.overlaps, pairs):
+        overlap.__dict__["area_m2"] = overlap.area_m2 * mpp * mpp
+        for a, b in ((i, j), (j, i)):
+            first, second = response.rooms[a], response.rooms[b]
+            response.warnings.append(Warning(code="room_overlap", contour_id=first.id,
+                message=f"部屋 '{first.name}' と '{second.name}' の床領域が {overlap.area_m2:.4f} m² 重複しています。部屋別面積は自動で削減していません。"))
+    summary = response.summary.__dict__
+    summary["union_floor_area_m2"] = summary["union_floor_area_m2"] * mpp * mpp
+    summary["overlap_floor_area_m2"] = max(0.0, summary["total_floor_area_m2"] - summary["union_floor_area_m2"]) if response.overlaps else 0.0
+    response.settings = AnalysisSettings.model_validate(settings.model_dump())
+    return response
