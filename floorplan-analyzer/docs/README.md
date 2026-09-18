@@ -8,6 +8,7 @@
 | 穴・重複・扉開口の扱い | [幾何計算の拡張](geometry-upgrade.md) |
 | 面積計算の高速化 | [性能測定](validation/algorithm-performance/report.md) |
 | 部屋選択時の表示速度 | [表示処理の測定](selection-performance.md) |
+| 同梱サンプルの部屋別結果 | [サンプルデータでの結果](validation/sample-results.md) |
 | 外部図面に対する計算精度 | [外部図面検証](validation/REPORT.md) |
 | 公開環境の確認 | [Vercelデプロイ記録](vercel-deployment.md) |
 | AWS環境の構築と更新 | [インフラ手順](../infra/README.md) |

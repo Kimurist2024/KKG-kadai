@@ -58,5 +58,5 @@
 ### 共通ルール
 - 依存追加は目的を明確にする。現在は Next.js/React と FastAPI/httpx/Pillow を使用し、幾何計算のコアは純 Python を維持する。
 - `frontend/src/types.ts` は `backend/app/schemas.py` と常に一致させる。
-- サンプル (`sample/sample_mask.json`) の結果は README 5-4 の表と一致していること。
+- サンプル (`sample/sample_mask.json`) の結果は `floorplan-analyzer/docs/validation/sample-results.md` の表と一致していること。
 - 統合・共通ファイル・依存設定・検証結果の確認は司令塔が担当する。同じファイルを複数の担当に同時に編集させない。

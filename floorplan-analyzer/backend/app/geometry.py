@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import math
+import heapq
 from dataclasses import dataclass, field
 from typing import Iterable, List, NamedTuple, Optional, Sequence, Set, Tuple
 
@@ -189,7 +190,7 @@ def clip_intervals(a: Iterable[Interval], b: Iterable[Interval]) -> List[Interva
 
     非重複判定と二つの交差処理を分け、公開関数で方式の選択と併合を行う。
     a は重複していてもよく、交差前に併合しない（ids の混入を防止）。
-    b の重複時は従来の全比較を使い、EPS 以下の断片を除く順序も維持する。
+    b の重複時は端点イベントで候補を列挙し、EPS 以下の断片を除く順序も維持する。
     非重複 b の走査はソート後 O(len(a) + len(b) + 候補交差数)。
     """
     b_list = sorted(b, key=_interval_sort_key)
@@ -223,9 +224,45 @@ def _clip_disjoint_intervals(a: Iterable[Interval], b_list: Sequence[Interval]) 
 
 
 def _clip_overlapping_intervals(a: Iterable[Interval], b_list: Sequence[Interval]) -> List[Interval]:
-    """重複時の全比較を独立させ、非重複を前提とする分岐を取り除く。"""
+    """端点イベントを走査して交差候補を列挙する。座標の量子化はしない。"""
+    a_list = sorted(a, key=_interval_sort_key)
+    if len(a_list) * len(b_list) < 4096 or any(
+        not math.isfinite(iv.start) or not math.isfinite(iv.end) or iv.start >= iv.end
+        for iv in (*a_list, *b_list)
+    ):
+        return _clip_all_pairs(a_list, b_list)
+    # いもす法と同じ開始/終了イベントを使うが、根拠IDとEPS判定を
+    # 維持するため被覆数だけに集約せず、交差する元区間を記録する。
+    events = []
+    for side, intervals in enumerate((a_list, b_list)):
+        for index, iv in enumerate(intervals):
+            events.append((iv.start, 1, side, index))
+            events.append((iv.end, 0, side, index))
+    active = (set(), set())
+    candidates = [[] for _ in a_list]
+    for _, entering, side, index in sorted(events):
+        if not entering:
+            active[side].discard(index)
+            continue
+        for other in active[1 - side]:
+            i, j = (index, other) if side == 0 else (other, index)
+            candidates[i].append(j)
+        active[side].add(index)
+    result = []
+    # 従来の a,b 順序で演算し、同値端点（負のゼロ含む）の選択も維持。
+    for ia, indices in zip(a_list, candidates):
+        for j in sorted(indices):
+            ib = b_list[j]
+            lo, hi = max(ia.start, ib.start), min(ia.end, ib.end)
+            if hi - lo > EPS_PX:
+                result.append(Interval(lo, hi, set(ia.ids)))
+    return result
+
+
+def _clip_all_pairs(a_list, b_list):
+    """小規模・特殊入力の従来経路。"""
     result: List[Interval] = []
-    for ia in sorted(a, key=_interval_sort_key):
+    for ia in a_list:
         for ib in b_list:
             lo, hi = max(ia.start, ib.start), min(ia.end, ib.end)
             if hi - lo > EPS_PX:
@@ -266,10 +303,46 @@ def _segments_intersect(p1: Point, p2: Point, q1: Point, q2: Point) -> bool:
 
 
 def is_self_intersecting(vertices: Sequence[Point]) -> bool:
-    """非隣接の辺同士が交差していれば True (蝶ネクタイ形など)。O(n²) だが頂点数は小さい。"""
+    """大きな輪郭は境界イベントで候補を絞り、従来の交差式で判定する。"""
     n = len(vertices)
     if n < 4:
         return False
+    if n >= 64:
+        magnitude = max(abs(v) for point in vertices for v in point)
+        if math.isfinite(magnitude) and magnitude < 1e100:
+            return _self_intersection_sweep(vertices, EPS_PX + 16 * math.ulp(magnitude))
+    return _self_intersection_all_pairs(vertices)
+
+
+def _self_intersection_sweep(vertices, pad):
+    n = len(vertices)
+    boxes = []
+    for i, a in enumerate(vertices):
+        b = vertices[(i + 1) % n]
+        boxes.append((min(a[0], b[0]) - pad, max(a[0], b[0]) + pad,
+                      min(a[1], b[1]) - pad, max(a[1], b[1]) + pad, i))
+    active = {}
+    ends = []
+    for left, right, bottom, top, i in sorted(boxes):
+        while ends and ends[0][0] < left:
+            _, expired = heapq.heappop(ends)
+            active.pop(expired)
+        for j, (low, high) in active.items():
+            first, second = min(i, j), max(i, j)
+            if second == first + 1 or (first == 0 and second == n - 1):
+                continue
+            if high < bottom or top < low:
+                continue
+            if _segments_intersect(vertices[first], vertices[(first + 1) % n],
+                                   vertices[second], vertices[(second + 1) % n]):
+                return True
+        active[i] = (bottom, top)
+        heapq.heappush(ends, (right, i))
+    return False
+
+
+def _self_intersection_all_pairs(vertices):
+    n = len(vertices)
     for i in range(n):
         p1, p2 = vertices[i], vertices[(i + 1) % n]
         for j in range(i + 2, n):
