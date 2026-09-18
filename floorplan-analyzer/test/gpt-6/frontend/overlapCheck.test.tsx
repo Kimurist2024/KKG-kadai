@@ -54,3 +54,19 @@ test("hovering a row rings the overlap on the plan; pressing a room chip selects
   expect(ring()).not.toBeNull();
   expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
 });
+
+test("keyboard focus keeps the ring even when the mouse leaves; it clears only when focus leaves the row", () => {
+  const { container, rows } = openOverlaps();
+  const ring = () => container.querySelector('[data-overlap-focus="true"]');
+  const [first, second] = within(rows[0]).getAllByRole("button");
+  fireEvent.focus(first);
+  expect(ring()).not.toBeNull();
+  fireEvent.mouseEnter(rows[0]);
+  fireEvent.mouseLeave(rows[0]);
+  expect(ring()).not.toBeNull(); // フォーカスが残っている間は、マウスが離れても消えない
+  fireEvent.blur(first, { relatedTarget: second }); // 同じ行の隣のチップへ移動
+  fireEvent.focus(second);
+  expect(ring()).not.toBeNull();
+  fireEvent.blur(second, { relatedTarget: document.body }); // 行の外へ
+  expect(ring()).toBeNull();
+});

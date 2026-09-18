@@ -67,8 +67,10 @@ export default function App() {
     return () => clearTimeout(t);
   }, [updatedAt]);
 
-  // 確認事項の「部屋の重複」と図面の連動。行に合わせている間（hover）と、部屋名を押した後（pinned）に図面で強調する。
+  // 確認事項の「部屋の重複」と図面の連動。マウスを行に乗せている間（hover）、行内にフォーカスがある間（focus）、
+  // 部屋名を押した後（pinned）に図面で強調する。3 つは別々に持ち、どれかが残っている間は強調を維持する。
   const [hoverOverlap, setHoverOverlap] = useState<number | null>(null);
+  const [focusOverlap, setFocusOverlap] = useState<number | null>(null);
   const [pinnedOverlap, setPinnedOverlap] = useState<number | null>(null);
 
   const selectRoom = useCallback((id: number | null) => {
@@ -78,6 +80,7 @@ export default function App() {
     setHoverSegments([]);
     setPinnedSegments([]);
     setHoverOverlap(null);
+    setFocusOverlap(null);
     setPinnedOverlap(null);
   }, []);
 
@@ -224,7 +227,7 @@ export default function App() {
                 hoverEdge={hoverEdge}
                 selectedEdge={selectedEdge}
                 highlightSegmentIds={hoverSegments.length ? hoverSegments : pinnedSegments}
-                highlightOverlap={hoverOverlap ?? pinnedOverlap}
+                highlightOverlap={hoverOverlap ?? focusOverlap ?? pinnedOverlap}
                 onSelect={selectRoom}
                 onHover={setHoverId}
                 onHoverEdge={setHoverEdge}
@@ -250,7 +253,8 @@ export default function App() {
                 <summary><span className="check-title">部屋の重複 {view.overlaps.length} か所</span><span className="check-description">{overlapSummary}</span></summary>
                 <p>紫の斜線が重複部分です。部屋別の面積はそのままにして、合計から重複計上分を除いた値を併記しています。行に合わせると図面上の位置を輪で示し、部屋名を押すとその部屋を選んで図面へ移動します。</p>
                 <ul className="overlap-list">{overlapRows.map(({ overlap, index, ratio }) => (
-                  <li key={index} className="overlap-row" onMouseEnter={() => setHoverOverlap(index)} onMouseLeave={() => setHoverOverlap(null)} onFocus={() => setHoverOverlap(index)} onBlur={() => setHoverOverlap(null)}>
+                  <li key={index} className="overlap-row" onMouseEnter={() => setHoverOverlap(index)} onMouseLeave={() => setHoverOverlap(null)}
+                    onFocus={() => setFocusOverlap(index)} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocusOverlap(null); }}>
                     <span className="overlap-pair">{overlap.room_ids.map((id, n) => (
                       <Fragment key={id}>
                         {n > 0 && <span className="overlap-times" aria-hidden="true">×</span>}
