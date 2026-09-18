@@ -2,7 +2,7 @@
 
 > `main` ブランチには説明資料だけを置いています。アプリ本体は [feature/kimura](https://github.com/Kimurist2024/KKG-kadai/tree/feature/kimura) にあります。以下の起動手順は同ブランチをチェックアウトし、`floorplan-analyzer/` で実行してください（`.claude/scripts/` のコマンドだけはリポジトリ直下で実行します）。
 
-公開サイト: https://floorplan-analyzer-taupe.vercel.app （2026-09-18 に API の疎通を確認しました。画像 AI は無効です。この確認では、公開環境での解析処理と画面操作までは再検証していません）
+公開サイト: https://floorplan-analyzer-taupe.vercel.app （2026-09-18 に API の疎通を確認しました。画像 AI は無効です。このとき、公開環境での解析処理と画面操作までは再検証していません）
 
 **部屋・壁・ドアのマスク JSON** を読み込み、部屋ごとの **床面積・周長・壁面積** を算出する Web アプリです。
 提出用の画面は、JSON のアップロードと固定条件での解析に絞りました。画像 AI の入力欄は表示していません。
@@ -11,10 +11,10 @@
 - バックエンド: Python / FastAPI / Pydantic 2 / Shapely 2.0 系。Uvicorn で起動し、座標から面積を計算します。
 - 公開用の設定: Vercel Services で Next.js と FastAPI を分け、`/api/*` は FastAPI、それ以外は Next.js に振り分けています。
 - 別の配置方法: Docker Compose と、AWS ECS Fargate 用の Terraform を同梱しました。ローカル・Compose・AWS では Next.js の API プロキシを通します。
-- 画像 AI: HTTPX 経由で OpenAI Responses API を呼ぶ機能を任意機能として残しています。通常画面には入力欄がなく、JSON 解析に AI の設定は要りません。
+- 画像 AI: HTTPX 経由で OpenAI Responses API を呼ぶ機能をオプションとして残しています。通常画面には入力欄がなく、JSON 解析に AI の設定は要りません。
 
-部屋を選んだときの表示処理の改善と、その計測結果は [性能検証](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/selection-performance.md) を参照してください。
-面積・壁・扉の計算を速くした際の、変更前後の全項目比較は [アルゴリズム性能検証](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/validation/algorithm-performance/report.md) を参照してください。
+部屋を選んだときの表示処理の改善と計測結果は [性能検証](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/selection-performance.md) にまとめました。
+面積・壁・扉の計算を速くしたときの、変更前後の全項目比較は [アルゴリズム性能検証](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/validation/algorithm-performance/report.md) にあります。
 直前の実装を基準にした最新の高速化と、浮動小数点まで完全に一致することの検証、論文調査は [計算結果を変えない高速化](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/validation/exact-speed/exact-speed.md) に書きました。目標にしていた100倍には届いていません。
 さらに5倍を目指した [端点イベント走査の実測](floorplan-analyzer/docs/validation/interval-sweep/interval-sweep.md) では、人工的な1,024頂点の輪郭で初回解析が7.9〜11.1倍になりました。ただし同梱図面ではほぼ同じ速さで、すべての入力で5倍という目標も未達です。
 
@@ -34,7 +34,7 @@ Python 3.12 と Node.js 22 を推奨します（CI・Docker と同じ構成で�
 ./scripts/stop.sh    # 停止
 ```
 
-起動スクリプトは、8000番と5173番を使っているプロセスを止めてから、依存関係のセットアップとサーバー起動を行います。互いに依存しない処理は並列にしました。JSON解析にAIのキーは不要です。
+起動スクリプトは、8000番と5173番を使っているプロセスを止めてから、依存関係のセットアップとサーバー起動を行います。互いに依存しない処理は並列に走らせています。JSON解析にAIのキーは不要です。
 
 1. 初回は同梱のサンプルを表示します。操作の説明は画面上部の「はじめての方へ」から読めます。
 2. 手持ちのJSONを選ぶかドロップすると、固定条件で解析します。
@@ -43,7 +43,7 @@ Python 3.12 と Node.js 22 を推奨します（CI・Docker と同じ構成で�
 
 計算条件は **天井高2.4m、ドア高2.0m、96.7px＝1.365m** に固定しています。画面の表示倍率は計算値に影響しません。通常画面では画像AIの入力と幾何補正を無効にしました。
 
-ローカルでのAPIの疎通確認は `http://127.0.0.1:8000/api/health`、仕様は `http://127.0.0.1:8000/docs` で見られます。8000番にアプリの画面はありません。コンテナで動かす場合は `docker compose up --build` で、画面は `http://localhost:3000` です。Compose ではバックエンドの8000番をホストに公開していません。
+ローカルでは `http://127.0.0.1:8000/api/health` でAPIの疎通を、`http://127.0.0.1:8000/docs` で仕様を確認できます。8000番にアプリの画面はありません。コンテナで動かす場合は `docker compose up --build` で、画面は `http://localhost:3000` です。Compose ではバックエンドの8000番をホストに公開していません。
 
 ## 2. 構成と役割
 
@@ -62,7 +62,7 @@ Python 3.12 と Node.js 22 を推奨します（CI・Docker と同じ構成で�
 | Compose | Next.js :3000 → backend:8000 | `compose.yaml` |
 | AWS（構成を同梱） | HTTPS ALB → Next.js :3000 → 同じタスクの FastAPI :8000 | `infra/terraform/app/main.tf` |
 
-プロキシの接続先はサーバー側の `API_PROXY_TARGET` で指定します。旧単一Function用の `api/index.py` は互換のために残していますが、現在の Vercel Services 設定では使っていません。アプリ直下の `requirements.txt` は `backend/requirements.txt` を参照しています。
+プロキシの接続先はサーバー側の `API_PROXY_TARGET` で指定します。以前の単一 Function 構成で使っていた `api/index.py` は互換のために残していますが、現在の Vercel Services 設定では使っていません。アプリ直下の `requirements.txt` は `backend/requirements.txt` を参照しています。
 
 数値はすべてバックエンドで計算し、丸めるのは表示するときだけです。元画像はブラウザ側でも取り出して表示しますが、アップロードするJSON自体は画像データを含めたままバックエンドへ送ります。解析レスポンスには画像を含めていません。座標と区間の計算はPython、多角形の穴・重複・和集合はShapely/GEOSに任せています。
 
@@ -92,7 +92,7 @@ GitHub Actions には、Pythonとフロントエンドのテスト、本番ビ�
 
 `壁面積 = 壁あり長[m] × 2.4m − 控除ドア幅[m] × 2.0m`
 
-「×2」はドアの枚数ではなく高さです。ドアの上部0.4m分は壁として残ります。採用した線分のIDと区間を保持しているので、図面・表・計算式のどこからでも根拠をたどれます。ドアを先にまとめず、壁との交差を1本ずつ取っているのは、対応しないドアのIDが混ざるのを防ぐためです。
+ドア幅に掛けている2.0mは、枚数ではなく高さです。ドアの上部0.4m分は壁として残ります。採用した線分のIDと区間を保持しているので、図面・表・計算式のどこからでも根拠をたどれます。ドアを先にまとめず、壁との交差を1本ずつ取っているのは、対応しないドアのIDが混ざるのを防ぐためです。
 
 ## 4. R-treeによる高速化
 
