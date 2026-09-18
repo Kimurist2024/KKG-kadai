@@ -1,12 +1,12 @@
-# Measurement artifacts
+# 測定資料
 
-- `report.md`: final measurement and interpretation.
-- `final.json`: authoritative post-fix same-run comparison, all raw repetitions and source/input hashes.
-- `baseline.json`: initial pre-change measurement, retained as history.
-- `stage-equivalence.json`: intermediate stages 1-3, 60 complete-response comparisons.
-- `pre-arithmetic-fix.json`: historical measurement before correcting cached room-area arithmetic order; not final.
-- `stage4-equivalence.json`: historical pre-arithmetic-fix cache comparisons; not final.
-- `stages.json`: exploratory timing overlapping comparison work; not used for performance claims.
-- `baseline-profile-*.txt`, `final-profile-*.txt`: cumulative cProfile reports. Profiling adds overhead.
+- `report.md`：最終測定とその解釈です。
+- `final.json`：修正後に同じ実行で比較した、評価の基準となる結果です。全反復の生の測定値と、ソース・入力のハッシュを含みます。
+- `baseline.json`：初回の変更前測定で、履歴として保持しています。
+- `stage-equivalence.json`：途中段階1-3の、レスポンス全体の比較60件です。
+- `pre-arithmetic-fix.json`：キャッシュされた部屋面積の演算順序を修正する前の測定履歴です。最終結果ではありません。
+- `stage4-equivalence.json`：演算修正前のキャッシュ比較の履歴です。最終結果ではありません。
+- `stages.json`：比較作業と並行して行った探索的な時間測定です。性能の根拠には使用しません。
+- `baseline-profile-*.txt`、`final-profile-*.txt`：累積時間の cProfile レポートです。プロファイリングにはオーバーヘッドが伴います。
 
-All measurements use local CLI calls. No browser or native-app computer use.
+すべてローカルの CLI 呼び出しで測定しています。ブラウザやネイティブアプリの UI 自動操作は行っていません。
