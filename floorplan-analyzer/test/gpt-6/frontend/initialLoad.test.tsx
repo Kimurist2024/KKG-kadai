@@ -33,8 +33,15 @@ test.each(["/", "/?start=upload", "/?room=3"])("opening %s shows the chooser wit
   expect(main.querySelector(".landing > .dropzone")).not.toBeNull();
   expect(main.querySelector(".panel")).toBeNull();
   expect(screen.getByRole("heading", { name: "JSON をドロップして面積を計算" }).tagName).toBe("H2");
-  expect(screen.getByRole("list", { name: "解析するとできること" }).querySelectorAll("li")).toHaveLength(3);
-  expect(screen.getByText(/サンプル: 同梱の平面図（11 部屋・約 360 KB）/)).toBeTruthy();
+  // 初期画面の文字は必要最低限: 見出し・一言の説明・ボタン 2 つ・折りたたみ・計算条件のチップだけ
+  expect(screen.getByText("部屋ごとの床面積・周長・壁面積を求めます")).toBeTruthy();
+  expect(Array.from(main.querySelectorAll(".conditions .cond-chip"), (chip) => chip.textContent)).toEqual([
+    "天井高 2.4 m", "ドア高 2.0 m", "スケール 96.7 px ＝ 1.365 m",
+  ]);
+  for (const selector of [".landing-points", ".formula-list", ".conditions-note", ".dropzone-hint", "footer", "header p"]) {
+    expect(main.querySelector(selector)).toBeNull();
+  }
+  expect(main.querySelector<HTMLDetailsElement>("details.dropzone-details")!.open).toBe(false);
 });
 
 test("the guide's sample link (?sample=1) loads the sample once", () => {

@@ -61,9 +61,9 @@ export default function UploadPanel({ fileName, loading, onFile, onLoadSample, c
       ) : (
         <div className="dropzone-body">
           <div className="dropzone-icon big" aria-hidden="true"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15V4M8 8l4-4 4 4M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" /></svg></div>
-          {/* 見出しは短い命令形に。長い説明はリード文へ（空状態は「見出し＋説明＋主/副アクション」） */}
+          {/* 初期画面の文字は最小限に。強調するのは見出しと主ボタンだけ（形式の詳細は折りたたみの中） */}
           <h2 className="dropzone-title">{dragging ? "ここにドロップして解析" : "JSON をドロップして面積を計算"}</h2>
-          <p className="dropzone-lead">平面図の解析結果（部屋・壁・ドアのマスク JSON）から、部屋ごとの床面積・周長・壁面積を求めます。</p>
+          <p className="dropzone-lead">部屋ごとの床面積・周長・壁面積を求めます</p>
           <div className="dropzone-actions">
             <button type="button" className="btn btn-primary btn-lg" disabled={loading} onClick={() => inputRef.current?.click()}>
               JSON ファイルを選択
@@ -72,10 +72,6 @@ export default function UploadPanel({ fileName, loading, onFile, onLoadSample, c
               サンプルで試す
             </button>
           </div>
-          <p className="dropzone-hint">
-            対応形式: .json（<code>contours</code> と <code>image_data</code> を含む解析結果）<br />
-            サンプル: 同梱の平面図（11 部屋・約 360 KB）をその場で解析します
-          </p>
           <p className="sr-only" aria-live="polite">{dragging ? "ファイルをドロップできます" : ""}</p>
           <details className="dropzone-details">
             <summary>入力形式について</summary>
