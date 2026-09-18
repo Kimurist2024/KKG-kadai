@@ -26,6 +26,8 @@ afterEach(() => { cleanup(); stylesheet.remove(); vi.unstubAllGlobals(); });
 
 async function openWorkspace() {
   render(<App />);
+  // サンプルは自動では読み込まれない。人が「サンプルで試す」を押したときと同じ操作で開く。
+  fireEvent.click(screen.getByRole("button", { name: "サンプルで試す" }));
   return screen.findByRole("region", { name: "平面図のスクロール領域" });
 }
 

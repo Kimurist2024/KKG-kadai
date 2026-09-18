@@ -67,6 +67,9 @@ test("failed upload preserves the prior snapshot and can be retried", async () =
 
 test("sample and upload show results without editable conditions or image AI; CSV remains", async () => {
   const { container } = render(<App />);
+  // サンプルは自動では読み込まれない。人が「サンプルで試す」を押したときだけ表示する。
+  expect(analyzeFile).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "サンプルで試す" }));
   await screen.findByText("サンプル表示中");
   expect(screen.getByRole("heading", { name: "課題指定の計算条件（固定）" })).toBeTruthy();
   expect(screen.queryByRole("button", { name: "計算条件を変更" })).toBeNull();

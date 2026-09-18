@@ -11,7 +11,7 @@ export default function GuidePage() {
       <nav aria-label="解析画面への移動"><Link href="/">解析画面へ</Link></nav>
       <header>
         <h1>はじめての方へ：使い方</h1>
-        <p>JSON を読み込むと、部屋ごとの床面積と壁面積が図面と表になって出てきます。解析画面を開くと同梱のサンプル図面が自動で読み込まれるので、ファイルを用意する前でも操作を試せます。天井高や縮尺などを入力する項目はありません。</p>
+        <p>JSON を読み込むと、部屋ごとの床面積と壁面積が図面と表になって出てきます。解析画面で「サンプルで試す」を押すと同梱のサンプル図面を読み込めるので、ファイルを用意する前でも操作を試せます。天井高や縮尺などを入力する項目はありません。</p>
       </header>
       <section className="guide-hero panel" aria-labelledby="guide-hero-heading">
         <h2 id="guide-hero-heading">まず 1 分で結果を見る</h2>

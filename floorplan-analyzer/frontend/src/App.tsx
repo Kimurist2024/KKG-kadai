@@ -83,12 +83,13 @@ export default function App() {
     [loadFile, selectRoom],
   );
 
-  // 初回はサンプルを自動解析する。URL の room は共有用の事前選択。
+  // サンプルは人が選んだときだけ読み込む。URL の ?sample=1 は、使い方ページの「サンプルで試す」から来た場合。
+  // それ以外（パラメータ無し・?start=upload）は選択枠だけを表示する。URL の room はサンプル表示時の事前選択。
   const loadSampleRef = useRef(loadSample);
   loadSampleRef.current = loadSample;
   useEffect(() => {
     const q = new URLSearchParams(window.location.search);
-    if (q.get("start") === "upload") return;
+    if (q.get("sample") !== "1") return;
     const room = Number(q.get("room"));
     void Promise.resolve(loadSampleRef.current()).then(() => { if (q.has("room") && Number.isFinite(room)) setSelectedId(room); });
   }, []);
