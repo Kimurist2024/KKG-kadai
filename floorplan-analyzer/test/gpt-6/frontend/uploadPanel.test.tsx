@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, expect, test } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, fireEvent, createEvent } from "@testing-library/react";
 import UploadPanel from "../../../frontend/src/components/UploadPanel";
 
 afterEach(cleanup);
@@ -34,4 +34,24 @@ test("a user file restores the reload-sample button; the large dropzone is uncha
   expect(screen.getByRole("button", { name: "JSON ファイルを選択" })).toBeTruthy();
   expect(screen.getByRole("button", { name: "サンプルで試す" })).toBeTruthy();
   expect(screen.getByText("入力形式について")).toBeTruthy();
+});
+
+test("dragging a file over the large dropzone changes the heading and announces it; leaving the frame resets", () => {
+  const { container } = render(<UploadPanel fileName={null} loading={false} onFile={noop} onLoadSample={noop} />);
+  const zone = container.querySelector<HTMLElement>(".dropzone")!;
+  expect(screen.getByRole("heading", { name: "JSON をドロップして面積を計算" })).toBeTruthy();
+  fireEvent.dragOver(zone);
+  expect(zone.classList.contains("dragging")).toBe(true);
+  expect(screen.getByRole("heading", { name: "ここにドロップして解析" })).toBeTruthy();
+  expect(container.querySelector('[aria-live="polite"]')!.textContent).toBe("ファイルをドロップできます");
+  // jsdom には DragEvent が無く、fireEvent の init では relatedTarget が載らないので、イベントに明示的に定義する
+  const leaveTo = (target: EventTarget | null) => {
+    const event = createEvent.dragLeave(zone);
+    Object.defineProperty(event, "relatedTarget", { value: target });
+    fireEvent(zone, event);
+  };
+  leaveTo(zone.querySelector("button")); // 子要素の上を通過しただけ
+  expect(zone.classList.contains("dragging")).toBe(true);
+  leaveTo(document.body); // 枠の外へ
+  expect(zone.classList.contains("dragging")).toBe(false);
 });
