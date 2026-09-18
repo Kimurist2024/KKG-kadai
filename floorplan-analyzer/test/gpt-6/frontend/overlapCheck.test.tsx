@@ -46,6 +46,7 @@ test("hovering a row rings the overlap on the plan; pressing a room chip selects
   fireEvent.mouseEnter(rows[0]);
   expect(ring()).not.toBeNull();
   expect(ring()!.getAttribute("pointer-events")).toBe("none");
+  expect(ring()!.querySelectorAll('[data-overlap-halo="true"]').length).toBeGreaterThan(0); // 重複の形に沿った縁取り
   fireEvent.mouseLeave(rows[0]);
   expect(ring()).toBeNull();
   expect(container.querySelector("#room-detail-heading")).toBeNull();
