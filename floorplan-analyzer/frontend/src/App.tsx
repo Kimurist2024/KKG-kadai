@@ -163,6 +163,8 @@ export default function App() {
       .sort((a, b) => b.overlap.area_m2 - a.overlap.area_m2 || a.index - b.index);
   }, [view]);
   const roomName = (id: number) => view?.rooms.find((r) => r.id === id)?.name ?? `#${id}`;
+  // 図面で強調する重複。固定中（部屋名を押した後）のものを表示しているときだけ、濃く太い縁取りにする
+  const highlightedOverlap = hoverOverlap ?? focusOverlap ?? pinnedOverlap;
   const overlapTotal = view?.summary.overlap_floor_area_m2 ?? 0;
   const overlapShare = view && view.summary.total_floor_area_m2 > 0 ? (overlapTotal / view.summary.total_floor_area_m2) * 100 : null;
   const overlapSummary = `重複計上 ${fmt(overlapTotal)} m²${overlapShare !== null ? `（床面積合計の ${fmt(overlapShare, 1)}%）` : ""}・最大 ${fmt(overlapRows[0]?.overlap.area_m2 ?? 0)} m²`;
@@ -227,7 +229,8 @@ export default function App() {
                 hoverEdge={hoverEdge}
                 selectedEdge={selectedEdge}
                 highlightSegmentIds={hoverSegments.length ? hoverSegments : pinnedSegments}
-                highlightOverlap={hoverOverlap ?? focusOverlap ?? pinnedOverlap}
+                highlightOverlap={highlightedOverlap}
+                overlapEmphasis={highlightedOverlap !== null && highlightedOverlap === pinnedOverlap ? "strong" : "preview"}
                 onSelect={selectRoom}
                 onHover={setHoverId}
                 onHoverEdge={setHoverEdge}
@@ -251,9 +254,9 @@ export default function App() {
               <div className="result-checks-scroll" role="region" aria-label="確認事項のスクロール領域" tabIndex={0}>
               {!!view?.overlaps?.length && <details className="status warn overlap-check">
                 <summary><span className="check-title">部屋の重複 {view.overlaps.length} か所</span><span className="check-description">{overlapSummary}</span></summary>
-                <p>紫の斜線が重複部分です。部屋別の面積はそのままにして、合計から重複計上分を除いた値を併記しています。行に合わせると図面上の重複部分を太い縁取りで強調し、部屋名を押すとその部屋を選んで図面へ移動します。</p>
+                <p>紫の斜線が重複部分です。部屋別の面積はそのままにして、合計から重複計上分を除いた値を併記しています。行に合わせると図面上の重複部分を縁取りで強調し、部屋名を押すとその部屋を選んで図面へ移動します。押した重複は、別の部屋を選ぶまで濃く太い縁取りで表示し続けます。</p>
                 <ul className="overlap-list">{overlapRows.map(({ overlap, index, ratio }) => (
-                  <li key={index} className="overlap-row" onMouseEnter={() => setHoverOverlap(index)} onMouseLeave={() => setHoverOverlap(null)}
+                  <li key={index} className={`overlap-row${pinnedOverlap === index ? " is-pinned" : ""}`} aria-current={pinnedOverlap === index ? "true" : undefined} onMouseEnter={() => setHoverOverlap(index)} onMouseLeave={() => setHoverOverlap(null)}
                     onFocus={() => setFocusOverlap(index)} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocusOverlap(null); }}>
                     <span className="overlap-pair">{overlap.room_ids.map((id, n) => (
                       <Fragment key={id}>
