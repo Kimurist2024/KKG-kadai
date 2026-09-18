@@ -10,6 +10,7 @@
 #   - 失敗したステップだけ、ログの末尾 40 行とパスを表示する
 #   - pytest / vitest は JUnit XML（pytest.junit.xml / vitest.junit.xml）も同じ場所に出す
 #   - 直近の実行は .claude/logs/verify/latest から開ける（保存は最新 10 回分）
+#   - 最終行は従来どおり 'verify: PASS' / 'verify: FAIL' だけ（合計時間とログの場所はその直前の行）
 #   - 色は端末に直接出すときだけ使う（NO_COLOR を設定すると無効）
 # 環境変数: VERIFY_LOG_DIR … ログの保存先を変える（既定: <repo>/.claude/logs/verify）
 set -uo pipefail
@@ -20,6 +21,8 @@ PY="$APP/backend/.venv/bin/python"
 case "$SCOPE" in quick|all) ;; *) echo "使い方: verify.sh [quick|all]" >&2; exit 2;; esac
 
 LOGROOT="${VERIFY_LOG_DIR:-$ROOT/.claude/logs/verify}"
+mkdir -p "$LOGROOT"
+LOGROOT="$(cd "$LOGROOT" && pwd)"   # 相対パス指定でも、各ステップの cd に影響されないよう絶対パスにする
 STAMP="$(date +%Y%m%d-%H%M%S)"
 RUN="$LOGROOT/$STAMP"
 mkdir -p "$RUN"
@@ -98,13 +101,15 @@ fi
 
 T1="$(now_ms)"
 total="$(fmt_ms $((T1 - T0)))"
-ln -sfn "$RUN" "$LOGROOT/latest"
+ln -sfn "$STAMP" "$LOGROOT/latest"
 # 古い実行ディレクトリを削除して最新 10 回分だけ残す
 ls -1d "$LOGROOT"/[0-9]* 2>/dev/null | sort -r | tail -n +11 | while IFS= read -r old; do rm -rf "$old"; done
 
 if [ "$fail" -eq 0 ]; then
-  printf 'verify: %sPASS%s  合計 %s  ログ: %s\n' "$C_OK" "$C_0" "$total" "$RUN"
+  printf '  %s合計 %s  ログ: %s%s\n' "$C_DIM" "$total" "$RUN" "$C_0"
+  printf 'verify: %sPASS%s\n' "$C_OK" "$C_0"
 else
-  printf 'verify: %sFAIL%s  合計 %s  失敗:%s  ログ: %s\n' "$C_NG" "$C_0" "$total" "$failed" "$RUN"
+  printf '  %s合計 %s  失敗:%s  ログ: %s%s\n' "$C_DIM" "$total" "$failed" "$RUN" "$C_0"
+  printf 'verify: %sFAIL%s\n' "$C_NG" "$C_0"
 fi
 exit "$fail"
