@@ -2,16 +2,16 @@
 
 > この `main` ブランチには説明資料を掲載しています。アプリ本体は [feature/kimura](https://github.com/Kimurist2024/KKG-kadai/tree/feature/kimura) を参照してください。以下の起動手順は同ブランチをチェックアウトし、`floorplan-analyzer/` を作業ディレクトリとして実行します（`.claude/scripts/` のコマンドはリポジトリ直下で実行）。
 
-公開サイト: https://floorplan-analyzer-taupe.vercel.app （JSON 解析を確認済み、画像 AI は未設定）
+公開サイト: https://floorplan-analyzer-taupe.vercel.app （2026-09-18 に API 疎通を確認。画像 AI は無効。今回の確認では公開環境の解析処理・画面操作は再検証していません）
 
 **部屋・壁・ドアマスク JSON** から、部屋ごとの **床面積・周長・壁面積** を算出する Web アプリです。
 提出用の画面は JSON アップロードと固定条件での解析に絞っています。画像 AI の入力欄は表示しません。
 
-- フロントエンド: TypeScript / React / Next.js App Router（`frontend/`）
-- バックエンド: Python / FastAPI（`backend/`）
-- AI: FastAPI → OpenAI Responses API（画像入力・Structured Outputs）。キー未設定でも JSON 解析は利用できます。
-- 配置: Docker Compose、AWS ECS Fargate 用 Terraform、GitHub Actions（テスト・ビルド・手動デプロイ）。
-- ブラウザ → Next.js の API プロキシ → FastAPI と HTTP で連携します。
+- フロントエンド: Next.js 16.3.5 App Router / React 19.3.0 / TypeScript 5.9.3（`frontend/package-lock.json` の固定値）。図面は SVG で描画します。
+- バックエンド: Python / FastAPI / Pydantic 2 / Shapely 2.0 系。Uvicorn で起動し、座標から面積を計算します。
+- 公開用設定: Vercel Services で Next.js と FastAPI を分離。`/api/*` は FastAPI、それ以外は Next.js に振り分けます。
+- 別の配置方法: Docker Compose と AWS ECS Fargate 用 Terraform を同梱。ローカル・Compose・AWS では Next.js の API プロキシを使います。
+- 画像 AI: HTTPX 経由の OpenAI Responses API 呼び出しを任意機能として保持。通常画面には入力欄がなく、JSON 解析には AI 設定は不要です。
 
 部屋選択時の表示処理の改善と計測結果は [性能検証](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/selection-performance.md) を参照してください。
 面積・壁・扉の計算高速化と変更前後の全項目比較は [アルゴリズム性能検証](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/validation/algorithm-performance/report.md) を参照してください。
@@ -27,7 +27,7 @@
 
 ## 1. 起動・操作
 
-Python 3.9以上、Node.js 20.9以上が必要です。`floorplan-analyzer/` で実行してください。
+Python 3.12・Node.js 22 を推奨します（CI・Docker と同じ構成。Node.js の指定下限は20.9）。以下は `floorplan-analyzer/` で実行してください。
 
 ```bash
 ./scripts/start.sh   # 起動完了後、http://localhost:5173 を開く
@@ -43,7 +43,7 @@ Python 3.9以上、Node.js 20.9以上が必要です。`floorplan-analyzer/` で
 
 計算条件は **天井高2.4m、ドア高2.0m、96.7px＝1.365m** です。表示倍率は計算値に影響しません。通常画面では画像AI入力と幾何補正を無効にしています。
 
-APIの疎通確認は `http://127.0.0.1:8000/api/health`、仕様・リクエスト例は `http://127.0.0.1:8000/docs` です。8000番にはアプリ画面はありません。コンテナ起動は `docker compose up --build`（画面は3000番）です。
+ローカルのAPI疎通確認は `http://127.0.0.1:8000/api/health`、仕様は `http://127.0.0.1:8000/docs` です。8000番にはアプリ画面はありません。コンテナ起動は `docker compose up --build`（画面は `http://localhost:3000`）。Compose はホストへバックエンドの8000番を公開しません。
 
 ## 2. 構成と役割
 
@@ -53,9 +53,22 @@ APIの疎通確認は `http://127.0.0.1:8000/api/health`、仕様・リクエス
 - `sample/`：同梱図面。`docs/`：設計・参考文献・検証記録。
 - `infra/terraform/`：AWS構成。`scripts/`：起動・停止ツール。
 
-ブラウザはNext.jsのAPIプロキシを介してFastAPIと通信します。数値はバックエンドで計算し、表示時だけ丸めます。元画像はクライアントに保持し、解析レスポンスで送り返しません。座標・区間計算はPython、多角形の穴・重複・和集合はShapely/GEOS、描画はSVGを使います。
+ブラウザは同一オリジンの `/api/*` に通信します。環境による経路の違いは次のとおりです。
 
-主要APIは `POST /api/analyze`（multipartの `file`）と `POST /api/analyze/json`（JSONボディ）です。部屋別・全体の集計に加え、各辺の区間と根拠ID、警告を返します。不正JSONは400、容量超過は413、入力・設定不正は422で通知します。
+| 環境 | API の経路 | 設定の根拠 |
+|---|---|---|
+| ローカル | Next.js :5173 → FastAPI :8000 | `scripts/start.sh`、`frontend/src/app/api/[...path]/route.ts` |
+| Vercel | Services のルーティング → FastAPI（Next.js のプロキシを通さない） | `vercel.json` |
+| Compose | Next.js :3000 → backend:8000 | `compose.yaml` |
+| AWS（構成を同梱） | HTTPS ALB → Next.js :3000 → 同じタスクの FastAPI :8000 | `infra/terraform/app/main.tf` |
+
+プロキシの接続先はサーバー側の `API_PROXY_TARGET` で指定します。旧単一Function用の `api/index.py` は互換用に残っていますが、現在の Vercel Services 設定では使用しません。アプリ直下の `requirements.txt` は `backend/requirements.txt` を参照します。
+
+数値はバックエンドで計算し、表示時だけ丸めます。元画像はブラウザでも取り出して表示しますが、アップロードするJSON自体は画像データを含めてバックエンドに送信します。解析レスポンスには画像を含めません。座標・区間計算はPython、多角形の穴・重複・和集合はShapely/GEOSが担当します。
+
+主要APIは `POST /api/analyze`（multipartの `file`）と `POST /api/analyze/json`（JSONボディ）です。部屋別・全体の集計に加え、各辺の区間と根拠ID、警告を返します。ファイル版は不正JSONを400、容量超過を413で通知し、形式・設定の検証エラーは422です。通常画面の条件は固定ですが、APIには条件指定・研究用幾何補正の設定が残っています。
+
+GitHub Actions は Python/フロントエンドのテスト・本番ビルド・Compose疎通・Terraform検証を定義しています。AWS更新は main 対象の手動実行で、CI成功と環境設定が必要です。現在の説明資料だけの main では実行できず、コード・workflow の統合が前提です。構成ファイルの存在は AWS での稼働確認を意味しません。
 
 詳しい責務は [ARCHITECTURE](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/ARCHITECTURE.md)、開発手順は [CONTRIBUTING](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/CONTRIBUTING.md)、環境変数・配置は [技術構成](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/architecture.md) と [インフラ手順](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/infra/README.md) を参照してください。
 
@@ -147,7 +160,7 @@ flowchart TD
 
 共通プロンプトは `.claude/scripts/`、役割は `.claude/agents/`、検討・レビュー記録は `floorplan-analyzer/docs/reviews/` に保存しています。未実施の検証を成功扱いにはしません。
 
-依存関係を導入後、リポジトリ直下で検証します。
+初回は `floorplan-analyzer/` で `backend/.venv/bin/python -m pip install -r backend/requirements-dev.txt` を実行し、テスト用依存も導入してください（仮想環境は起動スクリプトで作成）。その後、リポジトリ直下で検証します。
 
 ```bash
 .claude/scripts/verify.sh quick  # pytest・型検査・Vitest
