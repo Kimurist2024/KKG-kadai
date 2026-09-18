@@ -1,6 +1,6 @@
 # アーキテクチャ
 
-このアプリは図面の部屋・壁・扉の座標から面積を計算します。画像AIは座標候補の作成を担当し、面積の算出はPythonの幾何計算が担当します。
+このアプリは図面の部屋・壁・扉の座標から面積を計算します。面積の算出はPythonの幾何計算が担当します。
 
 ## 配置と責務
 
@@ -19,7 +19,6 @@
 | `backend/app/topology.py` | 穴を含む多角形の検証・構築 |
 | `backend/app/spatial.py` | STRtreeによる候補の絞り込み |
 | `backend/app/analysis_cache.py` | 幾何結果の保存と縮尺・高さの再計算 |
-| `backend/app/ai.py` / `ai_schemas.py` | 画像AIとの通信と出力検証 |
 | `test/gpt-6/backend/` | 計算・API・キャッシュ・AI応答の回帰テスト |
 | `backend/benchmarks/` | 性能計測コードと変更前・段階別の固定実装 |
 | `scripts/` | 起動・停止、検証レポートの生成 |
@@ -65,7 +64,7 @@
 `_analyze_core` は分類・部屋解析・警告・重複判定・集計の流れをまとめ、
 `analyze_room` が外周と穴、`analyze_edge` が壁・扉の対応付けを担当します。
 `_wall_and_door_warnings` は壁不足・未対応扉の通知、`_room_overlaps` は交差と和集合の計算です。
-入力・出力の意味は `schemas.py`、AI 候補の制約は `ai_schemas.py` の各クラスに説明しています。
+入力・出力の意味は `schemas.py` の各クラスに説明しています。
 
 `analysis_cache.py` は幾何結果を px 単位で再利用し、今回の縮尺・高さに換算します。
 数値の再現性を保つため、通常計算と同じ順で加算・乗算します。

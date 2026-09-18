@@ -2,9 +2,6 @@ services:
   backend:
     build: ./backend
     environment:
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      OPENAI_MODEL: ${OPENAI_MODEL:-}
-      AI_ACCESS_TOKEN: ${AI_ACCESS_TOKEN:-}
       CORS_ORIGINS: http://localhost:3000
     restart: unless-stopped
   frontend:

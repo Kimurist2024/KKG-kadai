@@ -9,7 +9,6 @@ vi.mock("../../../frontend/src/hooks/useAnalysis", () => ({ useAnalysis: () => (
   result: sample, status: { state: "idle" }, updatedAt: null,
   cancelPending: vi.fn(), loadFile: vi.fn(), loadSample: vi.fn(), reanalyze: vi.fn(),
 }) }));
-vi.mock("../../../frontend/src/components/AiImportPanel", () => ({ default: () => null }));
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 test("room selection immediately updates results without network; keyboard clears selection", () => {

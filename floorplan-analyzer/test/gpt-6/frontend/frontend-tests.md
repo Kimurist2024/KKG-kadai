@@ -5,7 +5,6 @@
 | ファイル | 検証対象 |
 |---|---|
 | `apiProxy.test.ts` | Next.js の API プロキシ |
-| `aiImport.test.tsx` | 画像 AI の読込・エラー・状態管理 |
 | `fixedSettings.test.tsx` | 課題の固定条件、即時解析、ファイル切替、壁警告・CSV |
 | `geometryDisplay.test.tsx` | 穴・重複を含む図形と計算根拠の表示 |
 | `planPan.test.tsx` | 図面のドラッグ移動 |

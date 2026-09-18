@@ -42,13 +42,6 @@ class ImageData(BaseModel):
     mime_type: str = "image/png"
 
 
-class AIRecognition(BaseModel):
-    """入力が AI 由来であることと、その認識時の注意事項。"""
-
-    model: str = Field(max_length=200)
-    warnings: List[str] = Field(default_factory=list, max_length=21)
-
-
 class MaskFile(BaseModel):
     """アップロードされる JSON ファイル全体。"""
 
@@ -59,7 +52,6 @@ class MaskFile(BaseModel):
     image_width: int = Field(gt=0)
     image_height: int = Field(gt=0)
     timestamp: Optional[str] = None
-    ai_recognition: Optional[AIRecognition] = None
 
 
 # ---------------------------------------------------------------- 計算パラメータ
@@ -211,7 +203,7 @@ class ImageInfo(BaseModel):
 class Warning(BaseModel):
     """利用者に知らせる注意事項。UI が対象の輪郭へ誘導できるよう id を持つ。"""
 
-    code: str = Field(description="unnamed_room | unmatched_door | invalid_shape | ignored_contour | data_mismatch | duplicate_id | missing_wall_data | no_room_walls | low_wall_coverage | ai_generated | room_overlap | inferred_door_wall | geometry_regularized | regularization_skipped")
+    code: str = Field(description="unnamed_room | unmatched_door | invalid_shape | ignored_contour | data_mismatch | duplicate_id | missing_wall_data | no_room_walls | low_wall_coverage | room_overlap | inferred_door_wall | geometry_regularized | regularization_skipped")
     message: str
     contour_id: Optional[int] = None
 

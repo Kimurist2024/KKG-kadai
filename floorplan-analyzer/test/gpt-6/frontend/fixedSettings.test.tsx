@@ -82,11 +82,11 @@ test("sample and upload show results without editable conditions or image AI; CS
   expect(container.querySelector("table.rooms")).not.toBeNull();
 });
 
-test("CSV retains missing-wall and AI caveats", () => {
+test("CSV retains missing-wall and door caveats", () => {
   const csv = roomsToCsv({ ...response, warnings: [
     { code: "missing_wall_data", contour_id: null, message: "壁データがありません。" },
-    { code: "ai_generated", contour_id: null, message: "AI による参考値" },
+    { code: "inferred_door_wall", contour_id: null, message: "扉部分の壁を補完しました。" },
   ] });
   expect(csv).toContain("壁データがありません。");
-  expect(csv).toContain("AI による参考値");
+  expect(csv).toContain("扉部分の壁を補完しました。");
 });

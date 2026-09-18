@@ -14,7 +14,6 @@ import RoomDetail from "./components/RoomDetail";
 const WARNING_LABELS: Record<WarningCode, { title: string; severity: "info" | "warn" }> = {
   room_overlap: { title: "部屋領域の重複", severity: "warn" },
   inferred_door_wall: { title: "扉部分の壁を補完", severity: "warn" },
-  ai_generated: { title: "AI 認識に基づく参考値", severity: "warn" },
   missing_wall_data: { title: "壁データなし", severity: "warn" },
   no_room_walls: { title: "壁が未検出の部屋", severity: "warn" },
   low_wall_coverage: { title: "壁の対応率が低い部屋", severity: "warn" },
@@ -133,7 +132,7 @@ export default function App() {
     view.warnings
       .filter((w) => !isWallWarning(w) && !(w.code === "room_overlap" && hasOverlapBlock))
       .forEach((w) => map.set(w.code, [...(map.get(w.code) ?? []), w]));
-    const order: WarningCode[] = ["room_overlap", "inferred_door_wall", "ai_generated", "geometry_regularized", "regularization_skipped", "missing_wall_data", "no_room_walls", "low_wall_coverage", "unmatched_door", "data_mismatch", "ignored_contour", "invalid_shape", "duplicate_id", "unnamed_room"];
+    const order: WarningCode[] = ["room_overlap", "inferred_door_wall", "geometry_regularized", "regularization_skipped", "missing_wall_data", "no_room_walls", "low_wall_coverage", "unmatched_door", "data_mismatch", "ignored_contour", "invalid_shape", "duplicate_id", "unnamed_room"];
     return order.filter((c) => map.has(c)).map((c) => ({ code: c, items: map.get(c)! }));
   }, [view]);
   const roomIds = useMemo(() => new Set(view?.rooms.map((r) => r.id) ?? []), [view]);
@@ -146,7 +145,7 @@ export default function App() {
   const hasWarnOnly = warningGroups.some((g) => WARNING_LABELS[g.code].severity === "warn");
 
   const wallWarnings = view?.warnings.filter(isWallWarning) ?? [];
-  const hasChecks = warningGroups.length > 0 || wallWarnings.length > 0 || !!view?.overlaps?.length || !!view?.warnings.some((w) => w.code === "ai_generated");
+  const hasChecks = warningGroups.length > 0 || wallWarnings.length > 0 || !!view?.overlaps?.length;
   const selectedRoom = view?.rooms.find((r) => r.id === selectedId) ?? null;
   const loading = status.state === "loading";
 
@@ -226,7 +225,6 @@ export default function App() {
               <h2 id="checks-heading" className="section-heading">解析結果の確認事項</h2>
               <p className="section-description">表示中の図面に対する検出結果です。対象箇所と入力データを確認してください。</p>
               <div className="result-checks-scroll" role="region" aria-label="確認事項のスクロール領域" tabIndex={0}>
-              {view?.warnings.some((w) => w.code === "ai_generated") && <div className="status warn" role="alert"><strong>AI 認識に基づく参考値です</strong><p>部屋・壁・ドアの位置と縮尺を確認してください。認識精度は図面によって異なります。</p></div>}
               {!!view?.overlaps?.length && <details className="status warn overlap-check">
                 <summary><span className="check-title">重複箇所を図面で確認</span><span className="check-description">部屋の組み合わせ・重複面積・対象への移動</span></summary>
                 <p>紫の斜線が重複部分です。部屋別の面積は変更せず、合計から重複計上分 {fmt(view.summary.overlap_floor_area_m2 ?? 0)} m² を除いた値を併記しています。どの部屋に属するか確認してください。</p>

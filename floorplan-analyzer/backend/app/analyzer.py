@@ -363,8 +363,6 @@ def _analyze_core(mask: MaskFile, settings: Optional[AnalysisSettings] = None, *
                              geometry_processing=processing, canonical_edges=edge_lookup)
     mpp = settings.meters_per_px
     warnings: List[Warning] = []
-    if mask.ai_recognition is not None:
-        warnings.append(Warning(code="ai_generated", message="AI が作成した輪郭に基づく参考値です。部屋・壁・ドアの認識漏れや位置ずれを元画像と照合してください。"))
 
     seen_ids: Dict[int, int] = {}
     for c in mask.contours:

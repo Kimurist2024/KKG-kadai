@@ -90,7 +90,7 @@ export interface SegmentOut {
   color: string;
 }
 
-export type WarningCode = "room_overlap" | "inferred_door_wall" | "ai_generated" | "unnamed_room" | "unmatched_door" | "invalid_shape" | "ignored_contour" | "data_mismatch" | "duplicate_id" | "missing_wall_data" | "no_room_walls" | "low_wall_coverage" | "geometry_regularized" | "regularization_skipped";
+export type WarningCode = "room_overlap" | "inferred_door_wall" | "unnamed_room" | "unmatched_door" | "invalid_shape" | "ignored_contour" | "data_mismatch" | "duplicate_id" | "missing_wall_data" | "no_room_walls" | "low_wall_coverage" | "geometry_regularized" | "regularization_skipped";
 
 export interface Warning {
   code: WarningCode;
@@ -155,16 +155,3 @@ export interface Layers {
 }
 
 /** 画像認識が返す確認前の輪郭。面積や縮尺の確定値ではない。 */
-export interface RecognizedMask {
-  image_width: number;
-  image_height: number;
-  image_data: { base64: string; mime_type: string };
-  contours: { id: number; label_id: number; isLine?: boolean | null; room_name?: string | null; color: string; vertices: Vertex[] }[];
-  ai_recognition: { model: string; warnings: string[] };
-}
-
-export interface RecognitionResponse {
-  mask: RecognizedMask;
-  model: string;
-  warnings: string[];
-}

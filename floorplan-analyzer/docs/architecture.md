@@ -4,47 +4,31 @@
 
 | 応募要件 | 今回の実装 | 主な確認箇所 |
 |---|---|---|
-| 画像認識 AI / 生成 AI の組み込み | OpenAI Responses API の画像入力と Structured Outputs で部屋・壁・ドアの輪郭候補を作成。座標検証後、既存の幾何計算に接続 | backend/app/ai.py, ai_schemas.py, tests/test_ai.py |
-| Next.js フロントエンド | Next.js 16 App Router、React 19、TypeScript、SSR とクライアント側の図面操作、実行時 API プロキシ | frontend/src/app/, components/AiImportPanel.tsx |
+| Next.js フロントエンド | Next.js 16 App Router、React 19、TypeScript、SSR とクライアント側の図面操作、実行時 API プロキシ | frontend/src/app/, components/ |
 | FastAPI バックエンド | JSON 解析、画像アップロード、Pydantic 検証、非同期 AI 呼び出し、型付きレスポンス | backend/app/main.py, schemas.py |
 | コンテナ・IaC・CI/CD・クラウド | Next.js/FastAPI の Dockerfile、Compose、AWS ECS Fargate/ALB/ECR/IAM/CloudWatch の Terraform、GitHub Actions | compose.yaml, infra/, ワークスペース直下 .github/workflows/ |
 
-単に技術名を並べるのではなく、画像入力から面積計算・クラウド配置までに使う構成です。AI の役割は輪郭候補の抽出で、面積計算は再現可能な幾何計算として分離します。
+単に技術名を並べるのではなく、マスク JSON の入力から面積計算・クラウド配置までに使う構成です。面積計算は再現可能な幾何計算として分離しています。
 
 ```mermaid
 flowchart LR
-  U[図面画像 / マスク JSON] --> N[Next.js UI]
+  U[マスク JSON] --> N[Next.js UI]
   N --> P[Next.js API プロキシ]
   P --> F[FastAPI]
-  F -->|画像・Structured Outputs| O[OpenAI API]
-  O --> V[座標・構造の検証]
-  V --> H[輪郭の照合・課題の固定条件で解析]
+  F --> H[輪郭の照合・課題の固定条件で解析]
   H --> G[FastAPI 幾何計算]
   G --> R[図面・面積・根拠・CSV]
 ```
 
-## 画像 AI の処理
+## 環境設定と起動
 
-1. 利用者が PNG/JPEG、サイト利用トークン、OpenAI への送信確認を入力する。
-2. FastAPI がトークンとファイルを検証する。最大 10 MB・1600 万画素・一辺 8192 px。EXIF の向きを補正し、モデルに送った画像と画面に表示する画像を一致させる。
-3. モデルは画像の左上を (0,0)、右下を (1,1) とする座標で部屋の多角形、壁・ドアの線分、不確かな箇所を返す。図面中の文章は指示として扱わない。
-4. Pydantic で座標範囲・有限数・頂点数・要素数・文字数を検証し、元画像のピクセル座標へ換算する。モデルの出力をコードとして実行しない。
-5. 利用者が元画像と候補の重ね合わせを確認し、縮尺を入力する。縮尺は AI が確定しない。
-6. 既存の床面積・壁面積計算を実行する。`ai_recognition` メタデータと `ai_generated` 警告により、AI 由来の参考値であることを画面と CSV に残す。
-
-現時点の訂正方法は、候補 JSON を保存して座標を編集し、再読込する方式です。図面上の頂点ドラッグ編集や、自動縮尺推定は未実装です。
-
-## AI 設定
-
-`OPENAI_API_KEY`、`OPENAI_MODEL`、`AI_ACCESS_TOKEN` を **FastAPI サーバーの環境変数**に設定します。モデル ID は、使用するアカウントで画像入力と Structured Outputs が利用できるものを指定してください。未設定の場合、従来の JSON 解析は動作し、画像認識は 503 を返します。
-
-`AI_ACCESS_TOKEN` はサイト利用者に渡す独立したランダム文字列です。OpenAI API キーを UI に入力・埋め込みしません。これは限定公開デモ向けの共通トークン方式で、ユーザー別ログイン・使用量管理は未実装です。
+現在、必須の環境変数はありません。許可オリジン（`CORS_ORIGINS`）やアップロード上限（`MAX_UPLOAD_BYTES`）を上書きしたい場合だけ、`config/env.example` を `.env` にコピーして設定します。
 
 Docker の場合:
 
 ```bash
 cp config/env.example .env
-# .env に値を設定（Git に登録しない）
+# 必要な場合だけ .env を編集（Git に登録しない）
 docker compose up --build
 ```
 
@@ -57,8 +41,6 @@ cd backend
 ```
 
 別ターミナルでアプリ直下から `cd frontend && npm ci && npm run dev`。画面は http://localhost:5173、Compose は http://localhost:3000。
-
-AI 呼び出しは `store: false`、自動再試行なし、時間上限付きです。これは OpenAI 側のすべてのデータ保持がなくなるという保証ではありません。送信確認の画面を設け、結果には認識の不確実性を表示します。
 
 ## 配置と開発フロー
 
@@ -89,7 +71,7 @@ GitHub に登録するルートは、`.github/` と `floorplan-analyzer/` が並
 
 上記ブラウザ検証の後、ユーザーから computer use 禁止の指定があり、以後の UI 自動操作を停止しています。以後の確認はコード・CLI・HTTP API・コンポーネントテストで行います。
 
-公式仕様: [Next.js の配置](https://nextjs.org/docs/app/getting-started/deploying)、[OpenAI 画像入力](https://developers.openai.com/api/docs/guides/images-vision)、[Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs)。AWS・Terraform・GitHub の出典はインフラ手順に記載。
+公式仕様: [Next.js の配置](https://nextjs.org/docs/app/getting-started/deploying)。AWS・Terraform・GitHub の出典はインフラ手順に記載。
 
 ## 幾何計算の拡張（2026-09-14）
 
