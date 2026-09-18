@@ -1,56 +1,56 @@
-# Algorithm performance measurement
+# アルゴリズムの性能測定
 
-Timestamp UTC: 2026-09-14T15:04:07.610693+00:00
+測定日時（UTC）：2026-09-14T15:04:07.610693+00:00
 
-## Sequential stages (milliseconds: median / nearest-rank p95)
+## 段階別の結果（ミリ秒：中央値 / 最近順位法による p95）
 
-| Fixture | Baseline | Stage1 | Stage2 | Stage3 | Final uncached | Final cold |
+| テストデータ | 変更前 | 段階1 | 段階2 | 段階3 | 最終実装・キャッシュ無効 | 最終実装・コールド |
 |---|---:|---:|---:|---:|---:|---:|
 | sample | 3.000 / 3.315 | 2.824 / 3.261 | 2.840 / 3.177 | 2.906 / 2.992 | 2.822 / 2.924 | 4.152 / 6.911 |
 | holes-door-gap-demo | 0.431 / 0.456 | 0.424 / 0.434 | 0.435 / 0.456 | 0.439 / 0.485 | 0.432 / 0.444 | 0.653 / 0.695 |
 | sample-110-rooms | 86.602 / 94.186 | 75.171 / 81.537 | 76.198 / 86.340 | 40.605 / 46.881 | 41.538 / 47.827 | 61.845 / 62.843 |
 | sample-550-rooms | 1627.138 / 1678.503 | 1460.150 / 1503.591 | 1443.395 / 1777.601 | 233.736 / 259.998 | 231.865 / 256.095 | 371.615 / 384.793 |
 
-Stage 1: reuse projected doors. Stage 2: interval scan. Stage 3: STRtree candidates. Final cold: cache preparation included.
+段階1：射影済みドアの再利用です。段階2：区間走査です。段階3：STRtree による候補抽出です。最終実装のコールド測定には、キャッシュの準備を含みます。
 
-## Changed settings (milliseconds: median / p95)
+## 設定変更時の結果（ミリ秒：中央値 / p95）
 
-| Fixture | Changed setting | Baseline | Final warm | Median speedup |
+| テストデータ | 変更した設定 | 変更前 | 最終実装・ウォーム | 中央値の高速化倍率 |
 |---|---|---:|---:|---:|
-| sample | height | 2.888 / 2.948 | 0.840 / 0.910 | 3.44x |
-| sample | scale | 2.895 / 3.829 | 0.843 / 0.893 | 3.43x |
-| holes-door-gap-demo | height | 0.431 / 0.471 | 0.140 / 0.150 | 3.07x |
-| holes-door-gap-demo | scale | 0.428 / 0.442 | 0.140 / 0.150 | 3.07x |
-| sample-110-rooms | height | 86.003 / 93.062 | 9.556 / 16.909 | 9.00x |
-| sample-110-rooms | scale | 87.725 / 91.897 | 8.985 / 14.581 | 9.76x |
-| sample-550-rooms | height | 1631.991 / 1652.379 | 99.503 / 108.990 | 16.40x |
-| sample-550-rooms | scale | 1618.235 / 1699.750 | 117.560 / 125.817 | 13.77x |
+| sample | 高さ | 2.888 / 2.948 | 0.840 / 0.910 | 3.44x |
+| sample | 縮尺 | 2.895 / 3.829 | 0.843 / 0.893 | 3.43x |
+| holes-door-gap-demo | 高さ | 0.431 / 0.471 | 0.140 / 0.150 | 3.07x |
+| holes-door-gap-demo | 縮尺 | 0.428 / 0.442 | 0.140 / 0.150 | 3.07x |
+| sample-110-rooms | 高さ | 86.003 / 93.062 | 9.556 / 16.909 | 9.00x |
+| sample-110-rooms | 縮尺 | 87.725 / 91.897 | 8.985 / 14.581 | 9.76x |
+| sample-550-rooms | 高さ | 1631.991 / 1652.379 | 99.503 / 108.990 | 16.40x |
+| sample-550-rooms | 縮尺 | 1618.235 / 1699.750 | 117.560 / 125.817 | 13.77x |
 
-## Result equivalence
+## 結果の同等性
 
-40 complete cold/warm response comparisons; 1,015,292 numeric fields; 0 differing numeric values; max absolute error 0.0; max relative error 0.0.
+コールド・ウォームのレスポンス全体を40件比較しました。数値フィールドは1,015,292件で、異なる数値は0件、最大絶対誤差は0.0、最大相対誤差は0.0でした。
 
-Includes four fixtures and five settings: default, ceiling 3.1m/door 2.2m, scale 123.4px=2.345m, tolerance 0px, tolerance 2.5px. All list order, vertex coordinates, room/edge/interval IDs, holes, overlap regions, warning strings, integers and nulls are checked. No polygon normalization hides vertex-order differences. Float tolerance is abs=1e-10/rel=1e-12; actual differences are independently recorded and were zero. An additional 12 intermediate-stage default-setting comparisons passed in final.json; stage-equivalence.json contains 60 comparisons across all five settings and three stages, also zero error.
+四つのテストデータと五つの設定を含みます。設定は、既定値、天井高3.1m/ドア高2.2m、縮尺123.4px=2.345m、許容値0px、許容値2.5pxです。すべてのリストの順序、頂点座標、部屋・辺・区間の ID、穴、重複領域、警告文字列、整数、null を確認しています。多角形の正規化によって頂点順序の差を隠すことはしていません。浮動小数点数の許容誤差は abs=1e-10/rel=1e-12 ですが、実際の差も独立して記録しており、ゼロでした。final.json では、既定設定での途中段階の比較12件にも合格しています。stage-equivalence.json には、五つの設定すべてと三つの段階を対象にした60件の比較があり、こちらも誤差はゼロでした。
 
-The 22 tests in tests/test_performance_equivalence.py require zero differing numeric fields and passed, including invalid/outside/overlapping holes, self-intersection, duplicate IDs, missing walls, 3-vertex lines and changed metadata. This is tested-input equivalence, not proof for every possible input.
+数値フィールドの差異がゼロであることを要件とする tests/test_performance_equivalence.py の22件のテストに合格しました。不正な穴・外側の穴・重なり合う穴、自己交差、ID の重複、壁の欠落、3頂点の線、メタデータの変更を含みます。これはテストした入力での同等性を示すもので、あらゆる入力に対する証明ではありません。
 
-Before the final run, comparing the initial cache implementation found 1,636 floating-point differences (maximum 1.8189894035458565e-11). Its room wall-area calculation summed already-subtracted edge areas, while the baseline subtracts summed door area from summed gross area. The implementation was corrected to preserve operation order. pre-arithmetic-fix.json and stage4-equivalence.json retain those historical pre-fix results; they are not the final result. Final measurement was rerun in full after the correction.
+最終測定の前に、初期のキャッシュ実装との比較で、浮動小数点数の差が1,636件見つかりました（最大1.8189894035458565e-11）。初期実装では控除済みの辺ごとの面積を合計して部屋の壁面積を計算していましたが、変更前の実装では控除前面積の合計からドア面積の合計を差し引いていました。演算順序を保持するよう実装を修正しました。pre-arithmetic-fix.json と stage4-equivalence.json は、その修正前の結果を履歴として保持したものであり、最終結果ではありません。修正後に最終測定をすべて再実行しました。
 
-## Scope and interpretation
+## 適用範囲と解釈
 
-- Sample and hole/door-gap demo: 30 repetitions each. Synthetic 110/550 rooms: 5 repetitions each; p95 for 5 samples is their maximum, not a stable estimate of population p95.
-- Local in-process analysis. Input loading/validation, outward response JSON serialization, HTTP and UI rendering excluded. Full response model construction and internal cache JSON/hash/read/write included. Cold includes cache clear. Warm primes at default settings, then changes heights or scale; baseline is timed with those same changed settings.
-- Other agents paused heavy test/build work during final measurement. final.json is authoritative. stages.json was exploratory and overlapped equivalence work, so is excluded from claims.
-- Large fixtures translate all sample contours 10/50 times with unique IDs, at 1200px horizontal/800px vertical spacing; holes are translated if present. They are synthetic scaling inputs, not independently collected real plans.
-- Small-sample cold calls increased: cache preparation costs more than it saves on first use. Height/scale changes are faster. See exact values in the tables above. Demo cold similarly increased.
-- Stage 2 alone has no demonstrated benefit on the small sample/110-room inputs. Their few intervals make overhead visible. The 550-room stage2 change is modest. Do not claim every stage speeds up every input.
-- Large-input cold calls and changed-settings calls improved, with ratios shown above. Stage 3 candidate reduction explains most of the large-input gain.
-- Baseline cProfile at 550 rooms: 2.299s total, 1.640s cumulative segment projection, 0.445s intersects. Profiling adds overhead: these times are not comparable directly to unprofiled latency.
-- Cache is process-local, 8 entries/16MiB/300s. Different contours/tolerance, restart, expiry or eviction require cold computation. Vercel instances do not share this cache.
-- Spatially separated synthetic copies favor STRtree. Inputs with heavily overlapping bounding boxes may not gain the same speedup.
-- Already-displayed room clicks normally reuse computed results. Analysis timing does not measure click-to-render time, network latency or Vercel cold starts. No computer use/browser automation was performed.
+- サンプルと穴・ドア隙間デモは、それぞれ30回繰り返しました。人工的な110/550部屋のデータは、それぞれ5回です。5件の測定値の p95 は最大値となり、母集団の p95 の安定した推定値ではありません。
+- ローカルのプロセス内での解析です。入力の読み込み・検証、外部に返すレスポンスの JSON シリアライズ、HTTP、UI 描画は対象外です。レスポンスモデル全体の構築と、内部キャッシュの JSON・ハッシュ・読み書きは含みます。コールド測定にはキャッシュのクリアを含みます。ウォーム測定では既定設定でキャッシュを準備してから高さまたは縮尺を変更し、変更前の実装も同じ変更後の設定で計測します。
+- 最終測定中は、他のエージェントによる負荷の高いテスト・ビルド作業を一時停止しました。final.json を評価の基準とします。stages.json は探索的な測定で同等性の検証作業と重なっていたため、主張の根拠から除外します。
+- 大規模なテストデータは、サンプルの全輪郭を10/50組に複製して平行移動し、一意の ID を付けて水平方向1200px・垂直方向800pxの間隔で配置したものです。穴がある場合は穴も平行移動します。規模拡大を模した人工的な入力であり、個別に収集した実際の図面ではありません。
+- 小規模サンプルのコールド呼び出しの所要時間は増加しました。初回はキャッシュの準備コストが短縮効果を上回るためです。高さ・縮尺の変更は高速になっています。正確な数値は上の表を参照してください。デモのコールド測定も同様に増加しました。
+- 段階2単独では、小規模サンプル・110部屋の入力で効果は確認できていません。これらは区間数が少ないため、オーバーヘッドが表れます。550部屋での段階2の変化は小幅です。どの段階もすべての入力を高速化するとは主張できません。
+- 大規模入力のコールド呼び出しと、設定変更時の呼び出しは改善しました。倍率は上に示しています。大規模入力での改善の大部分は、段階3の候補削減によるものです。
+- 550部屋での変更前の cProfile 結果は、合計2.299s、線分射影の累積時間1.640s、intersects が0.445sでした。プロファイリングにはオーバーヘッドが伴うため、これらの時間はプロファイリングなしの所要時間と直接比較できません。
+- キャッシュはプロセス内に限定され、8件/16MiB/300sです。輪郭・許容値の変更、再起動、有効期限切れ、キャッシュからの削除がある場合は、コールド計算が必要です。Vercel のインスタンス間でこのキャッシュは共有しません。
+- 空間的に離れた人工的なコピーは STRtree に有利です。外接長方形が大きく重なる入力では、同じ高速化が得られない可能性があります。
+- 表示済みの部屋をクリックした場合は、通常、計算済みの結果を再利用します。解析時間は、クリックから描画までの時間、ネットワーク遅延、Vercel のコールドスタートを測定するものではありません。UI 自動操作やブラウザ自動操作は行っていません。
 
-## Reproduce
+## 再現手順
 
 ```sh
 cd floorplan-analyzer/backend
@@ -58,7 +58,7 @@ cd floorplan-analyzer/backend
 .venv/bin/python -m pytest -q tests/test_performance_equivalence.py
 ```
 
-Raw samples, input hashes and implementation hashes: [final.json](final.json). Initial pre-change measurements: [baseline.json](baseline.json). Per-function cProfile reports: baseline-profile-* and final-profile-* in this directory.
+生の測定値、入力ハッシュ、実装ハッシュは [final.json](final.json)、初回の変更前測定は [baseline.json](baseline.json) を参照してください。関数別の cProfile レポートは、このディレクトリ内の baseline-profile-* と final-profile-* です。
 
 ```json
 {
