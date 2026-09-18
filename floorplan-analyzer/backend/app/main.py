@@ -21,7 +21,6 @@ from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
 from .analyzer import analyze
-from .ai import router as ai_router
 from .schemas import AnalysisSettings, AnalyzeResponse, MaskFile
 
 MAX_UPLOAD_BYTES = int(os.environ.get("MAX_UPLOAD_BYTES", str(50 * 1024 * 1024)))
@@ -45,7 +44,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.include_router(ai_router)
 
 
 def _validation_details(exc):

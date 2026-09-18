@@ -53,7 +53,7 @@ export function roomsToCsv(res: AnalyzeResponse): string {
     r.door_area_m2.toFixed(3),
     r.wall_area_m2.toFixed(3),
     wallWarningsForRoom(res, r.id).map((w) => w.message).join(" / "),
-    res.warnings.filter((w) => (w.code === "ai_generated" || w.code === "inferred_door_wall" || w.code === "room_overlap") && (w.contour_id === null || w.contour_id === r.id)).map((w) => w.message).join(" / "),
+    res.warnings.filter((w) => (w.code === "inferred_door_wall" || w.code === "room_overlap") && (w.contour_id === null || w.contour_id === r.id)).map((w) => w.message).join(" / "),
   ]);
   rows.push([
     "合計",
@@ -61,7 +61,7 @@ export function roomsToCsv(res: AnalyzeResponse): string {
     "", "", "", "", "", "", "",
     res.summary.total_wall_area_m2.toFixed(3),
     res.warnings.some(isWallWarning) ? "要確認の壁面積を含みます" : "",
-    res.warnings.filter((w) => ["ai_generated", "inferred_door_wall", "room_overlap"].includes(w.code)).map((w) => w.message).join(" / "),
+    res.warnings.filter((w) => ["inferred_door_wall", "room_overlap"].includes(w.code)).map((w) => w.message).join(" / "),
   ]);
   if ((res.summary.overlap_floor_area_m2 ?? 0) > 0) {
     rows.push(["重複を除いた床面積", res.summary.union_floor_area_m2!.toFixed(3), "", "", "", "", "", "", "", "", "", "部屋別の帰属は未確定"]);

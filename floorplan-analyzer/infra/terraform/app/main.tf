@@ -25,7 +25,6 @@ data "aws_ecr_repository" "backend" {
 }
 locals {
   repositories = [data.aws_ecr_repository.frontend.arn, data.aws_ecr_repository.backend.arn]
-  secret_arns  = [var.openai_api_key_secret_arn, var.ai_access_token_secret_arn]
   account_id   = data.aws_caller_identity.current.account_id
 }
 resource "aws_vpc" "app" {
@@ -156,15 +155,11 @@ resource "aws_iam_role_policy" "execution" {
   role = aws_iam_role.execution.id
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = concat([
+    Statement = [
       { Effect = "Allow", Action = ["ecr:GetAuthorizationToken"], Resource = "*" },
       { Effect = "Allow", Action = ["ecr:BatchCheckLayerAvailability", "ecr:GetDownloadUrlForLayer", "ecr:BatchGetImage"], Resource = local.repositories },
-      { Effect = "Allow", Action = ["logs:CreateLogStream", "logs:PutLogEvents"], Resource = "${aws_cloudwatch_log_group.app.arn}:*" },
-      { Effect = "Allow", Action = ["secretsmanager:GetSecretValue"], Resource = local.secret_arns }
-      ], var.secrets_kms_key_arn == null ? [] : [{
-        Effect    = "Allow", Action = ["kms:Decrypt"], Resource = var.secrets_kms_key_arn,
-        Condition = { StringEquals = { "kms:ViaService" = "secretsmanager.${var.aws_region}.amazonaws.com" } }
-    }])
+      { Effect = "Allow", Action = ["logs:CreateLogStream", "logs:PutLogEvents"], Resource = "${aws_cloudwatch_log_group.app.arn}:*" }
+    ]
   })
 }
 resource "aws_iam_role" "task" {
@@ -191,11 +186,6 @@ resource "aws_ecs_task_definition" "app" {
     {
       name         = "backend", image = var.backend_image, essential = true,
       portMappings = [{ containerPort = 8000, protocol = "tcp" }],
-      environment  = [{ name = "OPENAI_MODEL", value = var.openai_model }],
-      secrets = [
-        { name = "OPENAI_API_KEY", valueFrom = var.openai_api_key_secret_arn },
-        { name = "AI_ACCESS_TOKEN", valueFrom = var.ai_access_token_secret_arn }
-      ],
       healthCheck = {
         command  = ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"],
         interval = 30, timeout = 5, retries = 3, startPeriod = 30

@@ -1,4 +1,4 @@
-import type { AnalyzeResponse, RecognitionResponse, Settings } from "./types";
+import type { AnalyzeResponse, Settings } from "./types";
 
 const BASE = ""; // Next.js のサーバー側プロキシを経由する。
 
@@ -57,14 +57,4 @@ export async function analyzeFile(
   }
   if (!res.ok) throw new ApiError(res.status, await extractMessage(res));
   return (await res.json()) as AnalyzeResponse;
-}
-
-export async function recognizeImage(file: File, token: string, signal: AbortSignal): Promise<RecognitionResponse> {
-  const form = new FormData();
-  form.append("file", file, file.name);
-  const res = await fetch(`${BASE}/api/recognize`, {
-    method: "POST", body: form, signal, headers: { "X-AI-Token": token },
-  });
-  if (!res.ok) throw new ApiError(res.status, await extractMessage(res));
-  return await res.json() as RecognitionResponse;
 }

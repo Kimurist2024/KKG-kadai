@@ -2,10 +2,9 @@ services:
   backend:
     build: ./backend
     environment:
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      OPENAI_MODEL: ${OPENAI_MODEL:-}
-      AI_ACCESS_TOKEN: ${AI_ACCESS_TOKEN:-}
-      CORS_ORIGINS: http://localhost:3000
+      # .env（アプリ直下）で上書きできる。未設定なら既定値を使う
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      MAX_UPLOAD_BYTES: ${MAX_UPLOAD_BYTES:-52428800}
     restart: unless-stopped
   frontend:
     build: ./frontend

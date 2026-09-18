@@ -15,7 +15,7 @@ npm --prefix frontend ci
 
 起動スクリプトは使用する8000/5173ポートの既存プロセスを停止します。他のアプリが使用中ならREADMEの手動起動を使ってください。停止は `./scripts/stop.sh` です。
 
-AIを利用する場合は `config/env.example` を `.env` にコピーして設定します。手動FastAPI起動時の環境変数読み込み方法は [技術構成](docs/architecture.md#ai-設定) にあります。
+環境変数を上書きする場合は `config/env.example` を `.env` にコピーして設定します（現在、必須の環境変数はありません）。
 
 ## 変更場所
 
