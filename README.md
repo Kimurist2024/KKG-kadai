@@ -2,16 +2,15 @@
 
 > `main` ブランチには説明資料だけを置いています。アプリ本体は [feature/kimura](https://github.com/Kimurist2024/KKG-kadai/tree/feature/kimura) にあります。以下の起動手順は同ブランチをチェックアウトし、`floorplan-analyzer/` で実行してください（`.claude/scripts/` のコマンドだけはリポジトリ直下で実行します）。
 
-公開サイト: https://floorplan-analyzer-taupe.vercel.app （2026-09-18 に API の疎通を確認しました。画像 AI は無効です。このとき、公開環境での解析処理と画面操作までは再検証していません）
+公開サイト: https://floorplan-analyzer-taupe.vercel.app （2026-09-18 に API の疎通を確認しました。このとき、公開環境での解析処理と画面操作までは再検証していません）
 
 **部屋・壁・ドアのマスク JSON** を読み込み、部屋ごとの **床面積・周長・壁面積** を算出する Web アプリです。
-提出用の画面は、JSON のアップロードと固定条件での解析に絞りました。画像 AI の入力欄は表示していません。
+提出用の画面は、JSON のアップロードと固定条件での解析に絞りました。
 
 - フロントエンド: Next.js 16.3.5 App Router / React 19.3.0 / TypeScript 5.9.3（`frontend/package-lock.json` で固定）。図面は SVG で描画しています。
 - バックエンド: Python / FastAPI / Pydantic 2 / Shapely 2.0 系。Uvicorn で起動し、座標から面積を計算します。
 - 公開用の設定: Vercel Services で Next.js と FastAPI を分け、`/api/*` は FastAPI、それ以外は Next.js に振り分けています。
 - 別の配置方法: Docker Compose と、AWS ECS Fargate 用の Terraform を同梱しました。ローカル・Compose・AWS では Next.js の API プロキシを通します。
-- 画像 AI: HTTPX 経由で OpenAI Responses API を呼ぶ機能をオプションとして残しています。通常画面には入力欄がなく、JSON 解析に AI の設定は要りません。
 
 部屋を選んだときの表示処理の改善と計測結果は [性能検証](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/selection-performance.md) にまとめました。
 面積・壁・扉の計算を速くしたときの、変更前後の全項目比較は [アルゴリズム性能検証](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/validation/algorithm-performance/report.md) にあります。
@@ -41,7 +40,7 @@ Python 3.12 と Node.js 22 を推奨します（CI・Docker と同じ構成で�
 3. 図面か表から部屋を選ぶと、面積・周長と辺ごとの内訳を確認できます。
 4. 拡大・ドラッグ・レイヤー切替で図面を確かめ、結果はCSVで保存できます。
 
-計算条件は **天井高2.4m、ドア高2.0m、96.7px＝1.365m** に固定しています。画面の表示倍率は計算値に影響しません。通常画面では画像AIの入力と幾何補正を無効にしました。
+計算条件は **天井高2.4m、ドア高2.0m、96.7px＝1.365m** に固定しています。画面の表示倍率は計算値に影響しません。通常画面では幾何補正を無効にしました。
 
 ローカルでは `http://127.0.0.1:8000/api/health` でAPIの疎通を、`http://127.0.0.1:8000/docs` で仕様を確認できます。8000番にアプリの画面はありません。コンテナで動かす場合は `docker compose up --build` で、画面は `http://localhost:3000` です。Compose ではバックエンドの8000番をホストに公開していません。
 
