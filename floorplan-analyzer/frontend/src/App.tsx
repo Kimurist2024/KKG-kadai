@@ -251,7 +251,7 @@ export default function App() {
               <div className="result-checks-scroll" role="region" aria-label="確認事項のスクロール領域" tabIndex={0}>
               {!!view?.overlaps?.length && <details className="status warn overlap-check">
                 <summary><span className="check-title">部屋の重複 {view.overlaps.length} か所</span><span className="check-description">{overlapSummary}</span></summary>
-                <p>紫の斜線が重複部分です。部屋別の面積はそのままにして、合計から重複計上分を除いた値を併記しています。行に合わせると図面上の位置を輪で示し、部屋名を押すとその部屋を選んで図面へ移動します。</p>
+                <p>紫の斜線が重複部分です。部屋別の面積はそのままにして、合計から重複計上分を除いた値を併記しています。行に合わせると図面上の重複部分を太い縁取りで強調し、部屋名を押すとその部屋を選んで図面へ移動します。</p>
                 <ul className="overlap-list">{overlapRows.map(({ overlap, index, ratio }) => (
                   <li key={index} className="overlap-row" onMouseEnter={() => setHoverOverlap(index)} onMouseLeave={() => setHoverOverlap(null)}
                     onFocus={() => setFocusOverlap(index)} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocusOverlap(null); }}>

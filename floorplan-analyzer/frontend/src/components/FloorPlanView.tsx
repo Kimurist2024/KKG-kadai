@@ -1,6 +1,7 @@
 import { useId, useMemo, useRef } from "react";
 import type { AnalyzeResponse, Layers } from "../types";
 import { bounds, fmt, labelPoint, regionPath } from "../format";
+import { overlapRing } from "../viewport";
 import { usePlanViewport } from "../hooks/usePlanViewport";
 import DetectedSegmentLayer from "./plan/DetectedSegmentLayer";
 import SelectedRoomEdges from "./plan/SelectedRoomEdges";
@@ -136,25 +137,25 @@ export default function FloorPlanView(props: Props) {
             })}
 
           {layers.rooms && result.overlaps?.flatMap((overlap, i) => overlap.regions.map((region, j) => <path key={`overlap-${i}-${j}`} data-overlap="true" d={regionPath(region.vertices, region.holes)} fillRule="evenodd" fill={`url(#${overlapPattern})`} stroke="#a21caf" strokeWidth={(i === highlightOverlap ? 2.5 : 1) * unitsPerPx} pointerEvents="none" />))}
-          {layers.rooms && highlightOverlap !== null && (() => {
-            // 重複は 0.01 m² 前後と小さいことが多い。白フチ付きの輪で囲み、背景や部屋の塗りの上でも位置が分かるようにする
-            const points = result.overlaps?.[highlightOverlap]?.regions.flatMap((region) => region.vertices) ?? [];
-            if (!points.length) return null;
-            const xs = points.map((p) => p.x), ys = points.map((p) => p.y);
-            const left = Math.min(...xs), right = Math.max(...xs), top = Math.min(...ys), bottom = Math.max(...ys);
-            const r = Math.max(Math.hypot(right - left, bottom - top) / 2 + 6 * unitsPerPx, 14 * unitsPerPx);
-            return (
-              <g data-overlap-focus="true" pointerEvents="none">
-                <circle cx={(left + right) / 2} cy={(top + bottom) / 2} r={r} fill="none" stroke="#fff" strokeWidth={5 * unitsPerPx} />
-                <circle cx={(left + right) / 2} cy={(top + bottom) / 2} r={r} fill="none" stroke="#a21caf" strokeWidth={2.5 * unitsPerPx} />
-              </g>
-            );
-          })()}
 
           {/* 壁・ドア (検出線分) */}
           {layers.walls && <DetectedSegmentLayer segments={result.walls} highlight={highlight} unitsPerPx={unitsPerPx} color={WALL_COLOR} strokeWidth={3} highlightedStrokeWidth={7} haloWidth={12} opacity={0.9} keyPrefix="w" titleKind="壁" />}
           {layers.doors && <DetectedSegmentLayer segments={result.doors} highlight={highlight} unitsPerPx={unitsPerPx} color={DOOR_COLOR} strokeWidth={4} highlightedStrokeWidth={9} haloWidth={14} opacity={0.95} keyPrefix="d" titleKind="ドア" />}
 
+          {layers.rooms && highlightOverlap !== null && (() => {
+            // 重複は壁沿いの幅 1〜2px の細い帯になることが多い。外接円で囲むと巨大になって位置が分からなくなるので、
+            // 重複の形そのものを太い半透明の縁取りでなぞる。壁・ドアの線に隠れないよう、それらより上に描く（クリックは透過）。
+            const regions = result.overlaps?.[highlightOverlap]?.regions ?? [];
+            if (!regions.length) return null;
+            const ring = overlapRing(regions.flatMap((region) => region.vertices), unitsPerPx);
+            return (
+              <g data-overlap-focus="true" pointerEvents="none" fill="none" strokeLinejoin="round" strokeLinecap="round">
+                {regions.map((region, j) => <path key={`under-${j}`} d={regionPath(region.vertices, region.holes)} stroke="#fff" strokeOpacity={0.75} strokeWidth={10 * unitsPerPx} />)}
+                {regions.map((region, j) => <path key={`halo-${j}`} data-overlap-halo="true" d={regionPath(region.vertices, region.holes)} stroke="#a21caf" strokeOpacity={0.6} strokeWidth={7 * unitsPerPx} />)}
+                {ring && <circle data-overlap-ring="true" cx={ring.cx} cy={ring.cy} r={ring.r} stroke="#a21caf" strokeWidth={2 * unitsPerPx} />}
+              </g>
+            );
+          })()}
           {selected && <SelectedRoomEdges selected={selected} selectedEdge={selectedEdge} hoverEdge={hoverEdge} onSelectEdge={onSelectEdge} onHoverEdge={onHoverEdge} unitsPerPx={unitsPerPx} hitWidth={hitWidth} badgeR={badgeR} badgeFont={badgeFont} />}
 
           {/* 部屋名ラベル */}
