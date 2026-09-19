@@ -190,7 +190,7 @@ flowchart TD
     F --> H["課題要件と照らして人が確認し、mainに統合"]
 ```
 
-共通プロンプトは `.claude/scripts/`、役割は `.claude/agents/`、検討やレビューの記録は `floorplan-analyzer/docs/reviews/` に残しています。実施できなかった検証は、未実施と明記して残しています。
+共通プロンプトは `.claude/scripts/`、役割は `.claude/agents/`、文章とmainへの反映の判断基準は `.claude/skills/`、検討やレビューの記録は `floorplan-analyzer/docs/reviews/` に残しています。実施できなかった検証は、未実施と明記して残しています。
 
 初回は `floorplan-analyzer/` で `backend/.venv/bin/python -m pip install -r backend/requirements-dev.txt` を実行し、テスト用の依存も入れてください（仮想環境は起動スクリプトが作ります）。その後、リポジトリ直下で検証します。
 
