@@ -3,7 +3,7 @@
 ## 最新: 2026-09-19（feature/kimura 9cdc491、初期画面の作り直しと重複箇所の表示を反映）
 
 - 公開 URL: https://floorplan-analyzer-taupe.vercel.app（別名 https://floorplan-analyzer-kimu4.vercel.app）
-- Deployment: `dpl_E8hgRQNmCeKwDWgYwxvShtobjWUA`（READY / production）
+- Deployment: `dpl_E8hgRQNmCeKwDWgYwxvShtobjWUA`（READY / production）。`npx vercel@59 inspect floorplan-analyzer-acvwqgkxv-kimu4.vercel.app --scope kimu4` で target が production、status が Ready、Aliases に上の公開 URL 2 件が含まれることを確認
 - 固有 URL: https://floorplan-analyzer-acvwqgkxv-kimu4.vercel.app（Deployment Protection のため直接アクセスはログインが必要。公開 URL は不要）
 - 実行: `floorplan-analyzer/` で `npx vercel@59 deploy --prod --scope kimu4 --yes`。作業ツリーは feature/kimura の 9cdc491 で未コミットの変更なし
 - HTTP での確認（computer use は不使用。ブラウザでの画面操作は未確認）:
