@@ -71,44 +71,17 @@ def readme_for_zip(text: str) -> str:
     return text
 
 
-def strip_code(text: str) -> str:
-    """コードの中身を取り除く。対象は ``` と ~~~ のフェンス、空行の直後に始まる字下げブロック、`…` のコードスパン。"""
-    kept: list[str] = []
-    fence = ""          # 開いているフェンス（例: "```"）。空なら外側
-    indented = False    # 字下げコードブロックの中か
-    previous_blank = True
-    for line in text.split("\n"):
-        opened = re.match(r" {0,3}(?:(`{3,})[^`]*|(~{3,}).*)$", line)
-        closing = re.match(r" {0,3}(`{3,}|~{3,})[ \t]*$", line)
-        if fence:
-            if closing and closing.group(1)[0] == fence[0] and len(closing.group(1)) >= len(fence):
-                fence = ""
-            previous_blank = False
-            continue
-        if opened:
-            fence = opened.group(1) or opened.group(2)
-            previous_blank = False
-            continue
-        is_indented = bool(re.match(r"(?: {4}|\t)", line)) and line.strip() != ""
-        if is_indented and (previous_blank or indented):
-            indented = True
-            continue
-        if line.strip():
-            indented = False
-        previous_blank = line.strip() == ""
-        kept.append(line)
-    # コードスパンは行をまたげる（空行はまたげない）ので、ブロックを除いた後にまとめて除く
-    return re.sub(r"(`+)(?:(?!\1)(?!\n[ \t]*\n).)+?\1", "", "\n".join(kept), flags=re.S)
-
-
 def markdown_targets(text: str) -> list[str]:
-    """リンクと画像の参照先を取り出す。タイトル付き、<> 囲み、参照形式の定義、HTML の src / href（引用符なしも）を対象にする。"""
-    body = strip_code(text)
+    """リンクと画像の参照先を取り出す。タイトル付き、<> 囲み、参照形式の定義、HTML の src / href（引用符なしも）を対象にする。
+
+    コードブロックやコードスパンの中かどうかは区別せず、README 全体から拾う。見分ける処理を持たなければ
+    見落としが起きないため。コード例の中のリンク風の文字列で失敗したら、書き手が README を直す。
+    """
     inline = [a or b for a, b in re.findall(
-        r"\]\(\s*(?:<([^>]+)>|((?:[^()\s]|\([^()\s]*\))+))(?:\s+[^)]*)?\)", body)]
-    reference = [a or b for a, b in re.findall(r"^ {0,3}\[[^\]]+\]:\s*(?:<([^>]+)>|(\S+))", body, flags=re.M)]
+        r"\]\(\s*(?:<([^>]+)>|((?:[^()\s]|\([^()\s]*\))+))(?:\s+[^)]*)?\)", text)]
+    reference = [a or b for a, b in re.findall(r"^ {0,3}\[[^\]]+\]:\s*(?:<([^>]+)>|(\S+))", text, flags=re.M)]
     html = [a or b or c for a, b, c in
-            re.findall(r"""(?:src|href)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>"']+))""", body, flags=re.I)]
+            re.findall(r"""(?:src|href)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>"']+))""", text, flags=re.I)]
     return inline + reference + html
 
 
