@@ -96,8 +96,9 @@ def strip_code(text: str) -> str:
         if line.strip():
             indented = False
         previous_blank = line.strip() == ""
-        kept.append(re.sub(r"(`+)(?:(?!\1).)+\1", "", line))
-    return "\n".join(kept)
+        kept.append(line)
+    # コードスパンは行をまたげる（空行はまたげない）ので、ブロックを除いた後にまとめて除く
+    return re.sub(r"(`+)(?:(?!\1)(?!\n[ \t]*\n).)+?\1", "", "\n".join(kept), flags=re.S)
 
 
 def markdown_targets(text: str) -> list[str]:
@@ -112,7 +113,7 @@ def markdown_targets(text: str) -> list[str]:
 
 def resolve(link: str) -> str | None:
     """README（zip の最上位）から見た相対リンクを zip 内のパスに直す。外部リンクやページ内リンクは None。"""
-    if re.match(r"[a-zA-Z][a-zA-Z0-9+.-]*:|#|//", link):
+    if re.match(r"[a-zA-Z][a-zA-Z0-9+.-]*:|#", link):
         return None
     path = unquote(link.split("#")[0].split("?")[0])
     return posixpath.normpath(path) if path else None
