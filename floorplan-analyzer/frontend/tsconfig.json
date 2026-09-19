@@ -28,20 +28,19 @@
       "node"
     ],
     "allowJs": true,
-    "baseUrl": ".",
     "paths": {
       "react": [
-        "node_modules/@types/react"
+        "./node_modules/@types/react"
       ],
       "react/*": [
-        "node_modules/@types/react/*"
+        "./node_modules/@types/react/*"
       ],
       "*": [
-        "node_modules/*",
-        "node_modules/@types/*"
+        "./node_modules/*",
+        "./node_modules/@types/*"
       ],
       "chai": [
-        "node_modules/@types/chai"
+        "./node_modules/@types/chai"
       ]
     }
   },
