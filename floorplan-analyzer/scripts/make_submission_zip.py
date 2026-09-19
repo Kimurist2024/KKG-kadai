@@ -69,6 +69,15 @@ def readme_for_zip(text: str) -> str:
     return text
 
 
+def markdown_targets(text: str) -> list[str]:
+    """リンクと画像の参照先を取り出す。タイトル付き、<> 囲み、参照形式、HTML の src / href も対象。"""
+    body = re.sub(r"```.*?```", "", text, flags=re.S)  # コードブロックの中は対象外
+    inline = [a or b for a, b in re.findall(r"\]\(\s*(?:<([^>]+)>|([^)\s]+))(?:\s+[^)]*)?\)", body)]
+    reference = [a or b for a, b in re.findall(r"^[ ]{0,3}\[[^\]]+\]:\s*(?:<([^>]+)>|(\S+))", body, flags=re.M)]
+    html = re.findall(r"""(?:src|href)\s*=\s*["']([^"']+)["']""", body)
+    return inline + reference + html
+
+
 def main() -> None:
     here = Path(__file__).resolve().parent
     root = Path(git("rev-parse", "--show-toplevel", cwd=here).decode().strip())
@@ -95,7 +104,7 @@ def main() -> None:
     files["README.md"] = (readme.encode("utf-8"), files["README.md"][1])
 
     # README の相対リンクと画像が、zip の中ですべて開けること
-    links = [m for m in re.findall(r"\]\(([^)\s]+)\)", readme) if not re.match(r"[a-z]+://|#|mailto:", m)]
+    links = [m for m in markdown_targets(readme) if not re.match(r"[a-z]+://|#|mailto:", m)]
     broken = sorted({link for link in links if link.split("#")[0].rstrip("/") not in files
                      and not any(name.startswith(link.split("#")[0].rstrip("/") + "/") for name in files)})
     if broken:
