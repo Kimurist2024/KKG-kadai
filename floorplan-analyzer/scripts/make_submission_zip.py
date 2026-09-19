@@ -10,12 +10,14 @@ from __future__ import annotations
 
 import hashlib
 import io
+import posixpath
 import re
 import subprocess
 import sys
 import tarfile
 import zipfile
 from pathlib import Path
+from urllib.parse import unquote
 
 TOP = "floorplan-submission"
 OUT_NAME = "floorplan-analyzer-submission.zip"
@@ -69,13 +71,51 @@ def readme_for_zip(text: str) -> str:
     return text
 
 
+def strip_code(text: str) -> str:
+    """コードの中身を取り除く。対象は ``` と ~~~ のフェンス、空行の直後に始まる字下げブロック、`…` のコードスパン。"""
+    kept: list[str] = []
+    fence = ""          # 開いているフェンス（例: "```"）。空なら外側
+    indented = False    # 字下げコードブロックの中か
+    previous_blank = True
+    for line in text.split("\n"):
+        opened = re.match(r" {0,3}(`{3,}|~{3,})", line)
+        if fence:
+            if opened and opened.group(1)[0] == fence[0] and len(opened.group(1)) >= len(fence) \
+                    and not line.strip(" `~"):
+                fence = ""
+            previous_blank = False
+            continue
+        if opened:
+            fence = opened.group(1)
+            previous_blank = False
+            continue
+        is_indented = bool(re.match(r"(?: {4}|\t)", line)) and line.strip() != ""
+        if is_indented and (previous_blank or indented):
+            indented = True
+            continue
+        if line.strip():
+            indented = False
+        previous_blank = line.strip() == ""
+        kept.append(re.sub(r"(`+)(?:(?!\1).)+\1", "", line))
+    return "\n".join(kept)
+
+
 def markdown_targets(text: str) -> list[str]:
-    """リンクと画像の参照先を取り出す。タイトル付き、<> 囲み、参照形式、HTML の src / href も対象。"""
-    body = re.sub(r"```.*?```", "", text, flags=re.S)  # コードブロックの中は対象外
+    """リンクと画像の参照先を取り出す。タイトル付き、<> 囲み、参照形式の定義、HTML の src / href（引用符なしも）を対象にする。"""
+    body = strip_code(text)
     inline = [a or b for a, b in re.findall(r"\]\(\s*(?:<([^>]+)>|([^)\s]+))(?:\s+[^)]*)?\)", body)]
-    reference = [a or b for a, b in re.findall(r"^[ ]{0,3}\[[^\]]+\]:\s*(?:<([^>]+)>|(\S+))", body, flags=re.M)]
-    html = re.findall(r"""(?:src|href)\s*=\s*["']([^"']+)["']""", body)
+    reference = [a or b for a, b in re.findall(r"^ {0,3}\[[^\]]+\]:\s*(?:<([^>]+)>|(\S+))", body, flags=re.M)]
+    html = [a or b or c for a, b, c in
+            re.findall(r"""(?:src|href)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>"']+))""", body, flags=re.I)]
     return inline + reference + html
+
+
+def resolve(link: str) -> str | None:
+    """README（zip の最上位）から見た相対リンクを zip 内のパスに直す。外部リンクやページ内リンクは None。"""
+    if re.match(r"[a-zA-Z][a-zA-Z0-9+.-]*:|#|//", link):
+        return None
+    path = unquote(link.split("#")[0].split("?")[0])
+    return posixpath.normpath(path) if path else None
 
 
 def main() -> None:
@@ -104,9 +144,11 @@ def main() -> None:
     files["README.md"] = (readme.encode("utf-8"), files["README.md"][1])
 
     # README の相対リンクと画像が、zip の中ですべて開けること
-    links = [m for m in markdown_targets(readme) if not re.match(r"[a-z]+://|#|mailto:", m)]
-    broken = sorted({link for link in links if link.split("#")[0].rstrip("/") not in files
-                     and not any(name.startswith(link.split("#")[0].rstrip("/") + "/") for name in files)})
+    links = [(link, resolve(link)) for link in markdown_targets(readme)]
+    links = [(link, path) for link, path in links if path is not None]
+    broken = sorted({link for link, path in links
+                     if path.startswith(("/", "..")) or (path != "." and path not in files
+                                                         and not any(name.startswith(path + "/") for name in files))})
     if broken:
         fail(f"README のリンク先が zip に無い: {broken}")
 
