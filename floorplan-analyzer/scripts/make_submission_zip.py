@@ -78,15 +78,15 @@ def strip_code(text: str) -> str:
     indented = False    # 字下げコードブロックの中か
     previous_blank = True
     for line in text.split("\n"):
-        opened = re.match(r" {0,3}(`{3,}|~{3,})", line)
+        opened = re.match(r" {0,3}(?:(`{3,})[^`]*|(~{3,}).*)$", line)
+        closing = re.match(r" {0,3}(`{3,}|~{3,})[ \t]*$", line)
         if fence:
-            if opened and opened.group(1)[0] == fence[0] and len(opened.group(1)) >= len(fence) \
-                    and not line.strip(" `~"):
+            if closing and closing.group(1)[0] == fence[0] and len(closing.group(1)) >= len(fence):
                 fence = ""
             previous_blank = False
             continue
         if opened:
-            fence = opened.group(1)
+            fence = opened.group(1) or opened.group(2)
             previous_blank = False
             continue
         is_indented = bool(re.match(r"(?: {4}|\t)", line)) and line.strip() != ""
@@ -104,7 +104,8 @@ def strip_code(text: str) -> str:
 def markdown_targets(text: str) -> list[str]:
     """リンクと画像の参照先を取り出す。タイトル付き、<> 囲み、参照形式の定義、HTML の src / href（引用符なしも）を対象にする。"""
     body = strip_code(text)
-    inline = [a or b for a, b in re.findall(r"\]\(\s*(?:<([^>]+)>|([^)\s]+))(?:\s+[^)]*)?\)", body)]
+    inline = [a or b for a, b in re.findall(
+        r"\]\(\s*(?:<([^>]+)>|((?:[^()\s]|\([^()\s]*\))+))(?:\s+[^)]*)?\)", body)]
     reference = [a or b for a, b in re.findall(r"^ {0,3}\[[^\]]+\]:\s*(?:<([^>]+)>|(\S+))", body, flags=re.M)]
     html = [a or b or c for a, b, c in
             re.findall(r"""(?:src|href)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>"']+))""", body, flags=re.I)]
