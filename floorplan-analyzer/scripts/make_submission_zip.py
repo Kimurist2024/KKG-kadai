@@ -30,9 +30,8 @@ EXCLUDE = {
     # 第三者が公開している図面の原本。再配布はせず、README 7章の URL で示す（抽出した画像とテキストは残す）
     "floorplan-analyzer/docs/validation/sources/ur_s2.pdf",
     "floorplan-analyzer/docs/validation/sources/mini_homes.pdf",
-    # 課題として配布された資料。先方の手元にあり、日本語のファイル名は環境によって文字化けする
-    # （同じデータは floorplan-analyzer/sample/ にあり、課題文は kadai.md にある）
-    "【KKG】コーディング課題.pdf",
+    # 課題として配布されたデータ。同じものが floorplan-analyzer/sample/ に入っている
+    # （課題文の PDF は、何に対する提出物かが zip だけで分かるように入れる）
     "平面図解析結果.png",
     "部屋・壁・ドアマスク.json",
 }
