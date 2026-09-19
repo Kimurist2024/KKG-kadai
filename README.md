@@ -94,7 +94,9 @@ Python 3.12 と Node.js 22 を推奨します（Node.js は20.9以上）。`floo
 - 木を作る時間もかかるので、壁とドアがそれぞれ64本未満のときは全件を確認します。候補は元の入力順に並べ直し、計算の順序を変えていません。
 - 同じ入力の幾何計算の結果は、最大8件・16MiB・5分間を上限に保持して使い回します。重なった区間の処理には端点イベント走査を入れました。候補を上位だけに絞る近似は入れていないので、結果は高速化の前と変わりません。
 
-課題で配布されたJSONそのもので、変更前と現行を交互に101回測りました。初回解析は2.89ms→2.30ms（1.25倍）、設定を変えた再解析は2.90ms→0.88ms（3.3倍）で、結果はbit単位で一致します（[同梱JSONでの速度確認](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/validation/sample-speed/sample-speed.md)）。
+課題で配布されたJSONそのもので、変更前と現行を交互に101回測りました。初回解析は2.94ms→1.96ms（1.50倍）、設定を変えた再解析は2.93ms→0.88ms（3.3倍）で、結果はbit単位で一致します（[同梱JSONでの速度確認](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/validation/sample-speed/sample-speed.md)）。
+
+図面の線分は多くても1,000本程度と想定し、30〜990本でも測りました。この範囲では索引の選び方より部屋・辺ごとの固定費のほうが大きかったので、2026年の論文にある「GEOSを配列単位でまとめて呼ぶ」考え方で固定費を削りました（[直近の論文による高速化](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/validation/recent-papers-speed/recent-papers-speed.md)）。
 
 図の読み方は [設計の補足](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/design-notes.md)、ほかの計測は [アルゴリズム性能検証](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/validation/algorithm-performance/report.md)、[計算結果を変えない高速化](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/validation/exact-speed/exact-speed.md)、[表示処理の性能検証](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/selection-performance.md) にあります。
 
@@ -132,6 +134,7 @@ Python 3.12 と Node.js 22 を推奨します（Node.js は20.9以上）。`floo
 - **補正すべき対象を考え直した**：最初はドアの厚みの補正が要ると考えましたが、面積に効くのは壁のほうだと気づき、輪郭が壁のどこを通るかを図に整理しました（5章の図）。
 - **高速化の順番と条件を決めた**：まず計測し、扉投影の重複をなくす→区間処理の改善→STRtree→結果の使い回し、の順を指定しました。区間の走査にいもす法の発想を使う案も出しています。条件は「計算結果が一切ずれないこと」で、これに合わないビームサーチは採用していません。
 - **測り方を疑った**：複製で作った人工データは正しさを確かめようがないと考え、配布されたJSONで測り直しました。すると初回解析が3.02ms→3.88msと逆に遅くなっていました。原因は、結果をキャッシュに登録するときに、辞書への変換と検証のやり直しが挟まっていたことです。この往復をやめて応答を直接組み立て、線分が64本未満のときの総当たりにも外接長方形での絞り込みを入れて、2.30msまで縮めました。
+- **想定する規模を決めた**：図面の線分は多くても1,000本程度と見て、大規模データ向けの索引の工夫は対象から外しました。30〜990本で測ると時間は部屋の数にほぼ比例し、索引による差は最大でも約25%だったので、部屋・辺ごとの固定費を削る方針にしました。
 - **警告を座標で確かめた**：「部屋が重なっている」という警告が本当かをJSONの座標で確認し、実在したので、合計にだけ重複を除いた値を併記しました。強調表示も外接円から形に沿った縁取りに変えています。
 - **AIの提案を見直した**：「初期表示でサンプルの結果を見せる」案は一度採用しましたが、実際の画面で見ると見栄えが悪かったので、人が選んだときだけ表示する形に戻しました。
 
@@ -190,6 +193,14 @@ flowchart TD
 - Chen ほか [Floor-SP: Inverse CAD for Floorplans by Sequential Room-wise Shortest Path](https://openaccess.thecvf.com/content_ICCV_2019/html/Chen_Floor-SP_Inverse_CAD_for_Floorplans_by_Sequential_Room-Wise_Shortest_Path_ICCV_2019_paper.html)（ICCV 2019）：部屋ごとの最短経路探索で平面図の輪郭を求める研究。上と同じ考え方の参考にしました。
 - Chen ほか [HEAT: Holistic Edge Attention Transformer for Structured Reconstruction](https://openaccess.thecvf.com/content/CVPR2022/html/Chen_HEAT_Holistic_Edge_Attention_Transformer_for_Structured_Reconstruction_CVPR_2022_paper.html)（CVPR 2022）：辺どうしの関係を全体で捉えて構造を復元する研究。上と同じ考え方の参考にしました。
 - [いもす法の原著者による解説](https://imoz.jp/algorithms/imos_method.html)（2012）：区間の出入り口だけを記録して重なりを数える手法の解説。重複区間の走査で「開始・終了のイベントだけを見る」発想に使いました（被覆数ではなく区間 ID を保持する形に変えています）。
+
+### 2026年の論文（高速化の検討に使用）
+
+- Fleischmann ほか [GeoPandas: Fundamental data structures for vector spatial data in Python](https://doi.org/10.1016/j.compenvurbsys.2026.102495)（2026）：GEOSを配列単位でまとめて呼んで速くする設計を述べた論文。部屋ごとに呼んでいたShapelyの処理を一括呼び出しに変える根拠にしました（採用）。
+- Pai ほか [Evaluating Learned Spatial Indexes](https://arxiv.org/abs/2606.19034)（2026）：索引の構築コストが何回の問い合わせで回収できるかを実験で比べた論文。線分が少ないときは木を作らない切り替えの根拠にしました。
+- Mandarapu, Kunkunuru [The Decode-Work Law](https://arxiv.org/abs/2607.01182)（2026）：結果を変えずに、厳密な判定の前に安い判定で候補を確定させる論文。早期判定を試しましたが、同梱データでは差が出なかったので採用していません。
+- Mahathevan ほか [Splyce: SIMD Vectorization of Sparse Coiteration](https://arxiv.org/abs/2609.19410)（2026）：ソート済みの列を走査するループから分岐を減らす論文。区間の併合で試しましたが、改善が無かったので採用していません。
+- Ehara, Amagata [Duration-constrained Interval Joins](https://arxiv.org/abs/2608.06856)（2026）：短い重なりを途中で作らないようにする論文。壁区間の処理順では結果が変わるため、実装していません。
 
 ### 公式ドキュメント
 
