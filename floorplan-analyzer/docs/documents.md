@@ -4,6 +4,7 @@
 |---|---|
 | 今のフォルダ・処理の責務 | [ARCHITECTURE](../ARCHITECTURE.md) |
 | 開発とテストの方法 | [CONTRIBUTING](../CONTRIBUTING.md) |
+| README に収めなかった設計の詳細 | [設計の補足](design-notes.md) |
 | 採用した技術と検証履歴 | [技術構成](architecture.md) |
 | 穴・重複・扉開口の扱い | [幾何計算の拡張](geometry-upgrade.md) |
 | 面積計算の高速化 | [性能測定](validation/algorithm-performance/report.md) |

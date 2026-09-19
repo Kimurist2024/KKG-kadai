@@ -15,3 +15,4 @@ description: 提出物の README.md や docs の文章を書く・直すとき�
 8. サンプルの結果は `floorplan-analyzer/docs/validation/sample-results.md` と一致していること。
 9. 文体はです・ます。README の 3 章以降は、和文と英数字の間に空白を入れない。
 10. 受入条件には、実際の差分と一致する内容だけを書く。レビューは文言をそのまま適用するので、曖昧な条件や実態と違う条件は書かない。
+11. README は、見出し 1 つにつき空行を除いて 10 行まで（コードや図の行も数える）。収まらない詳細は削るか、`floorplan-analyzer/docs/design-notes.md` に移してリンクする。
