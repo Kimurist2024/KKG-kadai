@@ -97,7 +97,7 @@ build は TypeScript の型検査を含む。仮想環境がなければ README 
 
 ## 利用方法
 
-Claude 向けの担当定義はワークスペースの `.claude/agents/`、共通の入口は `CLAUDE.md`。Codex 向けの入口は `AGENTS.md` で、メイン担当が利用可能な委譲機能に役割本文を渡す。この文書自体がエージェントを起動するわけではない。
+Claude 向けの担当定義はワークスペースの `.claude/agents/`、共通の入口は `CLAUDE.md`。手順ではなく判断基準だけをまとめた Skill は `.claude/skills/` に置く（`readme-writing`: 提出物の文章、`main-sync`: `main` への反映）。Codex 向けの入口は `AGENTS.md` で、メイン担当が利用可能な委譲機能に役割本文を渡す。この文書自体がエージェントを起動するわけではない。
 
 依頼例: 「縮尺設定をもっと分かりやすくしたい。必要なら Web リサーチで事例を確認し、UI 担当で実装、メイン担当で統合検証まで進めて」。
 
