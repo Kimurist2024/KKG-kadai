@@ -46,9 +46,9 @@ Python 3.12 と Node.js 22 を推奨します（Node.js は20.9以上）。`floo
 - `frontend/`：Next.js・React・TypeScript。図面、結果表、計算式、CSVを担当します。
 - `backend/app/`：FastAPI。入力検証と幾何計算をここに集めています。
 - `test/gpt-6/`：フロント・バックのテスト。`sample/`：同梱の図面。`docs/`：設計と検証の記録。
-- `infra/terraform/`：AWS構成。`scripts/`：起動・停止・提出用zipのツール。`.claude/`：AI開発のスクリプトと役割の定義。
+- `infra/terraform/`：AWS構成。`scripts/`：起動・停止ツール。
 
-主要なAPIは `POST /api/analyze`（multipartの `file`）と `POST /api/analyze/json`（JSONボディ）の2つで、部屋別・全体の集計、各辺の区間と根拠になる線分のID、警告を返します。不正なJSONは400、容量超過は413、検証エラーは422です。仕様は起動後に `http://127.0.0.1:8000/docs` で確認できます。
+主要なAPIは `POST /api/analyze`（multipartの `file`）と `POST /api/analyze/json`（JSONボディ）の2つで、部屋別・全体の集計、各辺の区間と根拠になる線分のID、警告を返します。ファイル版は不正なJSONを400、容量超過を413で返し、形式や設定の検証エラーは422です。仕様は起動後に `http://127.0.0.1:8000/docs` で確認できます。
 
 環境ごとのAPIの経路とCIは [設計の補足](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/design-notes.md)、責務の詳細は [ARCHITECTURE](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/ARCHITECTURE.md)、課題要件との対応は [技術構成と検証状況](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/architecture.md)、AWSは [インフラ手順](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/infra/deployment.md) にあります。
 
