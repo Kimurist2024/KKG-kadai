@@ -21,7 +21,7 @@ from shapely.errors import GEOSException
 from shapely.ops import unary_union
 
 from . import geometry as g
-from .topology import room_polygon, polygon_regions
+from .topology import room_polygon, simple_room_polygons, polygon_regions_many
 from .spatial import SegmentIndex, overlap_pairs
 from .schemas import (
     AnalysisSettings,
@@ -157,6 +157,20 @@ def analyze_edge(
     settings: AnalysisSettings,
     canonical_edge_ids: Optional[List[int]] = None,
 ) -> EdgeResult:
+    """1 辺の公開入口。内部では辞書を組み立て、ここで検証する。"""
+    return EdgeResult.model_validate(_analyze_edge_data(
+        index, a, b, wall_segments, door_segments, settings, canonical_edge_ids))
+
+
+def _analyze_edge_data(
+    index: int,
+    a: g.Point,
+    b: g.Point,
+    wall_segments: SegmentSource,
+    door_segments: SegmentSource,
+    settings: AnalysisSettings,
+    canonical_edge_ids: Optional[List[int]] = None,
+) -> dict:
     """1 辺の壁・開口・扉を対応付け、区間の根拠と壁面積を返す。"""
     mpp = settings.meters_per_px
     length_px = g.distance(a, b)
@@ -188,7 +202,7 @@ def analyze_edge(
     gross = wall_len_m * settings.ceiling_height_m
     door_area = door_len_m * settings.door_height_m
 
-    return EdgeResult(
+    return dict(
         index=index,
         canonical_edge_id=canonical_edge_ids[0] if canonical_edge_ids and len(canonical_edge_ids) == 1 else None,
         canonical_edge_ids=canonical_edge_ids or [],
@@ -228,7 +242,7 @@ def analyze_room(
     area_px2 = g.polygon_area(pts) - sum(g.polygon_area(ring) for ring in rings[1:])
     perim_px = sum(g.polygon_perimeter(ring) for ring in rings)
 
-    edges: List[EdgeResult] = []
+    edges: List[dict] = []
     offset = 0
     for ring_index, ring in enumerate(rings):
         ring_edges = [(a, ring[(i + 1) % len(ring)]) for i, a in enumerate(ring)]
@@ -248,20 +262,20 @@ def analyze_room(
             boundary_kind = "outer" if ring_index == 0 else "hole"
             canonical_ids = ((canonical_edges or {}).get((contour_index, boundary_kind, offset + i))
                              if contour_index is not None else None)
-            edge = analyze_edge(offset + i, a, b,
+            edge = _analyze_edge_data(offset + i, a, b,
                                 wall_candidates[i] if wall_candidates is not None else wall_segments,
                                 door_candidates[i] if door_candidates is not None else door_segments,
                                 settings, canonical_ids)
-            edge.boundary_kind = boundary_kind
+            edge["boundary_kind"] = boundary_kind
             edges.append(edge)
         offset += len(ring)
 
-    wall_len = sum(e.wall_length_m for e in edges)
-    opening_len = sum(e.opening_length_m for e in edges)
-    door_len = sum(e.door_length_m for e in edges)
-    gross = sum(e.wall_area_gross_m2 for e in edges)
-    door_area = sum(e.door_area_m2 for e in edges)
-    door_ids = {i for e in edges for iv in e.door_intervals for i in iv.ids}
+    wall_len = sum(e["wall_length_m"] for e in edges)
+    opening_len = sum(e["opening_length_m"] for e in edges)
+    door_len = sum(e["door_length_m"] for e in edges)
+    gross = sum(e["wall_area_gross_m2"] for e in edges)
+    door_area = sum(e["door_area_m2"] for e in edges)
+    door_ids = {i for e in edges for iv in e["door_intervals"] for i in iv["ids"]}
 
     return RoomResult(
         id=room.id,
@@ -361,13 +375,14 @@ def _room_overlaps(polygons, room_results, mpp, warnings, *, geometry_only):
     pairs = [pair for pair, hit in zip(candidates, hits) if hit]
     shared_regions = intersection([polygons[i] for i, _ in pairs],
                                   [polygons[j] for _, j in pairs])
-    for (i, j), shared, area in zip(pairs, shared_regions, polygon_areas(shared_regions)):
-        shared_area = float(area)
-        if shared_area <= g.EPS_PX:
-            continue
+    accepted = [(pair, shared, float(area))
+                for pair, shared, area in zip(pairs, shared_regions, polygon_areas(shared_regions))
+                if not float(area) <= g.EPS_PX]
+    regions = polygon_regions_many([shared for _, shared, _ in accepted])
+    for ((i, j), shared, shared_area), region in zip(accepted, regions):
         overlap_indices.append((i, j))
         overlaps.append(OverlapResult(room_ids=[room_results[i].id, room_results[j].id],
-            area_m2=shared_area * mpp * mpp, regions=polygon_regions(shared)))
+            area_m2=shared_area * mpp * mpp, regions=region))
         if not geometry_only:
             for a, b in [(i, j), (j, i)]:
                 warnings.append(Warning(code="room_overlap", contour_id=room_results[a].id,
@@ -405,6 +420,7 @@ def _analyze_core(mask: MaskFile, settings: Optional[AnalysisSettings] = None, *
 
     room_results: List[RoomResult] = []
     polygons = []
+    prepared_rooms = simple_room_polygons(rooms)
     for room in rooms:
         if len(room.vertices) < 3:
             warnings.append(Warning(code="ignored_contour", contour_id=room.id, message=f"部屋 id={room.id}: 頂点が 3 点未満のため無視しました"))
@@ -417,7 +433,12 @@ def _analyze_core(mask: MaskFile, settings: Optional[AnalysisSettings] = None, *
             warnings.append(Warning(code="ignored_contour", contour_id=room.id, message=f"部屋 id={room.id}: 輪郭が自己交差しているため無視しました (面積を正しく定義できません)"))
             continue
         try:
-            polygon, holes = room_polygon(room)
+            prepared = prepared_rooms.get(id(room))
+            if prepared is None:
+                polygon, holes = room_polygon(room)
+            else:
+                polygon, (x, y) = prepared
+                holes = []
         except (ValueError, GEOSException) as exc:
             warnings.append(Warning(code="invalid_shape", contour_id=room.id, message=f"部屋 id={room.id}: {exc}。この部屋を集計から除外しました"))
             continue
@@ -426,9 +447,11 @@ def _analyze_core(mask: MaskFile, settings: Optional[AnalysisSettings] = None, *
         else:
             display = f"未命名 #{room.id}"
             warnings.append(Warning(code="unnamed_room", contour_id=room.id, message=f"部屋 id={room.id}: room_name がありません。'{display}' として扱います"))
-        point = polygon.representative_point()
+        if prepared is None:
+            point = polygon.representative_point()
+            x, y = point.x, point.y
         result = analyze_room(room, wall_index, door_index, settings, display, holes,
-                              Vertex(x=point.x, y=point.y), canonical_edges,
+                              Vertex(x=x, y=y), canonical_edges,
                               contour_indices[id(room)])
         polygons.append(polygon)
         if any(e.inferred_wall_intervals for e in result.edges):

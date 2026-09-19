@@ -51,3 +51,7 @@
 
 - pytest 183 件 PASS。変更前の凍結実装との同等性テスト（3 入力 × 5 設定＋異常入力 7 種、浮動小数点の bit 差ゼロ）に加えて、全入力の cold / warm / uncached で各浮動小数点を bit 単位で比較するテスト（`test/gpt-6/backend/performance/test_cold_exact.py`）を追加しました
 - [results.json](results.json) は改善後の計測で更新しています。改善前の値は上の表と git 履歴に残ります
+
+## その後（2026-09-19）
+
+直近半年の論文の考え方を使ってさらに高速化し、同じ計測で初回解析は 1.96ms（変更前比 1.50 倍）になりました。内容は [直近の論文による高速化](../recent-papers-speed/recent-papers-speed.md) にあります。
