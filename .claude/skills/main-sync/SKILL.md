@@ -5,7 +5,7 @@ description: feature/kimura の説明資料を main ブランチへ反映する�
 
 # main へ反映するときの判断基準
 
-1. 反映するのは、ユーザーが `main` を見ている文脈のときだけ（README の修正など）。`cycle-finish.sh` は `main` に触れないので、反映は司令塔が別に行う。
+1. 反映するのは、ユーザーが `main` への反映を指示しているときだけ（「README の修正は main にも反映して」のような継続的な指示を含む）。指示が無ければ `feature/kimura` までで止める。`cycle-finish.sh` は `main` に触れないので、反映は司令塔が別に行う。
 2. 先に `feature/kimura` へのマージが済んでいること。レビューを通っていない内容は `main` に入れない。
 3. `main` は説明用のブランチ。反映してよいのは `README.md` と、`main` に既にある参照先の資料だけで、アプリ本体は入れない。`main` に無い資料は足さない（README のリンクは `feature/kimura` を指している）。
 4. `main` 側にしかない README の編集が 0 件であること。1 件でもあれば上書きせず、先に取り込む。
