@@ -30,6 +30,6 @@
 
 本実装は論文の学習モデルを複製したものではなく、次の研究に共通する「局所結果を独立に測らず、幾何制約と全体の接続関係でベクトル化する」考え方を、説明可能な決定的アルゴリズムとして採用した。
 
-- Liu et al., [Raster-to-Vector: Revisiting Floorplan Transformation](https://openaccess.thecvf.com/content_ICCV_2017/html/Liu_Raster-to-Vector_Revisiting_Floorplan_ICCV_2017_paper.html), ICCV 2017.
+- Liu et al., [Raster-to-Vector: Revisiting Floorplan Transformation](https://openaccess.thecvf.com/content_iccv_2017/html/Liu_Raster-To-Vector_Revisiting_Floorplan_ICCV_2017_paper.html), ICCV 2017.
 - Chen et al., [Floor-SP: Inverse CAD for Floorplans by Sequential Room-wise Shortest Path](https://openaccess.thecvf.com/content_ICCV_2019/html/Chen_Floor-SP_Inverse_CAD_for_Floorplans_by_Sequential_Room-Wise_Shortest_Path_ICCV_2019_paper.html), ICCV 2019.
 - Chen et al., [HEAT: Holistic Edge Attention Transformer for Structured Reconstruction](https://openaccess.thecvf.com/content/CVPR2022/html/Chen_HEAT_Holistic_Edge_Attention_Transformer_for_Structured_Reconstruction_CVPR_2022_paper.html), CVPR 2022.

@@ -108,7 +108,7 @@ def wall_intervals_on_edge(
     ノイズ除去を隙間併合・スナップより先に行うことで、tol 未満の断片同士が併合や
     スナップで膨らんで生き残るのを防ぐ。スナップ・併合は [0, 辺長] を超えない。
     隙間併合と端点スナップは「セグメンテーションで分断・短縮された壁の補完」であり、
-    許容誤差 tolerance_px より短い開口は検出しない仕様 (README 5-3, 5-5)。
+    許容誤差 tolerance_px より短い開口は検出しない仕様 (docs/design-notes.md「輪郭の基準と注意点の詳細」)。
     """
     length = g.distance(a, b)
     raw = g.project_segments_onto_edge(a, b, wall_segments, tolerance_px)

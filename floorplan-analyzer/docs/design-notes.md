@@ -23,7 +23,7 @@ README は見出しごとに 10 行までに収めています。ここには、
 
 主要なAPIは `POST /api/analyze`（multipartの `file`）と `POST /api/analyze/json`（JSONボディ）の2つです。部屋別・全体の集計に加えて、各辺の区間と根拠になる線分のID、警告を返します。ファイル版は不正なJSONを400、容量超過を413で返し、形式や設定の検証エラーは422です。通常画面の条件は固定ですが、API側には条件指定と研究用の幾何補正の設定を残しています。
 
-GitHub Actions には、Pythonとフロントエンドのテスト、本番ビルド、Composeの疎通、Terraformの検証を定義しています。AWSの更新は main を対象にした手動実行で、CIの成功と環境設定が前提です。説明資料しかない今の main では実行できず、コードと workflow を統合してからになります。AWSについては、Terraformの構成の検証（fmt・validate）までを行いました。
+GitHub Actions には、Pythonとフロントエンドのテスト、本番ビルド、Composeの疎通、Terraformの検証を定義しています。AWSの更新は main を対象にした手動実行で、CIの成功と環境設定が前提です。説明資料しかない今の main では実行できず、コードと workflow を統合してからになります。AWSについては、Terraformの構成の検証（fmt・validate）までを行った記録が [技術構成と検証状況](architecture.md) にあります（2026-09-20 の点検時点では、この環境に Terraform と Docker が入っておらず、再確認はしていません）。
 
 それぞれの責務は [ARCHITECTURE](../ARCHITECTURE.md)、開発手順は [CONTRIBUTING](../CONTRIBUTING.md)、環境変数と配置は [技術構成](architecture.md) と [インフラ手順](../infra/deployment.md) を参照してください。
 
@@ -77,7 +77,7 @@ STRtreeは、各線分をx軸・y軸に平行な長方形で囲み、近いも�
 
 ## 許容距離 10px・角度 10° の根拠（同梱データでの実測、2026-09-19）
 
-同梱の `sample/sample_mask.json` で、部屋の辺と重なる平行な壁線 48 組の「辺からのずれ」は中央値 0.8px、90% が 2.4px 以内、10px 以内では最大 7.2px でした（残りの 1 組は 16.8px 離れた別の壁線）。辺との角度は中央値 0.00°、最大 1.21° です。壁とドアの線の幅（`lineWidth`）はすべて 5px です。
+同梱の `sample/sample_mask.json` で、実際の解析で壁として採用された壁線と辺の組は 49 組あり、「辺からのずれ」は中央値 0.82px、最大 7.16px、辺との角度は最大 1.21° でした（`spatial.SegmentIndex.near` で絞った候補を `geometry.project_segments_onto_edge` に通して採用されたものだけを集計。2026-09-20 に取り直し）。壁とドアの線の幅（`lineWidth`）はすべて 5px です。
 
 許容距離（`tolerance_px`）だけを変えて `analyze_uncached` を実行した結果:
 
