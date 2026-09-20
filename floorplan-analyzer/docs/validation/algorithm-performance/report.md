@@ -55,7 +55,7 @@
 ```sh
 cd floorplan-analyzer/backend
 .venv/bin/python -m benchmarks.performance --phase final
-.venv/bin/python -m pytest -q tests/test_performance_equivalence.py
+.venv/bin/python -m pytest -q ../test/gpt-6/backend/performance/test_baseline_equivalence.py   # 当時は tests/test_performance_equivalence.py。2026-09-20 に現在のパスへ更新
 ```
 
 生の測定値、入力ハッシュ、実装ハッシュは [final.json](final.json)、初回の変更前測定は [baseline.json](baseline.json) を参照してください。関数別の cProfile レポートは、このディレクトリ内の baseline-profile-* と final-profile-* です。
