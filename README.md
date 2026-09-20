@@ -8,7 +8,7 @@
 
 - フロントエンド: Next.js 16.3.5 / React 19.3.0 / TypeScript 5.9.3。図面は SVG で描画しています。
 - バックエンド: Python / FastAPI / Pydantic 2 / Shapely 2.0 系。座標から面積を計算します。
-- 配置: Vercel で公開し、Docker Compose と AWS ECS Fargate 用の Terraform も同梱しました。
+- 配置: Vercel で公開しています。Docker Compose と AWS ECS Fargate 用の Terraform は構成ファイルを同梱した段階で、実際に動かしての確認はこれからです。
 
 README に収めなかった詳細は [設計の補足](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/design-notes.md) と [資料一覧](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/documents.md) にあります。
 
@@ -28,7 +28,7 @@ Python 3.12 と Node.js 22 を推奨します（Node.js は20.9以上）。`floo
 2. 図面か表から部屋を選ぶと、面積・周長と辺ごとの内訳を確認できます。
 3. 拡大・ドラッグ・レイヤー切替で図面を確かめ、結果はCSVで保存できます。
 
-計算条件は **天井高2.4m、ドア高2.0m、96.7px＝1.365m** に固定しています。Docker で動かす場合は `docker compose up --build`（画面は `http://localhost:3000`）です。
+計算条件は **天井高2.4m、ドア高2.0m、96.7px＝1.365m** に固定しています。
 
 ### UI設計で工夫した点
 
@@ -128,7 +128,7 @@ JSONから読み取れるのは座標までで、輪郭の基準と壁厚は別�
 
 ## 6. 検証・AIの活用
 
-同梱の11部屋を合計すると **床面積48.75m²、壁面積155.54m²** になります。LD＋Kは27.52m²で、図面に書かれている27.22m²より約1%大きい値です。
+同梱の11部屋を合計すると **床面積48.75m²、壁面積155.54m²** になります。LD＋Kは27.53m²で、図面に書かれている27.22m²より約1%大きい値です。
 
 この差は計算の誤りではなく、輪郭の引かれ方によるものだと考えています。頂点座標から求めた面積と周長はJSONに記載された値と表示桁まで一致し、高速化の前後で結果が完全に一致することもテストで確認しているからです。
 
@@ -199,7 +199,7 @@ flowchart TD
 - Leutenegger ほか [STR: A Simple and Efficient Algorithm for R-Tree Packing](https://www.cs.odu.edu/~mln/ltrs-pdfs/icase-1997-14.pdf)（1997）：空間データを矩形でまとめて木にし、検索候補を絞るアルゴリズムの論文。Shapely の STRtree の基礎で、4章の候補検索の根拠にしました。
 - Boncz ほか [MonetDB/X100: Hyper-Pipelining Query Execution](https://www.cidrdb.org/cidr2005/papers/P19.pdf)（CIDR 2005）：データベースの処理をベクトル単位にまとめて速くする論文。辺ごとの検索呼び出しを部屋の輪郭単位にまとめる発想に使いました。
 - Amdahl [Validity of the Single Processor Approach to Achieving Large Scale Computing Capabilities](https://www.cs.cmu.edu/~18742/papers/Amdahl1967.pdf)（1967）：一部だけを速くしても全体の高速化には限りがあることを示した論文。速度は解析全体で測るという評価方針の根拠です。
-- Liu ほか [Raster-to-Vector: Revisiting Floorplan Transformation](https://openaccess.thecvf.com/content_ICCV_2017/html/Liu_Raster-to-Vector_Revisiting_Floorplan_ICCV_2017_paper.html)（ICCV 2017）：ラスタ画像の平面図から部屋や壁のベクトル表現を復元する研究。研究用の幾何補正で「局所ではなく全体の接続関係で整える」考え方の参考にしました。
+- Liu ほか [Raster-to-Vector: Revisiting Floorplan Transformation](https://openaccess.thecvf.com/content_iccv_2017/html/Liu_Raster-To-Vector_Revisiting_Floorplan_ICCV_2017_paper.html)（ICCV 2017）：ラスタ画像の平面図から部屋や壁のベクトル表現を復元する研究。研究用の幾何補正で「局所ではなく全体の接続関係で整える」考え方の参考にしました。
 - Chen ほか [Floor-SP: Inverse CAD for Floorplans by Sequential Room-wise Shortest Path](https://openaccess.thecvf.com/content_ICCV_2019/html/Chen_Floor-SP_Inverse_CAD_for_Floorplans_by_Sequential_Room-Wise_Shortest_Path_ICCV_2019_paper.html)（ICCV 2019）：部屋ごとの最短経路探索で平面図の輪郭を求める研究。上と同じ考え方の参考にしました。
 - Chen ほか [HEAT: Holistic Edge Attention Transformer for Structured Reconstruction](https://openaccess.thecvf.com/content/CVPR2022/html/Chen_HEAT_Holistic_Edge_Attention_Transformer_for_Structured_Reconstruction_CVPR_2022_paper.html)（CVPR 2022）：辺どうしの関係を全体で捉えて構造を復元する研究。上と同じ考え方の参考にしました。
 - [いもす法の原著者による解説](https://imoz.jp/algorithms/imos_method.html)（2012）：区間の出入り口だけを記録して重なりを数える手法の解説。重複区間の走査で「開始・終了のイベントだけを見る」発想に使いました（被覆数ではなく区間 ID を保持する形に変えています）。

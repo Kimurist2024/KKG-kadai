@@ -15,7 +15,7 @@ model: opus
 ## 設計上の制約（README 第 5・7 章、docs/orchestration.md に準拠）
 - 幾何計算のコアは純 Python。`geometry.py` は副作用のない純粋関数のみ、業務ルールは `analyzer.py`。
 - 数値は丸めない。不正入力は黙って受け入れず、422/400/413 か警告で返す。
-- サンプル (`sample/sample_mask.json`) の結果は README 5-4 の表と一致し続けること。
+- サンプル (`sample/sample_mask.json`) の結果は `floorplan-analyzer/docs/validation/sample-results.md` の表と一致し続けること。
 
 ## 作業の進め方
 1. 対象は `grep -n "^def \|^class "` で構造を取り、変更する関数と既存テストだけ読む（全文 cat はしない）。
