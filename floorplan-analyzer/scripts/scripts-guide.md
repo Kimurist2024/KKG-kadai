@@ -10,6 +10,7 @@
 | `validation/run_validation.py` | 保存した外部図面・手動輪郭をAPIで検算する |
 | `validation/build_report.py` | 検証結果からMarkdownとSVGを生成する |
 | `make_submission_zip.py` | 提出用の zip（リポジトリ直下の `floorplan-analyzer-submission.zip` と `.sha256`）を作る。git で管理しているファイルだけを入れ、第三者の図面 PDF 2 件と、`sample/` に同じものがある配布データ 2 件は除く（課題文の PDF は入れる）。README は GitHub への絶対リンクを相対パスに直し、`main` ブランチ向けの注意書きを外して入れる。リンク切れ・秘密情報の疑い・25 MB 超のどれかがあれば失敗する |
+| `measure_index_choice.py` | 同梱 JSON だけを使い、候補検索を外接長方形の走査と STRtree で入れ替えて解析時間を比べる（出力の一致を確かめてから交互に計測） |
 | `measure_sample_speed.py` | 同梱 JSON だけを対象に、変更前の凍結実装と現行の解析時間を交互に計測する |
 
 ```bash

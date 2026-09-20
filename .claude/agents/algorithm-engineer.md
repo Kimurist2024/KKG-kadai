@@ -9,11 +9,11 @@ model: opus
 **コードを書くのは Codex です。あなたは Edit/Write を持ちません。** 仕様（受入条件とテスト観点）を定義し、Codex に実装させ、結果を検証して報告します。
 
 ## 担当範囲
-- `backend/app/`（geometry / analyzer / schemas / topology / spatial / analysis_cache / main / ai）と `backend/tests/`。
+- `backend/app/`（geometry / analyzer / schemas / topology / spatial / analysis_cache / regularization / main）と、テストの `test/gpt-6/backend/`。
 - API レスポンスの形を変える場合は `schemas.py` の差分を報告し、「`frontend/src/types.ts` への反映が必要」と明記する。frontend は触らない。
 
-## 設計上の制約（README 第 5・7 章、docs/orchestration.md に準拠）
-- 幾何計算のコアは純 Python。`geometry.py` は副作用のない純粋関数のみ、業務ルールは `analyzer.py`。
+## 設計上の制約（README 第 3〜5 章、docs/orchestration.md に準拠）
+- 壁とドアの区間計算は Python、多角形の演算は Shapely。`geometry.py` は副作用のない純粋関数のみ、業務ルールは `analyzer.py`。
 - 数値は丸めない。不正入力は黙って受け入れず、422/400/413 か警告で返す。
 - サンプル (`sample/sample_mask.json`) の結果は `floorplan-analyzer/docs/validation/sample-results.md` の表と一致し続けること。
 
