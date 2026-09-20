@@ -196,21 +196,11 @@ flowchart TD
 
 ### 論文・解説記事
 
+実装の中心になった3件に絞っています。検討して見送ったものを含むほかの論文は、[直近の論文による高速化](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/validation/recent-papers-speed/recent-papers-speed.md)、[計算結果を変えない高速化](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/validation/exact-speed/exact-speed.md)、[幾何補正の説明](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/geometry-regularization.md) に載せています。
+
 - Leutenegger ほか [STR: A Simple and Efficient Algorithm for R-Tree Packing](https://www.cs.odu.edu/~mln/ltrs-pdfs/icase-1997-14.pdf)（1997）：空間データを矩形でまとめて木にし、検索候補を絞るアルゴリズムの論文。Shapely の STRtree の基礎で、4章の候補検索の根拠にしました。
-- Boncz ほか [MonetDB/X100: Hyper-Pipelining Query Execution](https://www.cidrdb.org/cidr2005/papers/P19.pdf)（CIDR 2005）：データベースの処理をベクトル単位にまとめて速くする論文。辺ごとの検索呼び出しを部屋の輪郭単位にまとめる発想に使いました。
-- Amdahl [Validity of the Single Processor Approach to Achieving Large Scale Computing Capabilities](https://www.cs.cmu.edu/~18742/papers/Amdahl1967.pdf)（1967）：一部だけを速くしても全体の高速化には限りがあることを示した論文。速度は解析全体で測るという評価方針の根拠です。
-- Liu ほか [Raster-to-Vector: Revisiting Floorplan Transformation](https://openaccess.thecvf.com/content_iccv_2017/html/Liu_Raster-To-Vector_Revisiting_Floorplan_ICCV_2017_paper.html)（ICCV 2017）：ラスタ画像の平面図から部屋や壁のベクトル表現を復元する研究。研究用の幾何補正で「局所ではなく全体の接続関係で整える」考え方の参考にしました。
-- Chen ほか [Floor-SP: Inverse CAD for Floorplans by Sequential Room-wise Shortest Path](https://openaccess.thecvf.com/content_ICCV_2019/html/Chen_Floor-SP_Inverse_CAD_for_Floorplans_by_Sequential_Room-Wise_Shortest_Path_ICCV_2019_paper.html)（ICCV 2019）：部屋ごとの最短経路探索で平面図の輪郭を求める研究。上と同じ考え方の参考にしました。
-- Chen ほか [HEAT: Holistic Edge Attention Transformer for Structured Reconstruction](https://openaccess.thecvf.com/content/CVPR2022/html/Chen_HEAT_Holistic_Edge_Attention_Transformer_for_Structured_Reconstruction_CVPR_2022_paper.html)（CVPR 2022）：辺どうしの関係を全体で捉えて構造を復元する研究。上と同じ考え方の参考にしました。
 - [いもす法の原著者による解説](https://imoz.jp/algorithms/imos_method.html)（2012）：区間の出入り口だけを記録して重なりを数える手法の解説。重複区間の走査で「開始・終了のイベントだけを見る」発想に使いました（被覆数ではなく区間 ID を保持する形に変えています）。
-
-### 2026年の論文（高速化の検討に使用）
-
-- Fleischmann ほか [GeoPandas: Fundamental data structures for vector spatial data in Python](https://doi.org/10.1016/j.compenvurbsys.2026.102495)（2026）：GEOSを配列単位でまとめて呼んで速くする設計を述べた論文。部屋ごとに呼んでいたShapelyの処理を一括呼び出しに変える根拠にしました（採用）。
-- Pai ほか [Evaluating Learned Spatial Indexes](https://arxiv.org/abs/2606.19034)（2026）：索引の構築コストが何回の問い合わせで回収できるかを実験で比べた論文。線分が少ないときは木を作らない切り替えの根拠にしました。
-- Mandarapu, Kunkunuru [The Decode-Work Law](https://arxiv.org/abs/2607.01182)（2026）：結果を変えずに、厳密な判定の前に安い判定で候補を確定させる論文。早期判定を試しましたが、同梱データでは計測値がほぼ同じだったので見送りました。
-- Mahathevan ほか [Splyce: SIMD Vectorization of Sparse Coiteration](https://arxiv.org/abs/2609.19410)（2026）：ソート済みの列を走査するループから分岐を減らす論文。区間の併合で試しましたが、計測値がほぼ同じだったので見送りました。
-- Ehara, Amagata [Duration-constrained Interval Joins](https://arxiv.org/abs/2608.06856)（2026）：短い重なりを途中で作らないようにする論文。壁区間の処理順では結果が変わるため、実装は見送りました。
+- Fleischmann ほか [GeoPandas: Fundamental data structures for vector spatial data in Python](https://doi.org/10.1016/j.compenvurbsys.2026.102495)（2026）：GEOSを配列単位でまとめて呼んで速くする設計を述べた論文。部屋ごとに呼んでいたShapelyの処理を一括呼び出しに変える根拠にしました（4章）。
 
 ### 公式ドキュメント
 
