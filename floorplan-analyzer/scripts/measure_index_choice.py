@@ -55,7 +55,8 @@ spatial.SegmentIndex.__init__ = original_init
 
 walls = sum(1 for c in mask.contours if c.label_id == 2)
 doors = sum(1 for c in mask.contours if c.label_id == 3)
-stats = {k: {"median_ms": statistics.median(v), "p95_ms": sorted(v)[math.ceil(len(v) * 0.95) - 1]}   # 最近順位法 for k, v in times.items()}
+stats = {k: {"median_ms": statistics.median(v), "p95_ms": sorted(v)[math.ceil(len(v) * 0.95) - 1]}  # p95 は最近順位法
+         for k, v in times.items()}
 print(f"同梱 sample_mask.json（壁 {walls} 本・ドア {doors} 本）/ 交互 {REPS} 回 / キャッシュ無効の直接計算 / 出力は 2 方式で完全一致")
 print(f"  外接長方形の走査（現行はこちら）: 中央値 {stats['scan']['median_ms']:.3f} ms / p95 {stats['scan']['p95_ms']:.3f} ms")
 print(f"  STRtree を強制                  : 中央値 {stats['tree']['median_ms']:.3f} ms / p95 {stats['tree']['p95_ms']:.3f} ms")
