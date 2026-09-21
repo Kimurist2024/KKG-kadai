@@ -1,6 +1,19 @@
 # Vercel デプロイ記録
 
-## 最新: 2026-09-19（feature/kimura 9cdc491、初期画面の作り直しと重複箇所の表示を反映）
+## 最新: 2026-09-21（feature/kimura 7a71b23、Shapely の一括呼び出しによる高速化を反映）
+
+- 公開 URL: https://floorplan-analyzer-taupe.vercel.app（別名 https://floorplan-analyzer-kimu4.vercel.app）
+- Deployment: `dpl_7i5Pr1D8FSoNTjYJh3AvxfxKHnWt`（READY / production）。`npx vercel@59 inspect floorplan-analyzer-q9k2ku272-kimu4.vercel.app --scope kimu4` で target が production、status が Ready、Aliases に上の公開 URL 2 件が含まれることを確認
+- 固有 URL: https://floorplan-analyzer-q9k2ku272-kimu4.vercel.app（Deployment Protection のため直接アクセスはログインが必要。公開 URL は不要）
+- 実行: `floorplan-analyzer/` で `npx vercel@59 deploy --prod --scope kimu4 --yes`。作業ツリーは feature/kimura の 7a71b23 で未コミットの変更なし
+- HTTP での確認（computer use は不使用。ブラウザでの画面操作は未確認）:
+  - `/` 200 で、初期画面の文言（「JSON をドロップして面積を計算」「サンプルで試す」「入力形式について」）を含む。`/guide` 200
+  - `/api/health` は `{"status":"ok"}`
+  - `/api/analyze` に同梱サンプルを multipart 送信して 200（往復約 1.3 秒。コールドスタートを含む）。部屋 11・壁線 21・ドア線 9・床面積合計 48.75 m²・壁面積合計 155.54 m²・重複を除いた床面積 48.58 m²・重複 9 か所・警告 20 件（`room_overlap` 18、`unnamed_room` 2）
+- 公開環境とローカル（macOS arm64 / Python 3.9）の応答を全フィールド比較: 構造・文字列・ID・警告文・配列順の相違は 0 件。数値 1,705 個のうち 26 個が末尾の桁だけ異なり、最大の相対差は 4.01e-14（`summary.overlap_floor_area_m2`）。小数第 3 位で丸めると差は 0 個（前回までと同じ。実行環境の違いによるもの）
+- 含まれる変更（前回 9cdc491 以降でアプリに影響するもの）: Shapely の一括呼び出しと辺の結果モデルの一括検証による高速化（#63。計算結果は変更前と完全に一致）、`analyzer.py` のコメント 1 行の修正（#76）。画面側のコードは前回から変更なし
+
+## 2026-09-19 の記録（feature/kimura 9cdc491、初期画面の作り直しと重複箇所の表示を反映）
 
 - 公開 URL: https://floorplan-analyzer-taupe.vercel.app（別名 https://floorplan-analyzer-kimu4.vercel.app）
 - Deployment: `dpl_E8hgRQNmCeKwDWgYwxvShtobjWUA`（READY / production）。`npx vercel@59 inspect floorplan-analyzer-acvwqgkxv-kimu4.vercel.app --scope kimu4` で target が production、status が Ready、Aliases に上の公開 URL 2 件が含まれることを確認
