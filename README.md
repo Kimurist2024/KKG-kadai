@@ -2,7 +2,7 @@
 
 > `main` ブランチには説明資料だけを置いています。アプリ本体は [feature/kimura](https://github.com/Kimurist2024/KKG-kadai/tree/feature/kimura) にあります。以下の起動手順は同ブランチをチェックアウトし、`floorplan-analyzer/` で実行してください（`.claude/scripts/` のコマンドだけはリポジトリ直下で実行します）。
 
-公開サイト: https://floorplan-analyzer-taupe.vercel.app （2026-09-19 にデプロイし、同梱サンプルの解析結果がローカルと表示桁で一致することを HTTP で確認しました）
+公開サイト: https://floorplan-analyzer-taupe.vercel.app （2026-09-21 にデプロイし、同梱サンプルの解析結果がローカルと表示桁で一致することを HTTP で確認しました）
 
 **部屋・壁・ドアのマスク JSON** を読み込み、部屋ごとの **床面積・周長・壁面積** を算出して、図面と表で確かめられる Web アプリです。
 
