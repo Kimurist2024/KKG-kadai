@@ -10,6 +10,7 @@ from collections import OrderedDict
 from pydantic_core import to_json
 
 from .schemas import AnalyzeResponse, AnalysisSettings, GeometryProcessing, Vertex, Warning
+from .door_openings import apply_openings
 
 
 class GeometryCache:
@@ -88,7 +89,9 @@ def materialize(geometry, mask, settings):
     浮動小数点の結果を変えないよう、analyzer と加算・乗算の順番を揃える。
     """
     if isinstance(geometry["response"], AnalyzeResponse):
-        return _materialize_response(geometry["response"], geometry["pairs"], settings)
+        response = _materialize_response(geometry["response"], geometry["pairs"], settings)
+        apply_openings(response, geometry["door_openings"], settings)
+        return response
     data = geometry["response"]
     mpp = settings.meters_per_px
     # 1. 区間 → 辺 → 部屋の順で換算する。先に集約してから掛けると丸め差が出る。
@@ -124,6 +127,7 @@ def materialize(geometry, mask, settings):
     summary["union_floor_area_m2"] = summary["union_floor_area_m2"] * mpp * mpp
     summary["overlap_floor_area_m2"] = max(0.0, summary["total_floor_area_m2"] - summary["union_floor_area_m2"]) if data["overlaps"] else 0.0
     summary["total_wall_area_m2"] = sum(r["wall_area_m2"] for r in data["rooms"])
+    apply_openings(data, geometry["door_openings"], settings)
     data["settings"] = settings.model_dump()
     data["timestamp"] = mask.timestamp
     data["image"] = dict(width=mask.image_width, height=mask.image_height,

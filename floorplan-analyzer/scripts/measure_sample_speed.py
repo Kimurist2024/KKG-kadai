@@ -26,8 +26,9 @@ ALT = dict(ceiling_height_m=3.1, door_height_m=2.2)
 
 data = json.loads((APP / "sample/sample_mask.json").read_text(encoding="utf-8"))
 mask, omask = MaskFile.model_validate(data), OldMask.model_validate(data)
-base, obase = AnalysisSettings(), OldSettings()
-salt, osalt = AnalysisSettings(**ALT), OldSettings(**ALT)
+# 凍結コピー（変更前）にはドア開口部の床の補正が無いので、現行側は奥行き 0（補正なし）で比べる。幾何計算と壁面積の比較はそのまま成り立つ
+base, obase = AnalysisSettings(door_opening_depth_m=0), OldSettings()
+salt, osalt = AnalysisSettings(door_opening_depth_m=0, **ALT), OldSettings(**ALT)
 
 
 def stats(xs):
@@ -48,7 +49,12 @@ def cold_cur():
 
 for a, b in ((cur.analyze(mask, base), old.analyze(omask, obase)), (cur.analyze(mask, salt), old.analyze(omask, osalt))):
     da, db = a.model_dump(mode="json"), b.model_dump(mode="json")
-    assert da["summary"] == db["summary"] and da["rooms"] == db["rooms"], "変更前後で結果が一致しません"
+    # 現行側にだけある、ドア開口部の床の補正のフィールドは比較から外す（奥行き 0 なので値は補正前と同じ）
+    NEW_ROOM = {"floor_area_raw_m2", "door_opening_adjustment_m2", "door_opening_transfers"}
+    NEW_SUMMARY = {"door_opening_adjusted_room_count"}
+    cur_rooms = [{k: v for k, v in r.items() if k not in NEW_ROOM} for r in da["rooms"]]
+    cur_summary = {k: v for k, v in da["summary"].items() if k not in NEW_SUMMARY}
+    assert cur_summary == db["summary"] and cur_rooms == db["rooms"], "変更前後で結果が一致しません"
 print("結果一致: summary / rooms が変更前後で完全一致（既定条件・設定変更）")
 
 res = {k: [] for k in ("cold_old", "cold_cur", "warm_old", "warm_cur", "uncached_cur")}

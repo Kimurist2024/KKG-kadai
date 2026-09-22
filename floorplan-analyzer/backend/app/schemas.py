@@ -62,6 +62,7 @@ class AnalysisSettings(BaseModel):
 
     ceiling_height_m: FiniteFloat = Field(default=2.4, gt=0, description="天井高 (m)")
     door_height_m: FiniteFloat = Field(default=2.0, ge=0, description="ドア高さ (m)")
+    door_opening_depth_m: FiniteFloat = Field(default=0.126, ge=0, le=1.0, description="ドア開口部の床を隣室へ移すときの奥行き (m)。0 で補正なし")
     scale_px: FiniteFloat = Field(default=96.7, gt=0, description="スケール基準: ピクセル")
     scale_m: FiniteFloat = Field(default=1.365, gt=0, description="スケール基準: メートル")
     tolerance_px: FiniteFloat = Field(
@@ -138,6 +139,21 @@ class EdgeResult(BaseModel):
     wall_area_m2: float = Field(description="壁面積 = gross − door")
 
 
+class AnalyzeJsonRequest(BaseModel):
+    """JSON 版の設定つきリクエスト。従来の MaskFile 直接送信も受け付ける。"""
+
+    mask: MaskFile
+    settings: AnalysisSettings = Field(default_factory=AnalysisSettings)
+
+
+class DoorOpeningTransfer(BaseModel):
+    door_id: int
+    other_room_id: int
+    other_room_name: str
+    width_m: float
+    area_m2: float
+
+
 class RoomResult(BaseModel):
     """1 部屋の集計値と全辺の算出根拠。穴は除くが他の部屋との重複は削らない。"""
 
@@ -149,7 +165,10 @@ class RoomResult(BaseModel):
     color: str
     vertices: List[Vertex]
     floor_area_px2: float
+    floor_area_raw_m2: float
     floor_area_m2: float
+    door_opening_adjustment_m2: float
+    door_opening_transfers: List[DoorOpeningTransfer]
     perimeter_px: float
     perimeter_m: float
     source_area_px2: Optional[float] = Field(description="JSON に記載されていた面積 (検証用)")
@@ -188,6 +207,7 @@ class Summary(BaseModel):
     wall_count: int
     door_count: int
     total_floor_area_m2: float
+    door_opening_adjusted_room_count: int
     total_wall_area_m2: float
 
 

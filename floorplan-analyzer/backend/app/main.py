@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Literal, Optional
+from typing import Literal, Optional, Union
 
 from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.concurrency import run_in_threadpool
@@ -21,7 +21,7 @@ from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
 from .analyzer import analyze
-from .schemas import AnalysisSettings, AnalyzeResponse, MaskFile
+from .schemas import AnalysisSettings, AnalyzeJsonRequest, AnalyzeResponse, MaskFile
 
 MAX_UPLOAD_BYTES = int(os.environ.get("MAX_UPLOAD_BYTES", str(50 * 1024 * 1024)))
 
@@ -64,6 +64,7 @@ async def validation_error_handler(_: Request, exc: RequestValidationError) -> J
 def settings_from_query(
     ceiling_height_m: float = Query(2.4, gt=0, description="天井高 (m)"),
     door_height_m: float = Query(2.0, ge=0, description="ドア高さ (m)"),
+    door_opening_depth_m: float = Query(0.126, ge=0, le=1.0, description="ドア開口部の床を隣室へ移す奥行き (m)。0 で補正なし"),
     scale_px: float = Query(96.7, gt=0, description="スケール基準 px"),
     scale_m: float = Query(1.365, gt=0, description="スケール基準 m"),
     tolerance_px: float = Query(10.0, ge=0, description="壁/ドアの辺への許容距離 (px)"),
@@ -74,6 +75,7 @@ def settings_from_query(
         return AnalysisSettings(
             ceiling_height_m=ceiling_height_m,
             door_height_m=door_height_m,
+            door_opening_depth_m=door_opening_depth_m,
             scale_px=scale_px,
             scale_m=scale_m,
             tolerance_px=tolerance_px,
@@ -140,7 +142,9 @@ async def analyze_upload(
 
 @app.post("/api/analyze/json", response_model=AnalyzeResponse)
 def analyze_body(
-    mask: MaskFile,
+    mask: Union[AnalyzeJsonRequest, MaskFile],
     settings: AnalysisSettings = Depends(settings_from_query),
 ) -> AnalyzeResponse:
+    if isinstance(mask, AnalyzeJsonRequest):
+        return analyze(mask.mask, mask.settings)
     return analyze(mask, settings)
