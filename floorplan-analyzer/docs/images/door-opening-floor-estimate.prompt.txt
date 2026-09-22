@@ -1,4 +1,7 @@
 Use case: infographic-diagram
+Final label revision (supersedes earlier width label):
+Edit only ONE text label in this infographic: in the upper-left top-down diagram, replace 「開口幅 w」 with 「張り出し幅 w」. Preserve every other element, geometry, colors, all other text and numbers exactly. The orange excess patch remains beyond the far wall face and narrower than the drawn gap, as a conceptual illustration. Do not move walls or patch. Ensure clear crisp Japanese lettering.
+
 Latest revision prompt (2026-09-22, built-in image generation; supersedes the original geometry):
 Edit the supplied Japanese infographic. Preserve ALL numerical cards, bottom notices, title, colors and typography. Change ONLY the upper-left plan illustration to depict the user's intended spatial relation: the LD floor contour extends through the doorway and protrudes BEYOND the far face of the wall into the neighboring room, rather than an orange patch sitting between and touching wall jambs.
 
