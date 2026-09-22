@@ -104,7 +104,7 @@ function RoomDetail({ result, room, originalRoomName, hoverEdge, selectedEdge, o
           {room.door_opening_transfers.length > 0 && (
             <ul className="muted small door-transfers" aria-label="ドア開口部の床の受け渡し">
               {room.door_opening_transfers.map((t) => (
-                <li key={t.door_id}>ドア id{t.door_id}（幅 {fmt(t.width_m)} m × 奥行き {fmt(s.door_opening_depth_m, 3)} m）: {t.area_m2 < 0 ? `${t.other_room_name} へ ${fmt(-t.area_m2, 3)} m²` : `${t.other_room_name} から ${fmt(t.area_m2, 3)} m²`}</li>
+                <li key={t.door_id}>ドア id{t.door_id}（幅 {fmt(t.width_m)} m × 奥行き {fmt(s.door_opening_depth_m, 3)} m）: {(() => { const other = result.rooms.find((r) => r.id === t.other_room_id)?.name ?? t.other_room_name; return t.area_m2 < 0 ? `${other} へ ${fmt(-t.area_m2, 3)} m²` : `${other} から ${fmt(t.area_m2, 3)} m²`; })()}</li>
               ))}
             </ul>
           )}

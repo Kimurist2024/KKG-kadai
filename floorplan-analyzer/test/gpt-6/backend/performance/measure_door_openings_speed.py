@@ -1,4 +1,4 @@
-"""作業前 HEAD と補正実装を同梱サンプルで交互測定する（ファイル書出しなし）。
+"""補正導入前の固定コミットと補正実装を同梱サンプルで交互測定する（ファイル書出しなし）。
 
 アプリ直下: backend/.venv/bin/python test/gpt-6/backend/performance/measure_door_openings_speed.py 101
 凍結版用の scripts/measure_sample_speed.py は新しい出力契約を比較できないため、
@@ -12,6 +12,7 @@ import sys
 import time
 import types
 
+REFERENCE_COMMIT = '2a89bc9'  # ドア開口部の床の補正を入れる直前のコミット（README「丸める」の言い換え、#101）
 APP = pathlib.Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(APP / 'backend'))
 from app import analyzer
@@ -27,11 +28,11 @@ def load_previous():
     # その他の幾何モジュールは今回変更していない。同じファイルから読み込む。
     for name in ('schemas', 'analysis_cache', 'analyzer'):
         path = (APP / 'backend/app' / (name + '.py')).relative_to(root)
-        source = subprocess.check_output(['git', 'show', 'HEAD:' + path.as_posix()], cwd=APP, text=True)
+        source = subprocess.check_output(['git', 'show', REFERENCE_COMMIT + ':' + path.as_posix()], cwd=APP, text=True)
         module = types.ModuleType(package.__name__ + '.' + name)
         module.__package__ = package.__name__
         sys.modules[module.__name__] = module
-        exec(compile(source, 'HEAD:' + str(path), 'exec'), module.__dict__)
+        exec(compile(source, REFERENCE_COMMIT + ':' + str(path), 'exec'), module.__dict__)
         setattr(package, name, module)
     return package
 
@@ -43,7 +44,7 @@ def main():
     settings, old_settings = AnalysisSettings(), before.schemas.AnalysisSettings()
     raw = analyzer.analyze(mask, AnalysisSettings(door_opening_depth_m=0))
     assert without_openings(raw.model_dump()) == before.analyzer.analyze(old_mask, old_settings).model_dump()
-    print('depth=0: 追加フィールド検証後、作業前 HEAD と全出力一致')
+    print('depth=0: 追加フィールド検証後、補正導入前のコミットと全出力一致')
     reps = int(sys.argv[1]) if len(sys.argv) > 1 else 101
     timings = {'before': [], 'after': []}
     for i in range(reps):

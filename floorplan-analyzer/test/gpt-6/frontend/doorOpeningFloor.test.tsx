@@ -43,6 +43,20 @@ test("RoomDetail lists each door transfer with the partner room and the depth", 
   expect(items[0]).toContain("奥行き 0.126 m");
 });
 
+test("RoomDetail shows the partner room's current display name after a rename", () => {
+  vi.stubGlobal("ResizeObserver", class { observe() {} disconnect() {} });
+  const noop = () => {};
+  const renamed = structuredClone(result) as AnalyzeResponse;
+  const partner = renamed.rooms.find((r) => r.name === "未命名 #3")!;
+  partner.name = "納戸";
+  const ldNow = renamed.rooms.find((r) => r.name === "LD")!;
+  render(<RoomDetail result={renamed} room={ldNow} originalRoomName={ldNow.room_name} hoverEdge={null} selectedEdge={null}
+    onHoverEdge={noop} onSelectEdge={noop} onHoverSegments={noop} pinnedSegments={[]} onPinSegments={noop}
+    onRename={noop} onShowOnPlan={noop} onClose={noop} />);
+  const items = Array.from(screen.getByLabelText("ドア開口部の床の受け渡し").querySelectorAll("li")).map((li) => li.textContent);
+  expect(items.find((s) => s!.includes("ドア id34"))).toContain("納戸 へ");
+});
+
 test("CSV includes the raw floor area and the transfer columns", () => {
   const lines = roomsToCsv(result).split("\n");
   expect(lines[0]).toContain("頂点からの床面積[m2]");
