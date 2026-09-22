@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="640" viewBox="0 0 1000 640" role="img" aria-labelledby="title desc">
+  <title id="title">ドア開口部の床を隣室へ移す補正</title>
+  <desc id="desc">採用した仮定の模式図。壁の厚みの中にあるドア開口部の床（幅w×奥行きd）を、床面積の大きい部屋から小さい部屋へ移す。奥行き15cmの見立てではLD＋Kが27.16平方メートル、図面の27.22平方メートルから逆算すると奥行きは0.126メートルで、この逆算値を既定値にしている。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#334155"/></marker>
+    <marker id="arrow-o" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#ce6b16"/></marker>
+    <marker id="arrow-w" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#fff"/></marker>
+  </defs>
+  <rect width="1000" height="640" rx="16" fill="#fff"/>
+  <g font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic',sans-serif" fill="#172c48">
+    <text x="40" y="46" font-size="27" font-weight="700">ドア開口部の床を隣室へ移す補正（採用した仮定）</text>
+    <text x="40" y="76" font-size="16" fill="#475569">壁の厚みの中にある開口部の床を、床面積の大きい部屋から小さい部屋へ移す ／ 位置関係は説明用の模式図</text>
+
+    <!-- 隣室 -->
+    <rect x="40" y="100" width="560" height="112" fill="#d8eef0" stroke="#237d87" stroke-width="2"/>
+    <text x="56" y="128" font-size="19" font-weight="700" fill="#1f5f66">隣室（床面積が小さい部屋）</text>
+    <!-- 壁 -->
+    <rect x="40" y="212" width="230" height="50" fill="#64748b"/>
+    <rect x="400" y="212" width="200" height="50" fill="#64748b"/>
+    <text x="100" y="243" font-size="18" font-weight="700" fill="#fff" text-anchor="middle">壁</text>
+    <text x="530" y="243" font-size="18" font-weight="700" fill="#fff" text-anchor="middle">壁</text>
+    <!-- 移す床 -->
+    <rect x="270" y="212" width="130" height="50" fill="#ffdfba" stroke="#ce6b16" stroke-width="3"/>
+    <text x="335" y="243" font-size="17" font-weight="700" fill="#9a4a0b" text-anchor="middle">移す床 w×d</text>
+    <!-- LD -->
+    <rect x="40" y="262" width="560" height="118" fill="#d8eef0" stroke="#237d87" stroke-width="2"/>
+    <text x="56" y="366" font-size="19" font-weight="700" fill="#1f5f66">LD（床面積が大きい部屋）</text>
+    <!-- LD の輪郭とドア線分 -->
+    <path d="M40 262H600" stroke="#1d4ed8" stroke-width="2.5" stroke-dasharray="8 6"/>
+    <path d="M270 262H400" stroke="#4ECDC4" stroke-width="6"/>
+    <text x="56" y="284" font-size="14" fill="#1d4ed8">LDの輪郭（入力のまま）</text>
+    <text x="410" y="284" font-size="14" fill="#0f766e">ドア線分（label_id=3）</text>
+    <!-- 受け渡しの矢印 -->
+    <path d="M335 350V150" stroke="#ce6b16" stroke-width="4" marker-end="url(#arrow-o)"/>
+    <text x="350" y="332" font-size="16" font-weight="700" fill="#9a4a0b">w×dをLDから隣室へ</text>
+    <!-- 寸法 -->
+    <path d="M270 190H400" stroke="#334155" stroke-width="1.5" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+    <text x="335" y="182" font-size="15" text-anchor="middle">幅 w ＝ ドアの幅</text>
+    <path d="M255 212V262" stroke="#fff" stroke-width="1.5" marker-start="url(#arrow-w)" marker-end="url(#arrow-w)"/>
+    <text x="246" y="242" font-size="15" fill="#fff" text-anchor="end">奥行き d</text>
+
+    <!-- 右の説明 -->
+    <rect x="630" y="100" width="330" height="280" rx="12" fill="#fff8ec" stroke="#ce6b16" stroke-width="2"/>
+    <text x="650" y="146" font-size="24" font-weight="700">移す面積 ＝ w × d</text>
+    <text x="650" y="186" font-size="18">LDは減る ／ 隣室は増える</text>
+    <text x="650" y="222" font-size="18">室内での受け渡しなので、</text>
+    <text x="650" y="248" font-size="18">全室の合計は変わらない</text>
+    <text x="650" y="288" font-size="16" fill="#475569">対象は2部屋が共有するドアだけ。</text>
+    <text x="650" y="312" font-size="16" fill="#475569">外部に面する玄関ドアは対象外</text>
+    <text x="650" y="356" font-size="20" font-weight="700" fill="#9a4a0b">既定値 d ＝ 0.126m（逆算値）</text>
+
+    <!-- 下段 左 -->
+    <rect x="40" y="404" width="450" height="180" rx="12" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/>
+    <text x="60" y="438" font-size="20" font-weight="700">① 奥行き15cmの見立て</text>
+    <text x="60" y="469" font-size="16">壁の隙間20cm − ドアの厚み5cm ＝ 15cm</text>
+    <text x="60" y="495" font-size="16">LDのドア3か所：幅の合計2.45m</text>
+    <text x="60" y="521" font-size="16">移す床 2.45m × 0.15m ≈ 0.37m²</text>
+    <text x="60" y="560" font-size="18" font-weight="700">LD＋K：27.53 → 27.16m²（図面との差 −0.06m²）</text>
+
+    <!-- 下段 右 -->
+    <rect x="510" y="404" width="450" height="180" rx="12" fill="#fff8ec" stroke="#ce6b16" stroke-width="2"/>
+    <text x="530" y="438" font-size="20" font-weight="700">② 図面の値から逆算（採用）</text>
+    <text x="530" y="469" font-size="16">27.5287 − 27.22 ＝ 0.3087m²</text>
+    <text x="530" y="495" font-size="16">0.3087m² ÷ 2.4495m ≈ 0.126m</text>
+    <text x="530" y="521" font-size="16">この奥行きを既定値にして再計算</text>
+    <text x="530" y="560" font-size="18" font-weight="700" fill="#9a4a0b">LD＋K：27.53 → 27.22m²（図面と一致）</text>
+
+    <text x="40" y="618" font-size="14" fill="#475569">0.126mは図面の27.22m²からの逆算値で、確かめられているのはLD＋Kの1件。輪郭の座標は入力のまま使い、床面積の数値だけを補正する。</text>
+  </g>
+</svg>
