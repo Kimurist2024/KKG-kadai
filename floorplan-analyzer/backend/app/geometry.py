@@ -6,16 +6,17 @@
 from __future__ import annotations
 
 import math
-import heapq
-from dataclasses import dataclass, field
-from typing import Iterable, List, NamedTuple, Optional, Sequence, Set, Tuple
+from typing import Iterable, List, NamedTuple, Optional, Sequence, Tuple
 
-Point = Tuple[float, float]
-Segment = Tuple[Point, Point]
-
-EPS_PX = 1e-9  # 浮動小数点の丸め誤差用。セグメンテーションの許容誤差 (tolerance_px) とは別物
-DEFAULT_MAX_ANGLE_DEG = 10.0  # 辺と線分のなす角がこれ以下なら「平行」とみなす
-
+from .geometry_primitives import (Point, Segment, EPS_PX, DEFAULT_MAX_ANGLE_DEG,
+                                  Interval, _interval_sort_key, merge_intervals,
+                                  _orientation, _segments_intersect)
+from .strategies.interval_clip import (auto as clip_intervals, _intervals_are_disjoint,
+                                      _clip_disjoint_intervals, _clip_overlapping_intervals,
+                                      _clip_all_pairs)
+from .strategies.self_intersection import (auto as is_self_intersecting,
+                                          _self_intersection_sweep,
+                                          _self_intersection_all_pairs)
 
 def polygon_area(vertices: Sequence[Point]) -> float:
     """シューレース (Gauss) の公式で多角形の面積を返す (px^2, 常に非負)。"""
@@ -40,24 +41,6 @@ def polygon_perimeter(vertices: Sequence[Point]) -> float:
 
 def distance(a: Point, b: Point) -> float:
     return math.hypot(b[0] - a[0], b[1] - a[1])
-
-
-@dataclass
-class Interval:
-    """辺上の 1 次元区間。start/end は辺の始点からの距離 (px)。"""
-
-    start: float
-    end: float
-    ids: Set[int] = field(default_factory=set)
-
-    @property
-    def length(self) -> float:
-        return max(0.0, self.end - self.start)
-
-
-def _interval_sort_key(interval: Interval) -> Tuple[float, float]:
-    """区間の安定ソート順を返す。"""
-    return interval.start, interval.end
 
 
 def project_segments_onto_edge(
@@ -159,19 +142,6 @@ def _project_segment(
     return None
 
 
-def merge_intervals(intervals: Iterable[Interval], gap_tolerance_px: float = 0.0) -> List[Interval]:
-    """重なり・近接 (gap <= gap_tolerance_px) する区間を併合する。"""
-    merged: List[Interval] = []
-    for iv in sorted(intervals, key=_interval_sort_key):
-        if merged and iv.start <= merged[-1].end + gap_tolerance_px:
-            last = merged[-1]
-            last.end = max(last.end, iv.end)
-            last.ids |= iv.ids
-        else:
-            merged.append(Interval(iv.start, iv.end, set(iv.ids)))
-    return merged
-
-
 def snap_to_edge_ends(intervals: List[Interval], edge_length: float, tolerance_px: float) -> List[Interval]:
     """辺の端に tolerance 以内で届いている区間を端まで延ばす (セグメンテーション誤差の吸収)。"""
     out: List[Interval] = []
@@ -185,103 +155,6 @@ def snap_to_edge_ends(intervals: List[Interval], edge_length: float, tolerance_p
 def drop_short(intervals: Iterable[Interval], min_length_px: float) -> List[Interval]:
     """ノイズ (例: 直交する壁の端がわずかに重なった部分) を除去する。"""
     return [iv for iv in intervals if iv.length >= min_length_px]
-
-
-def clip_intervals(a: Iterable[Interval], b: Iterable[Interval]) -> List[Interval]:
-    """a ∩ b。b が非重複なら開始位置の走査で不要な比較を省く。
-
-    非重複判定と二つの交差処理を分け、公開関数で方式の選択と併合を行う。
-    a は重複していてもよく、交差前に併合しない（ids の混入を防止）。
-    b の重複時は端点イベントで候補を列挙し、EPS 以下の断片を除く順序も維持する。
-    非重複 b の走査はソート後 O(len(a) + len(b) + 候補交差数)。
-    """
-    # 解析では空または単一区間が多い。単一区間でも従来の比較・max/min 順を守る。
-    if isinstance(a, list) and isinstance(b, list):
-        if not a or not b:
-            return []
-        if len(a) == len(b) == 1:
-            ia, ib = a[0], b[0]
-            if ib.end <= ia.start or ib.start >= ia.end:
-                return []
-            lo, hi = max(ia.start, ib.start), min(ia.end, ib.end)
-            return [Interval(lo, hi, set(ia.ids))] if hi - lo > EPS_PX else []
-    b_list = sorted(b, key=_interval_sort_key)
-    if not b_list:
-        return []
-    if _intervals_are_disjoint(b_list):
-        result = _clip_disjoint_intervals(a, b_list)
-    else:
-        result = _clip_overlapping_intervals(a, b_list)
-    return merge_intervals(result)
-
-
-def _intervals_are_disjoint(intervals: Sequence[Interval]) -> bool:
-    """走査方式の選択理由を明示するため、ソート済み区間の非重複判定を分ける。"""
-    return all(left.end <= right.start for left, right in zip(intervals, intervals[1:]))
-
-
-def _clip_disjoint_intervals(a: Iterable[Interval], b_list: Sequence[Interval]) -> List[Interval]:
-    """非重複時だけ使えるカーソル走査を総当たりの処理から分ける。"""
-    result: List[Interval] = []
-    cursor = 0
-    for ia in sorted(a, key=_interval_sort_key):
-        while cursor < len(b_list) and b_list[cursor].end <= ia.start:
-            cursor += 1
-        for index in range(cursor, len(b_list)):
-            ib = b_list[index]
-            if ib.start >= ia.end:
-                break
-            lo, hi = max(ia.start, ib.start), min(ia.end, ib.end)
-            if hi - lo > EPS_PX:
-                result.append(Interval(lo, hi, set(ia.ids)))
-    return result
-
-
-def _clip_overlapping_intervals(a: Iterable[Interval], b_list: Sequence[Interval]) -> List[Interval]:
-    """端点イベントを走査して交差候補を列挙する。座標の量子化はしない。"""
-    a_list = sorted(a, key=_interval_sort_key)
-    if len(a_list) * len(b_list) < 4096 or any(
-        not math.isfinite(iv.start) or not math.isfinite(iv.end) or iv.start >= iv.end
-        for iv in (*a_list, *b_list)
-    ):
-        return _clip_all_pairs(a_list, b_list)
-    # いもす法と同じ開始/終了イベントを使うが、根拠IDとEPS判定を
-    # 維持するため被覆数だけに集約せず、交差する元区間を記録する。
-    events = []
-    for side, intervals in enumerate((a_list, b_list)):
-        for index, iv in enumerate(intervals):
-            events.append((iv.start, 1, side, index))
-            events.append((iv.end, 0, side, index))
-    active = (set(), set())
-    candidates = [[] for _ in a_list]
-    for _, entering, side, index in sorted(events):
-        if not entering:
-            active[side].discard(index)
-            continue
-        for other in active[1 - side]:
-            i, j = (index, other) if side == 0 else (other, index)
-            candidates[i].append(j)
-        active[side].add(index)
-    result = []
-    # 従来の a,b 順序で演算し、同値端点（負のゼロ含む）の選択も維持。
-    for ia, indices in zip(a_list, candidates):
-        for j in sorted(indices):
-            ib = b_list[j]
-            lo, hi = max(ia.start, ib.start), min(ia.end, ib.end)
-            if hi - lo > EPS_PX:
-                result.append(Interval(lo, hi, set(ia.ids)))
-    return result
-
-
-def _clip_all_pairs(a_list, b_list):
-    """小規模・特殊入力の従来経路。"""
-    result: List[Interval] = []
-    for ia in a_list:
-        for ib in b_list:
-            lo, hi = max(ia.start, ib.start), min(ia.end, ib.end)
-            if hi - lo > EPS_PX:
-                result.append(Interval(lo, hi, set(ia.ids)))
-    return result
 
 
 def complement_intervals(intervals: Iterable[Interval], edge_length: float, *, normalized=False) -> List[Interval]:
@@ -302,71 +175,6 @@ def complement_intervals(intervals: Iterable[Interval], edge_length: float, *, n
     if edge_length - cursor > EPS_PX:
         out.append(Interval(cursor, edge_length))
     return out
-
-
-def _orientation(a: Point, b: Point, c: Point) -> float:
-    """a→b に対するcの有向面積（外積）。"""
-    return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
-
-
-def _segments_intersect(p1: Point, p2: Point, q1: Point, q2: Point) -> bool:
-    """線分 p1p2 と q1q2 が交差するか (端点接触は交差とみなさない)。"""
-
-    d1, d2 = _orientation(q1, q2, p1), _orientation(q1, q2, p2)
-    d3, d4 = _orientation(p1, p2, q1), _orientation(p1, p2, q2)
-    return (d1 * d2 < -EPS_PX) and (d3 * d4 < -EPS_PX)
-
-
-def is_self_intersecting(vertices: Sequence[Point]) -> bool:
-    """大きな輪郭は境界イベントで候補を絞り、従来の交差式で判定する。"""
-    n = len(vertices)
-    if n < 4:
-        return False
-    if n >= 64:
-        magnitude = max(abs(v) for point in vertices for v in point)
-        if math.isfinite(magnitude) and magnitude < 1e100:
-            return _self_intersection_sweep(vertices, EPS_PX + 16 * math.ulp(magnitude))
-    return _self_intersection_all_pairs(vertices)
-
-
-def _self_intersection_sweep(vertices, pad):
-    n = len(vertices)
-    boxes = []
-    for i, a in enumerate(vertices):
-        b = vertices[(i + 1) % n]
-        boxes.append((min(a[0], b[0]) - pad, max(a[0], b[0]) + pad,
-                      min(a[1], b[1]) - pad, max(a[1], b[1]) + pad, i))
-    active = {}
-    ends = []
-    for left, right, bottom, top, i in sorted(boxes):
-        while ends and ends[0][0] < left:
-            _, expired = heapq.heappop(ends)
-            active.pop(expired)
-        for j, (low, high) in active.items():
-            first, second = min(i, j), max(i, j)
-            if second == first + 1 or (first == 0 and second == n - 1):
-                continue
-            if high < bottom or top < low:
-                continue
-            if _segments_intersect(vertices[first], vertices[(first + 1) % n],
-                                   vertices[second], vertices[(second + 1) % n]):
-                return True
-        active[i] = (bottom, top)
-        heapq.heappush(ends, (right, i))
-    return False
-
-
-def _self_intersection_all_pairs(vertices):
-    n = len(vertices)
-    for i in range(n):
-        p1, p2 = vertices[i], vertices[(i + 1) % n]
-        for j in range(i + 2, n):
-            if i == 0 and j == n - 1:
-                continue  # 最初と最後の辺は隣接
-            q1, q2 = vertices[j], vertices[(j + 1) % n]
-            if _segments_intersect(p1, p2, q1, q2):
-                return True
-    return False
 
 
 def total_length(intervals: Iterable[Interval]) -> float:
