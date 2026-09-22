@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="570" viewBox="0 0 1000 570" role="img" aria-labelledby="title desc">
+  <title id="title">壁面積からドア開口を控除する計算</title>
+  <desc id="desc">説明用の例。幅4メートル、高さ2.4メートルの壁から、幅0.85メートル、高さ2メートルのドア開口を差し引く。上部0.4メートルは壁として残り、壁面積は7.90平方メートルになる。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#334155"/></marker>
+  </defs>
+  <rect width="1000" height="570" rx="16" fill="#fff"/>
+  <g font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic',sans-serif" fill="#172c48">
+    <text x="40" y="48" font-size="28" font-weight="700">壁面積からドア開口を差し引く</text>
+    <text x="40" y="80" font-size="17" fill="#475569">課題の固定条件：天井高2.4m・ドア高2.0m ／ 寸法は説明用の例</text>
+    <rect x="130" y="147" width="480" height="288" fill="#d8eef0" stroke="#237d87" stroke-width="3"/>
+    <rect x="346" y="195" width="102" height="240" fill="#ffdfba" stroke="#ce6b16" stroke-width="3"/>
+    <path d="M130 113H610 M94 147V435 M474 195V435 M346 468H448" stroke="#334155" stroke-width="1.5" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+    <g font-size="18" text-anchor="middle">
+      <text x="370" y="106">壁あり長 4.00m</text>
+      <text x="65" y="291" transform="rotate(-90 65 291)">天井高 2.4m</text>
+      <text x="499" y="316" transform="rotate(-90 499 316)">ドア高 2.0m</text>
+      <text x="397" y="498">控除ドア幅 0.85m</text>
+      <text x="235" y="290" fill="#237d87" font-weight="700">残る壁</text>
+      <text x="397" y="308" fill="#9a4c0c" font-weight="700">ドア</text>
+      <text x="397" y="335" fill="#9a4c0c">開口</text>
+    </g>
+    <path d="M400 169H649" stroke="#237d87" stroke-width="2"/>
+    <text x="665" y="163" font-size="20" font-weight="700">上部0.4mは壁として残る</text>
+    <text x="665" y="191" font-size="17">2.4m − 2.0m = 0.4m</text>
+    <rect x="643" y="227" width="320" height="195" rx="12" fill="#f1f5f9"/>
+    <g font-size="20">
+      <text x="665" y="264">壁全体：4.00 × 2.4 = 9.60m²</text>
+      <text x="665" y="303" fill="#9a4c0c">控除分：0.85 × 2.0 = 1.70m²</text>
+      <text x="665" y="353" font-size="23" font-weight="700">9.60 − 1.70 = 7.90m²</text>
+      <text x="665" y="391" font-size="17">「×2.0」は枚数ではなく高さ</text>
+    </g>
+    <text x="40" y="548" font-size="17" fill="#475569">対象は壁と対応するドアの区間です。この処理では床面積の輪郭はそのまま保持します。</text>
+  </g>
+</svg>
