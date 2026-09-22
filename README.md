@@ -43,7 +43,7 @@ Python 3.12 と Node.js 22 を推奨します（Node.js は20.9以上）。`floo
 
 ## 2. 構成と役割
 
-課題の指定（フロントエンドはTypeScriptかJavaScript、バックエンドはPythonで、両者を分離する）に沿って、フロントエンドにはTypeScriptを選び、画面は `frontend/`、入力検証と幾何計算は `backend/app/` に分けました。テストは `test/gpt-6/`、同梱の図面は `sample/`、設計と検証の記録は `docs/`、AWS構成は `infra/terraform/`、起動・停止ツールは `scripts/` にあります。
+課題の指定（フロントエンドはTypeScriptかJavaScript、バックエンドはPythonで、両者を分離する）に沿って、フロントエンドにはTypeScriptを選び、画面は `frontend/`、入力検証と幾何計算は `backend/app/` に分けました。計算のうち方式を入れ替えて比べたい部分（候補検索・区間の切り取り・自己交差の判定・多角形の作成・重なり候補）は `backend/app/strategies/` に名前つきで登録し、組み合わせを指定して同じ入力で比較できるようにしています。テストは `test/gpt-6/`、同梱の図面は `sample/`、設計と検証の記録は `docs/`、AWS構成は `infra/terraform/`、起動・停止ツールは `scripts/` にあります。
 
 主要なAPIは `POST /api/analyze`（multipartの `file`）と `POST /api/analyze/json`（JSONボディ）の2つで、部屋別・全体の集計、各辺の区間と根拠になる線分のID、警告を返します。ファイル版は不正なJSONを400、容量超過を413で返し、形式や設定の検証エラーは422です。仕様は起動後に `http://127.0.0.1:8000/docs` で確認できます。
 
@@ -188,6 +188,7 @@ flowchart TD
 ```bash
 .claude/scripts/verify.sh quick  # pytest・型検査・Vitest
 .claude/scripts/verify.sh all    # 上記と本番ビルド
+backend/.venv/bin/python scripts/compare_algorithms.py   # アルゴリズムの組み合わせを同じ入力で比較（floorplan-analyzer/ で実行）
 ```
 
 コードの変更は作業ブランチで検証し、レビューを経て `feature/kimura` に統合しています。mainへの反映は私が手動で行います（[開発手順](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/orchestration.md)）。

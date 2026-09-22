@@ -190,6 +190,35 @@ LD＋K の計算値 27.5287m² と図面の 27.22m² の差 0.3087m² を、ド�
 
 LD の 3 か所以外の 5 本の共有ドア（id35・36・37・39・40）は、どちらの部屋へ移すかを JSON から決められないため、「面積の大きい部屋から小さい部屋へ」というルールで仮定した。向きを逆にするとその 2 部屋の増減が入れ替わり、合計は変わらない。玄関の外部ドア（id32、0.94m）は開口部を屋外とみなして玄関から 0.141m² を引いた。屋内とみなす場合は合計が 48.75m² のまま変わらない。図面に記載があるのは LDK の面積だけなので、ほかの部屋の補正後の値を確かめる材料は無い。アプリの計算にはこの補正を入れておらず、輪郭は入力のまま使っている。
 
+## アルゴリズムの差し替えと比較の仕組み（2026-09-22）
+
+実験のたびに app 全体の凍結コピーや monkeypatch で方式を切り替えていたのをやめ、差し替え点（seam）ごとに方式を名前で登録し、組み合わせ（profile）を指定して比べられるようにした。`backend/app/strategies/` に seam ごとのモジュールがある。
+
+| seam | 登録されている方式（先頭が既定） | 切り出し元 |
+|---|---|---|
+| `candidate_search`（辺に近い線分の候補） | `auto`（64 本以上で木）・`scan`・`strtree` | `spatial.SegmentIndex` |
+| `interval_clip`（区間の共通部分） | `auto`・`all_pairs`・`sweep` | `geometry.clip_intervals` |
+| `self_intersection`（輪郭の自己交差） | `auto`・`sweep`・`all_pairs` | `geometry.is_self_intersecting` |
+| `room_polygons`（部屋の多角形の作成・妥当性・代表点） | `batch`・`per_room` | `topology` |
+| `overlap_pairs`（重なり候補の列挙） | `auto`（32 未満で総当たり）・`brute`・`strtree` | `spatial.overlap_pairs` |
+
+- profile は `strategies.PROFILES`（`default`・`scan_only`・`tree_only`・`all_pairs`）。`analyze_uncached(mask, settings, profile=...)` で指定する。API と `analyze()`（キャッシュ経由）は `default` 固定で、契約は変えていない。
+- `default` の出力は、この変更の前と bit 単位で同じ（同梱 JSON と検証用の 4 入力 × 設定 4 通り＝20 件で、変更前のコードと比較して一致。既存の凍結コピーとの一致テストもそのまま合格）。初回解析の時間は変更前と同じ（交互 246 回の中央値で +0.10%）。
+- 比較は `scripts/compare_algorithms.py`。同梱 JSON・交互 101 回の結果（2026-09-22、[algorithm-comparison.json](validation/recent-papers-speed/algorithm-comparison.json)）:
+
+| profile | 中央値 ms | p95 ms | default との出力一致 | 差があったフィールド |
+|---|---:|---:|---|---|
+| default | 1.731 | 2.509 | 一致 | — |
+| scan_only | 1.710 | 2.771 | 一致 | — |
+| tree_only | 1.952 | 4.019 | 一致 | — |
+| all_pairs | 1.993 | 3.003 | 一致 | — |
+
+新しい方式を足す手順:
+
+1. `backend/app/strategies/<seam>.py` に、同じ呼び出し規約の関数（またはクラス）を書き、`@register("<seam>", "<名前>")` を付ける。
+2. `strategies/__init__.py` の `PROFILES` に、その方式を使う組み合わせを足す。
+3. `backend/.venv/bin/python scripts/compare_algorithms.py --profiles default,<組み合わせ名> --reps 101` を実行する。出力が既定と一致しなければ終了コード 1 になり、最初に違ったフィールドが表に出る。`test/gpt-6/backend/strategies/` のテストは、登録されているすべての profile が既定と一致することを確かめる。
+
 ## Shapely を選んだ理由（ほかのライブラリとの比較、2026-09-20）
 
 このアプリが多角形の処理に使っている機能は、妥当性の検査と理由の説明（`is_valid`・`explain_validity`）、穴つきの多角形、部屋どうしの重なり（`intersects`・`intersection`・`area`）、和集合（`unary_union`）、部屋名を置く代表点（`representative_point`）、線分の空間索引（`STRtree`）、配列単位の呼び出し（`polygons`・`linearrings`・`get_coordinates` など）です。使用しているのは Shapely 2.0.7（GEOS 3.11.4 を同梱、パッケージ約 4MB）で、`pip install` だけで入ります。

@@ -21,7 +21,8 @@ from shapely.errors import GEOSException
 from shapely.ops import unary_union
 
 from . import geometry as g
-from .topology import room_polygon, simple_room_polygons, polygon_regions_many
+from .topology import room_polygon, polygon_regions_many
+from .strategies import get, resolve_profile
 from .spatial import SegmentIndex, overlap_pairs
 from .schemas import (
     AnalysisSettings,
@@ -136,6 +137,7 @@ def door_intervals_on_edge(
     walls: List[g.Interval],
     tolerance_px: float,
     raw: Optional[List[g.Interval]] = None,
+    *, interval_clip=g.clip_intervals,
 ) -> List[g.Interval]:
     """辺 a→b 上のドア区間。壁あり区間との共通部分だけを返す (壁の無い所のドアは控除しない)。
 
@@ -145,7 +147,7 @@ def door_intervals_on_edge(
     if raw is None:
         raw = g.project_segments_onto_edge(a, b, door_segments, tolerance_px)
     # 壁との交差を取るまでは、各ドアの id を別々に保持する。
-    return g.clip_intervals(raw, walls)
+    return interval_clip(raw, walls)
 
 
 def analyze_edge(
@@ -170,6 +172,7 @@ def _analyze_edge_data(
     door_segments: SegmentSource,
     settings: AnalysisSettings,
     canonical_edge_ids: Optional[List[int]] = None,
+    *, interval_clip=g.clip_intervals,
 ) -> dict:
     """1 辺の壁・開口・扉を対応付け、区間の根拠と壁面積を返す。"""
     mpp = settings.meters_per_px
@@ -194,7 +197,8 @@ def _analyze_edge_data(
         # 壁の id と補完根拠のドア id を混ぜず、後者は inferred に残す。
         walls = g.merge_intervals(walls + [g.Interval(iv.start, iv.end) for iv in inferred])
     openings = g.complement_intervals(walls, length_px, normalized=True)
-    doors = door_intervals_on_edge(a, b, door_segments, walls, settings.tolerance_px, raw_doors)
+    doors = door_intervals_on_edge(a, b, door_segments, walls, settings.tolerance_px, raw_doors,
+                                   interval_clip=interval_clip)
 
     wall_len_m = g.total_length(walls) * mpp
     opening_len_m = g.total_length(openings) * mpp  # 区間の内訳と必ず一致させる
@@ -233,6 +237,7 @@ def analyze_room(
     label_point: Optional[Vertex] = None,
     canonical_edges: Optional[Dict[Tuple[int, str, int], List[int]]] = None,
     contour_index: Optional[int] = None,
+    *, interval_clip=g.clip_intervals,
 ) -> RoomResult:
     """外周と穴の全辺を解析し、部屋単位の床面積・周長・壁面積に集計する。"""
     mpp = settings.meters_per_px
@@ -265,7 +270,7 @@ def analyze_room(
             edge = _analyze_edge_data(offset + i, a, b,
                                 wall_candidates[i] if wall_candidates is not None else wall_segments,
                                 door_candidates[i] if door_candidates is not None else door_segments,
-                                settings, canonical_ids)
+                                settings, canonical_ids, interval_clip=interval_clip)
             edge["boundary_kind"] = boundary_kind
             edges.append(edge)
         offset += len(ring)
@@ -362,7 +367,7 @@ def _wall_and_door_warnings(room_results, wall_segments, doors_out) -> List[Warn
     return warnings
 
 
-def _room_overlaps(polygons, room_results, mpp, warnings, *, geometry_only):
+def _room_overlaps(polygons, room_results, mpp, warnings, *, geometry_only, pair_search=overlap_pairs):
     """交差領域と和集合を求める。部屋別面積は変更せず、重複情報を返す。
 
     ペアの面積を合計すると三重以上の重複を過大計上するため、全体面積は和集合で求める。
@@ -372,7 +377,7 @@ def _room_overlaps(polygons, room_results, mpp, warnings, *, geometry_only):
     overlap_indices = []
     # 同じ GEOS の判定を配列で呼び出し、ペアごとの Python ラッパーを省く。
     # 入力・出力の順序は overlap_pairs の i,j 順をそのまま維持する。
-    candidates = list(overlap_pairs(polygons))
+    candidates = list(pair_search(polygons))
     hits = intersects([polygons[i] for i, _ in candidates],
                       [polygons[j] for _, j in candidates])
     pairs = [pair for pair, hit in zip(candidates, hits) if hit]
@@ -394,7 +399,7 @@ def _room_overlaps(polygons, room_results, mpp, warnings, *, geometry_only):
     return overlaps, overlap_indices, union_area
 
 
-def _analyze_core(mask: MaskFile, settings: Optional[AnalysisSettings] = None, *, geometry_only=False,
+def _analyze_core(mask: MaskFile, settings: Optional[AnalysisSettings] = None, *, profile=None, geometry_only=False,
                   geometry_processing: Optional[GeometryProcessing] = None,
                   canonical_edges: Optional[Dict[Tuple[int, str, int], List[int]]] = None):
     """分類 → 有効な部屋の解析 → 警告 → 重複判定 → 全体集計の順に実行する。"""
@@ -402,8 +407,14 @@ def _analyze_core(mask: MaskFile, settings: Optional[AnalysisSettings] = None, *
     if settings.geometry_mode == "regularized_shared" and geometry_processing is None:
         from .regularization import regularize_mask
         active_mask, processing, edge_lookup = regularize_mask(mask, settings.boundary_reference)
-        return _analyze_core(active_mask, settings, geometry_only=geometry_only,
+        return _analyze_core(active_mask, settings, profile=profile, geometry_only=geometry_only,
                              geometry_processing=processing, canonical_edges=edge_lookup)
+    selected = resolve_profile(profile)
+    index_factory = get("candidate_search", selected.candidate_search)
+    interval_clip = get("interval_clip", selected.interval_clip)
+    self_intersection = get("self_intersection", selected.self_intersection)
+    prepare_rooms = get("room_polygons", selected.room_polygons)
+    pair_search = get("overlap_pairs", selected.overlap_pairs)
     mpp = settings.meters_per_px
     warnings: List[Warning] = []
 
@@ -419,11 +430,11 @@ def _analyze_core(mask: MaskFile, settings: Optional[AnalysisSettings] = None, *
 
     wall_segments, walls_out = _extract_segments("wall", walls, mpp, warnings)
     door_segments, doors_out = _extract_segments("door", doors, mpp, warnings)
-    wall_index, door_index = SegmentIndex(wall_segments), SegmentIndex(door_segments)
+    wall_index, door_index = index_factory(wall_segments), index_factory(door_segments)
 
     room_results: List[RoomResult] = []
     polygons = []
-    prepared_rooms = simple_room_polygons(rooms)
+    prepared_rooms = prepare_rooms(rooms)
     for room in rooms:
         if len(room.vertices) < 3:
             warnings.append(Warning(code="ignored_contour", contour_id=room.id, message=f"部屋 id={room.id}: 頂点が 3 点未満のため無視しました"))
@@ -432,7 +443,7 @@ def _analyze_core(mask: MaskFile, settings: Optional[AnalysisSettings] = None, *
         if g.polygon_area(pts) <= g.EPS_PX:
             warnings.append(Warning(code="ignored_contour", contour_id=room.id, message=f"部屋 id={room.id}: 面積が 0 (一直線または全点一致) のため無視しました"))
             continue
-        if g.is_self_intersecting(pts):
+        if self_intersection(pts):
             warnings.append(Warning(code="ignored_contour", contour_id=room.id, message=f"部屋 id={room.id}: 輪郭が自己交差しているため無視しました (面積を正しく定義できません)"))
             continue
         try:
@@ -455,7 +466,7 @@ def _analyze_core(mask: MaskFile, settings: Optional[AnalysisSettings] = None, *
             x, y = point.x, point.y
         result = analyze_room(room, wall_index, door_index, settings, display, holes,
                               Vertex(x=x, y=y), canonical_edges,
-                              contour_indices[id(room)])
+                              contour_indices[id(room)], interval_clip=interval_clip)
         polygons.append(polygon)
         if any(e.inferred_wall_intervals for e in result.edges):
             warnings.append(Warning(code="inferred_door_wall", contour_id=room.id,
@@ -493,7 +504,8 @@ def _analyze_core(mask: MaskFile, settings: Optional[AnalysisSettings] = None, *
             r.name = f"{r.name} ({seen[r.name]})"
 
     overlaps, overlap_indices, union_area = _room_overlaps(
-        polygons, room_results, 1.0 if geometry_only else mpp, warnings, geometry_only=geometry_only
+        polygons, room_results, 1.0 if geometry_only else mpp, warnings, geometry_only=geometry_only,
+        pair_search=pair_search
     )
     total_area = sum(r.floor_area_m2 for r in room_results)
 
@@ -529,9 +541,10 @@ def _analyze_core(mask: MaskFile, settings: Optional[AnalysisSettings] = None, *
     return (response, overlap_indices) if geometry_only else response
 
 
-def analyze_uncached(mask: MaskFile, settings: Optional[AnalysisSettings] = None) -> AnalyzeResponse:
+def analyze_uncached(mask: MaskFile, settings: Optional[AnalysisSettings] = None,
+                     profile=None) -> AnalyzeResponse:
     """キャッシュを経由しない計算。比較検証・診断の基準として残す。"""
-    return _analyze_core(mask, settings)
+    return _analyze_core(mask, settings, profile=profile)
 
 
 def _compute_geometry(mask: MaskFile, settings: AnalysisSettings) -> dict:
