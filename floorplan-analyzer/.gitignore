@@ -1,0 +1,23 @@
+# Python
+backend/.venv/
+**/__pycache__/
+**/.pytest_cache/
+# Node
+frontend/node_modules/
+frontend/dist/
+# OS
+.DS_Store
+.vercel/
+.env
+.env.*
+!.env.example
+frontend/.next/
+*.tsbuildinfo
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+!*.tfvars.example
+.vercel
+.env*

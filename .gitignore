@@ -1,0 +1,39 @@
+# --- 依存・ビルド成果物（サイズが大きく再生成できる） ---
+# 末尾スラッシュなしも指定: worktree でシンボリックリンクにした場合も除外する
+node_modules/
+**/node_modules
+**/.venv
+**/__pycache__/
+**/.pytest_cache/
+**/.next/
+**/dist/
+*.tsbuildinfo
+
+# --- 配布用アーカイブ（提出時に生成する） ---
+*.zip
+*.zip.sha256
+
+# --- OS / エディタ ---
+.DS_Store
+desktop.ini
+
+# --- 秘密情報 ---
+.env
+.env.*
+!.env.example
+.vercel/
+
+# --- Terraform ---
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+!*.tfvars.example
+
+# --- AI 実行ログ（生ログは大きいので除外。要約は docs/ai-log/ に手動で残す） ---
+.claude/logs/
+
+# --- ローカル作業用の一時出力（リポジトリには含めない） ---
+output/
+tmp/

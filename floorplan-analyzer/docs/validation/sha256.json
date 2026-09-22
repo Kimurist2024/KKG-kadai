@@ -1,0 +1,23 @@
+{
+  "bedroom_door_gap_mask.json": "56296f9af7736e0ab0994631b16c71d15ea324dbb61912f982c5d5df82920af9",
+  "mini_mask.json": "782c63a51cab6b1fc277eb839cccdf6a70818c9efaee46644e233402a8f5f19d",
+  "bedroom_wall_mask.json": "afb899bbd566990e3f6bb2c8c9554c360bb95f8868845c2dfe303848eda0993b",
+  "results.json": "3c41c2bae0792483347e30c542ded893168ee4bbe8dd90de23e16107a35b96cf",
+  "mini_response.json": "ae029e9aaa5caf217210d03c07e8392d2d83eb10ffb0509b0d52f67c51862545",
+  "ur_settings.json": "24593622209abac9193a61846031cdbf159666185e07538ab41aa9335f77cabe",
+  "build_report.py": "495c2f4487ac5b488bd559bdadcbb5511358f4ffb02d96a516d5aed3a4cd4f3d",
+  "ur_mask.json": "67e33038fe8dc184b962f0ce97678927329c8a81a26472629768f94fd62488c9",
+  "mini_settings.json": "3d6d7bc66e4cfba24195a04f6c69344812cab43eb262a73a0a8e9e8e8b49e6b0",
+  "ur_response.json": "5fec7d5f5f25d3d3aa92cb7532960b6449892b8b4db4d824c31696512d2c76f1",
+  "run_validation.py": "4e8240635a92a37242e0952f508def779dc656c7af845b9f174dffc165a659c3",
+  "http_results.json": "856972ea95bf5f8b7bd3d45ee4c7e7f4788d54608cc5a56cc3ddd0845c6dd5e2",
+  "bedroom_wall_response.json": "b1d13c927801f8713de60245401d3ab2983fbb7832cb5a61d2247cea40ee1364",
+  "bedroom_door_gap_response.json": "05e5560e396ee29c985b475aca9b71ece22d9b33a82e7c2f67ee0236752b7282",
+  "sources/ur_detail.png": "68eeb0e3051b290826de7be009bae5107b0a77b0f8a1348d2349b4c7353a463a",
+  "sources/mini_homes.pdf": "fcd0117fa30519e769b8eef08a5f1cb138012d098a63fd83be2f0a922575f764",
+  "sources/ur_s2.pdf": "84d9243aa03ef12b3b36bc4732adf56ed39f2f599356241af6b43b6e7caa03b8",
+  "sources/ur_contact.png": "b6b83382c1c5f43d534cea55beb66544c699c25d930b69228d5e3d8e75729114",
+  "sources/mini_homes2.png": "b193475a28fd7f4ea05bee348078b5fb2da330c244265ee4fd504a6a69c9126c",
+  "sources/mini_homes5.png": "bf7633cf97bdb85f38ad034010f6ce0969a92a4f3a7ce4138bb3a80248dcccd5",
+  "sources/ur_page3.png": "76d779ffc18f2b3d8597a97d0adb00ca47e4216d9198ea34788379c3ea433029"
+}

@@ -1,0 +1,2 @@
+# API エントリポイント用。依存は backend に集約する。
+-r backend/requirements.txt

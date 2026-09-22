@@ -1,0 +1,19 @@
+{
+  "typeCheckingMode": "off",
+  "include": [
+    "floorplan-analyzer/backend/app",
+    "floorplan-analyzer/test/gpt-6/backend",
+    "floorplan-analyzer/scripts"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/.venv",
+    "**/__pycache__",
+    "**/.next"
+  ],
+  "venvPath": "floorplan-analyzer/backend",
+  "venv": ".venv",
+  "extraPaths": [
+    "floorplan-analyzer/backend"
+  ]
+}

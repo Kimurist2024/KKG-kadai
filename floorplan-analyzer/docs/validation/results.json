@@ -1,0 +1,252 @@
+{
+  "area_rows": [
+    {
+      "dataset": "ur",
+      "room": "1LDK-42-EV",
+      "reference_m2": 42.59,
+      "actual_m2": 42.28307915769581,
+      "error_m2": -0.30692084230419425,
+      "error_pct": -0.7206406252739939,
+      "perimeter_m": 29.735300316122235,
+      "reference_perimeter_m": 29.700000000000003,
+      "perimeter_error_pct": 0.11885628323984321,
+      "source_url": "https://www.ur-net.go.jp/rd_portal/UR-BIM/jni4dd0000001wmv-att/03_kenchikuzu_S2_ver1.1.pdf",
+      "page": 3
+    },
+    {
+      "dataset": "ur",
+      "room": "1DK-36",
+      "reference_m2": 36.6,
+      "actual_m2": 36.427954066229105,
+      "error_m2": -0.17204593377089594,
+      "error_pct": -0.4700708572975332,
+      "perimeter_m": 25.877239199157007,
+      "reference_perimeter_m": 25.900000000000002,
+      "perimeter_error_pct": -0.0878795399343435,
+      "source_url": "https://www.ur-net.go.jp/rd_portal/UR-BIM/jni4dd0000001wmv-att/03_kenchikuzu_S2_ver1.1.pdf",
+      "page": 3
+    },
+    {
+      "dataset": "ur",
+      "room": "1K-28 A",
+      "reference_m2": 28.66,
+      "actual_m2": 28.562827620111456,
+      "error_m2": -0.09717237988854421,
+      "error_pct": -0.33905226758040863,
+      "perimeter_m": 24.08935721812434,
+      "reference_perimeter_m": 24.1,
+      "perimeter_error_pct": -0.04416092064589705,
+      "source_url": "https://www.ur-net.go.jp/rd_portal/UR-BIM/jni4dd0000001wmv-att/03_kenchikuzu_S2_ver1.1.pdf",
+      "page": 3
+    },
+    {
+      "dataset": "ur",
+      "room": "2DK-48",
+      "reference_m2": 48.95,
+      "actual_m2": 49.26052879410528,
+      "error_m2": 0.3105287941052737,
+      "error_pct": 0.6343795589484724,
+      "perimeter_m": 28.79430979978925,
+      "reference_perimeter_m": 28.700000000000003,
+      "perimeter_error_pct": 0.3286055741785532,
+      "source_url": "https://www.ur-net.go.jp/rd_portal/UR-BIM/jni4dd0000001wmv-att/03_kenchikuzu_S2_ver1.1.pdf",
+      "page": 3
+    },
+    {
+      "dataset": "ur",
+      "room": "1K-28 B",
+      "reference_m2": 28.66,
+      "actual_m2": 28.14887359663158,
+      "error_m2": -0.5111264033684186,
+      "error_pct": -1.783413828919811,
+      "perimeter_m": 23.995258166491045,
+      "reference_perimeter_m": 24.1,
+      "perimeter_error_pct": -0.43461341704961187,
+      "source_url": "https://www.ur-net.go.jp/rd_portal/UR-BIM/jni4dd0000001wmv-att/03_kenchikuzu_S2_ver1.1.pdf",
+      "page": 3
+    },
+    {
+      "dataset": "ur",
+      "room": "1K-28 C",
+      "reference_m2": 28.66,
+      "actual_m2": 28.562827620111456,
+      "error_m2": -0.09717237988854421,
+      "error_pct": -0.33905226758040863,
+      "perimeter_m": 24.08935721812434,
+      "reference_perimeter_m": 24.1,
+      "perimeter_error_pct": -0.04416092064589705,
+      "source_url": "https://www.ur-net.go.jp/rd_portal/UR-BIM/jni4dd0000001wmv-att/03_kenchikuzu_S2_ver1.1.pdf",
+      "page": 3
+    },
+    {
+      "dataset": "ur",
+      "room": "1LDK-45",
+      "reference_m2": 45.86,
+      "actual_m2": 45.94889660626626,
+      "error_m2": 0.08889660626626039,
+      "error_pct": 0.19384345020989624,
+      "perimeter_m": 28.041517386722866,
+      "reference_perimeter_m": 28.0,
+      "perimeter_error_pct": 0.1482763811530896,
+      "source_url": "https://www.ur-net.go.jp/rd_portal/UR-BIM/jni4dd0000001wmv-att/03_kenchikuzu_S2_ver1.1.pdf",
+      "page": 3
+    },
+    {
+      "dataset": "ur",
+      "room": "3LDK-66",
+      "reference_m2": 66.5,
+      "actual_m2": 66.64659778026007,
+      "error_m2": 0.1465977802600662,
+      "error_pct": 0.22044778986476388,
+      "perimeter_m": 32.74646996838778,
+      "reference_perimeter_m": 32.7,
+      "perimeter_error_pct": 0.14210999506965027,
+      "source_url": "https://www.ur-net.go.jp/rd_portal/UR-BIM/jni4dd0000001wmv-att/03_kenchikuzu_S2_ver1.1.pdf",
+      "page": 3
+    },
+    {
+      "dataset": "mini",
+      "room": "Bedroom 2 (closet excluded)",
+      "reference_m2": 8.17546752,
+      "actual_m2": 8.021710098055154,
+      "error_m2": -0.15375742194484587,
+      "error_pct": -1.8807171769529063,
+      "perimeter_m": 11.444679509632225,
+      "reference_perimeter_m": 11.5824,
+      "perimeter_error_pct": -1.1890496819983332,
+      "source_url": "https://b9f0a121-a2f4-4be4-a8a0-ebf384c417bf.filesusr.com/ugd/0dcb7e_6ad37e587a4b47f7baebde4c7abafb32.pdf",
+      "page": 5
+    },
+    {
+      "dataset": "mini",
+      "room": "Bath",
+      "reference_m2": 2.97289728,
+      "actual_m2": 3.4466682774252324,
+      "error_m2": 0.4737709974252322,
+      "error_pct": 15.936339294751289,
+      "perimeter_m": 7.814837127845885,
+      "reference_perimeter_m": 7.315200000000001,
+      "perimeter_error_pct": 6.8301225919439545,
+      "source_url": "https://b9f0a121-a2f4-4be4-a8a0-ebf384c417bf.filesusr.com/ugd/0dcb7e_6ad37e587a4b47f7baebde4c7abafb32.pdf",
+      "page": 5
+    },
+    {
+      "dataset": "mini",
+      "room": "Master (closets included)",
+      "reference_m2": 10.869655680000001,
+      "actual_m2": 10.867376992316917,
+      "error_m2": -0.0022786876830842573,
+      "error_pct": -0.020963752212288522,
+      "perimeter_m": 13.40906479859895,
+      "reference_perimeter_m": 13.411200000000001,
+      "perimeter_error_pct": -0.01592103168285286,
+      "source_url": "https://b9f0a121-a2f4-4be4-a8a0-ebf384c417bf.filesusr.com/ugd/0dcb7e_6ad37e587a4b47f7baebde4c7abafb32.pdf",
+      "page": 5
+    }
+  ],
+  "arithmetic_checks": {
+    "floor_area_m2": {
+      "expected": 8.021710098055152,
+      "actual": 8.021710098055154,
+      "absolute_error": 1.7763568394002505e-15
+    },
+    "perimeter_m": {
+      "expected": 11.444679509632223,
+      "actual": 11.444679509632225,
+      "absolute_error": 1.7763568394002505e-15
+    },
+    "wall_area_m2": {
+      "expected": 25.908533800350263,
+      "actual": 25.90853380035026,
+      "absolute_error": 3.552713678800501e-15
+    }
+  },
+  "datasets": {
+    "ur": {
+      "n": 8,
+      "mape_pct": 0.587612580709411,
+      "max_absolute_pct": 1.783413828919811
+    },
+    "mini": {
+      "n": 3,
+      "mape_pct": 5.946006741305494,
+      "max_absolute_pct": 15.936339294751289
+    }
+  },
+  "wall_gap": {
+    "reference_m2": 25.908533800350263,
+    "actual_m2": 25.59679439579685,
+    "error_pct": -1.2032305917257236,
+    "warnings": [
+      {
+        "code": "unmatched_door",
+        "message": "ドア id=20: どの部屋の壁にも対応付けられませんでした (控除されていません)",
+        "contour_id": 20
+      }
+    ]
+  },
+  "scale_sensitivity": [
+    {
+      "scale_error_pct": -5.0,
+      "floor_error_pct": -9.750000000000025,
+      "wall_error_pct": -5.000000000000016
+    },
+    {
+      "scale_error_pct": -1.0,
+      "floor_error_pct": -1.9899999999999807,
+      "wall_error_pct": -1.0000000000000009
+    },
+    {
+      "scale_error_pct": 0,
+      "floor_error_pct": 2.220446049250313e-14,
+      "wall_error_pct": -1.1102230246251565e-14
+    },
+    {
+      "scale_error_pct": 1.0,
+      "floor_error_pct": 2.010000000000023,
+      "wall_error_pct": 0.9999999999999787
+    },
+    {
+      "scale_error_pct": 5.0,
+      "floor_error_pct": 10.250000000000048,
+      "wall_error_pct": 5.000000000000004
+    }
+  ],
+  "offset_sensitivity": [
+    {
+      "offset_x_y_px": 0,
+      "wall_area_m2": 25.90853380035026,
+      "wall_error_pct": -1.1102230246251565e-14
+    },
+    {
+      "offset_x_y_px": 2,
+      "wall_area_m2": 25.90853380035026,
+      "wall_error_pct": -1.1102230246251565e-14
+    },
+    {
+      "offset_x_y_px": 5,
+      "wall_area_m2": 25.90853380035026,
+      "wall_error_pct": -1.1102230246251565e-14
+    },
+    {
+      "offset_x_y_px": 9,
+      "wall_area_m2": 25.90853380035026,
+      "wall_error_pct": -1.1102230246251565e-14
+    },
+    {
+      "offset_x_y_px": 10,
+      "wall_area_m2": 25.90853380035026,
+      "wall_error_pct": -1.1102230246251565e-14
+    },
+    {
+      "offset_x_y_px": 11,
+      "wall_area_m2": 0.0,
+      "wall_error_pct": -100.0
+    },
+    {
+      "offset_x_y_px": 20,
+      "wall_area_m2": 0.0,
+      "wall_error_pct": -100.0
+    }
+  ]
+}

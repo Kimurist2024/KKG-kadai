@@ -1,0 +1,43 @@
+         2516 function calls (2513 primitive calls) in 0.001 seconds
+
+   Ordered by: cumulative time
+   List reduced from 160 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.001    0.001 performance.py:94(<lambda>)
+        1    0.000    0.000    0.001    0.001 analyzer.py:274(analyze)
+        2    0.000    0.000    0.000    0.000 analyzer.py:182(analyze_room)
+       12    0.000    0.000    0.000    0.000 analyzer.py:130(analyze_edge)
+       42    0.000    0.000    0.000    0.000 decorators.py:62(wrapped)
+        2    0.000    0.000    0.000    0.000 topology.py:7(room_polygon)
+        5    0.000    0.000    0.000    0.000 polygon.py:221(__new__)
+       12    0.000    0.000    0.000    0.000 analyzer.py:89(wall_intervals_on_edge)
+      111    0.000    0.000    0.000    0.000 main.py:253(__init__)
+       15    0.000    0.000    0.000    0.000 analyzer.py:75(_interval_out)
+       36    0.000    0.000    0.000    0.000 geometry.py:57(project_segments_onto_edge)
+      115    0.000    0.000    0.000    0.000 {method 'validate_python' of 'pydantic_core._pydantic_core.SchemaValidator' objects}
+        6    0.000    0.000    0.000    0.000 polygon.py:62(__new__)
+       12    0.000    0.000    0.000    0.000 analyzer.py:171(<listcomp>)
+        1    0.000    0.000    0.000    0.000 topology.py:33(polygon_regions)
+    57/54    0.000    0.000    0.000    0.000 {built-in method builtins.sum}
+        5    0.000    0.000    0.000    0.000 base.py:651(is_valid)
+       85    0.000    0.000    0.000    0.000 geometry.py:102(merge_intervals)
+       12    0.000    0.000    0.000    0.000 analyzer.py:111(door_intervals_on_edge)
+        5    0.000    0.000    0.000    0.000 predicates.py:361(is_valid)
+        1    0.000    0.000    0.000    0.000 ops.py:129(unary_union)
+        8    0.000    0.000    0.000    0.000 base.py:327(area)
+       12    0.000    0.000    0.000    0.000 geometry.py:142(complement_intervals)
+      117    0.000    0.000    0.000    0.000 geometry.py:40(distance)
+        1    0.000    0.000    0.000    0.000 set_operations.py:337(union_all)
+        5    0.000    0.000    0.000    0.000 creation.py:176(polygons)
+       36    0.000    0.000    0.000    0.000 geometry.py:188(total_length)
+        1    0.000    0.000    0.000    0.000 base.py:593(intersection)
+        1    0.000    0.000    0.000    0.000 set_operations.py:79(intersection)
+        2    0.000    0.000    0.000    0.000 analyzer.py:242(_extract_segments)
+       30    0.000    0.000    0.000    0.000 geometry.py:193(point_at)
+      100    0.000    0.000    0.000    0.000 {built-in method builtins.sorted}
+       12    0.000    0.000    0.000    0.000 numerictypes.py:470(issubdtype)
+        8    0.000    0.000    0.000    0.000 measurement.py:21(area)
+        6    0.000    0.000    0.000    0.000 polygon.py:93(<listcomp>)
+
+

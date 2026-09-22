@@ -1,0 +1,552 @@
+"""部屋ごとの床面積・周長・壁面積を算出するコアロジック。
+
+計算要件 (課題 2-2):
+  * 壁面積 = 辺の長さ × 天井高 (2.4 m)
+  * ドア部分の面積は壁面積から控除する (ドア高さ 2.0 m)
+  * 部屋によっては壁が存在しない輪郭区間がある
+  * スケール: 96.7 px = 1.365 m
+
+方針:
+  1. 部屋の各辺について、壁線分 (label_id=2) を辺上に射影し「壁あり区間」を求める
+  2. 壁あり区間の補集合が「開口 (壁なし) 区間」
+  3. ドア線分 (label_id=3) も同様に射影し、壁あり区間との共通部分だけを控除対象にする
+  4. 辺ごとの壁面積 = 壁あり長 × 天井高 − ドア長 × ドア高。部屋の壁面積はその合計
+"""
+from __future__ import annotations
+
+from typing import Dict, List, Optional, Tuple, Union
+
+from shapely import area as polygon_areas, intersection, intersects
+from shapely.errors import GEOSException
+from shapely.ops import unary_union
+
+from . import geometry as g
+from .topology import room_polygon, simple_room_polygons, polygon_regions_many
+from .spatial import SegmentIndex, overlap_pairs
+from .schemas import (
+    AnalysisSettings,
+    AnalyzeResponse,
+    Contour,
+    EdgeResult,
+    ImageInfo,
+    MaskFile,
+    RoomResult,
+    OverlapResult,
+    SegmentOut,
+    Summary,
+    Vertex,
+    Warning,
+    GeometryProcessing,
+)
+
+LABEL_WALL = 2
+LABEL_DOOR = 3
+
+# 小規模では線分リスト、大規模では候補検索用インデックスを受け取る。
+SegmentSource = Union[List[Tuple[int, g.Segment]], SegmentIndex]
+
+
+def classify(
+    contours: List[Contour], warnings: Optional[List[Warning]] = None
+) -> Tuple[List[Contour], List[Contour], List[Contour]]:
+    """輪郭を (部屋, 壁, ドア) に分類する。
+
+    壁 = isLine かつ label_id=2、ドア = isLine かつ label_id=3。部屋は isLine が偽の多角形。
+    未知のラベルを持つ線分は壁として計算せず、警告だけ出す。
+    """
+    rooms: List[Contour] = []
+    walls: List[Contour] = []
+    doors: List[Contour] = []
+    for c in contours:
+        if c.isLine:
+            if c.label_id == LABEL_WALL:
+                walls.append(c)
+            elif c.label_id == LABEL_DOOR:
+                doors.append(c)
+            elif warnings is not None:
+                warnings.append(Warning(code="ignored_contour", contour_id=c.id, message=f"線分 id={c.id}: 未知の label_id={c.label_id} のため無視しました"))
+        else:
+            rooms.append(c)
+    return rooms, walls, doors
+
+
+def _segment_of(c: Contour) -> Optional[g.Segment]:
+    if len(c.vertices) < 2:
+        return None
+    p, q = c.vertices[0], c.vertices[-1]
+    return ((p.x, p.y), (q.x, q.y))
+
+
+def _interval_out(a: g.Point, b: g.Point, iv: g.Interval, mpp: float, length: float) -> dict:
+    # 親の EdgeResult が区間・頂点を一括検証する。個々のモデル生成呼出しを省く。
+    # point_at と同じ演算順で、辺長だけを共有する。
+    if length <= g.EPS_PX:
+        s = e = a
+    else:
+        rs, re = iv.start / length, iv.end / length
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        s = (a[0] + dx * rs, a[1] + dy * rs)
+        e = (a[0] + dx * re, a[1] + dy * re)
+    interval_length = iv.length
+    return dict(
+        start_px=iv.start,
+        end_px=iv.end,
+        start=dict(x=s[0], y=s[1]),
+        end=dict(x=e[0], y=e[1]),
+        length_px=interval_length,
+        length_m=interval_length * mpp,
+        ids=sorted(iv.ids),
+    )
+
+
+def wall_intervals_on_edge(
+    a: g.Point, b: g.Point, wall_segments: List[Tuple[int, g.Segment]], tolerance_px: float
+) -> List[g.Interval]:
+    """辺 a→b 上の「壁あり区間」。
+
+    手順: 射影 → 重なりのみ併合 → 極短ノイズ除去 → 隙間併合 (tol 以下) → 端点スナップ → 再併合。
+    ノイズ除去を隙間併合・スナップより先に行うことで、tol 未満の断片同士が併合や
+    スナップで膨らんで生き残るのを防ぐ。スナップ・併合は [0, 辺長] を超えない。
+    隙間併合と端点スナップは「セグメンテーションで分断・短縮された壁の補完」であり、
+    許容誤差 tolerance_px より短い開口は検出しない仕様 (docs/design-notes.md「輪郭の基準と注意点の詳細」)。
+    """
+    length = g.distance(a, b)
+    raw = g.project_segments_onto_edge(a, b, wall_segments, tolerance_px)
+    # 0/1 区間では併合しても同じ区間だけが残る。ノイズ除去→端点補完の順は維持。
+    if not raw:
+        return []
+    if len(raw) == 1:
+        iv = raw[0]
+        if iv.length < min(tolerance_px, length / 2):
+            return []
+        return g.snap_to_edge_ends(raw, length, tolerance_px)
+    walls = g.merge_intervals(raw)
+    # ノイズ閾値は辺長の半分を上限にする: 輪郭の辺が tol より細かく分割されていても、
+    # 辺の大半を覆う壁を「ノイズ」として捨てない (直交壁の角の 1〜2 px の重なりは引き続き除去)
+    walls = g.drop_short(walls, min_length_px=min(tolerance_px, length / 2))
+    walls = g.merge_intervals(walls, gap_tolerance_px=tolerance_px)
+    walls = g.snap_to_edge_ends(walls, length, tolerance_px)
+    return g.merge_intervals(walls, gap_tolerance_px=tolerance_px)
+
+
+def door_intervals_on_edge(
+    a: g.Point,
+    b: g.Point,
+    door_segments: List[Tuple[int, g.Segment]],
+    walls: List[g.Interval],
+    tolerance_px: float,
+    raw: Optional[List[g.Interval]] = None,
+) -> List[g.Interval]:
+    """辺 a→b 上のドア区間。壁あり区間との共通部分だけを返す (壁の無い所のドアは控除しない)。
+
+    ドアごとに個別にクリップしてから併合する。先に併合すると、壁と重ならないドアの id が
+    隣のドアの区間に紛れ込み、ドア数や警告が誤る。
+    """
+    if raw is None:
+        raw = g.project_segments_onto_edge(a, b, door_segments, tolerance_px)
+    # 壁との交差を取るまでは、各ドアの id を別々に保持する。
+    return g.clip_intervals(raw, walls)
+
+
+def analyze_edge(
+    index: int,
+    a: g.Point,
+    b: g.Point,
+    wall_segments: SegmentSource,
+    door_segments: SegmentSource,
+    settings: AnalysisSettings,
+    canonical_edge_ids: Optional[List[int]] = None,
+) -> EdgeResult:
+    """1 辺の公開入口。内部では辞書を組み立て、ここで検証する。"""
+    return EdgeResult.model_validate(_analyze_edge_data(
+        index, a, b, wall_segments, door_segments, settings, canonical_edge_ids))
+
+
+def _analyze_edge_data(
+    index: int,
+    a: g.Point,
+    b: g.Point,
+    wall_segments: SegmentSource,
+    door_segments: SegmentSource,
+    settings: AnalysisSettings,
+    canonical_edge_ids: Optional[List[int]] = None,
+) -> dict:
+    """1 辺の壁・開口・扉を対応付け、区間の根拠と壁面積を返す。"""
+    mpp = settings.meters_per_px
+    length_px = g.distance(a, b)
+
+    if isinstance(wall_segments, SegmentIndex):
+        wall_segments = wall_segments.near(a, b, settings.tolerance_px)
+    if isinstance(door_segments, SegmentIndex):
+        door_segments = door_segments.near(a, b, settings.tolerance_px)
+
+    walls = wall_intervals_on_edge(a, b, wall_segments, settings.tolerance_px)
+    # 両側に壁がある隙間だけを扉から補完する。許容誤差で埋めた隙間は再計上しない。
+    raw_doors = g.project_segments_onto_edge(a, b, door_segments, settings.tolerance_px)
+    inferred = []
+    for left, right in zip(walls, walls[1:]):
+        for door in raw_doors:
+            if (abs(door.start - left.end) <= settings.tolerance_px + g.EPS_PX
+                    and abs(door.end - right.start) <= settings.tolerance_px + g.EPS_PX):
+                inferred.append(g.Interval(left.end, right.start, set(door.ids)))
+    if inferred:
+        inferred = g.merge_intervals(inferred)
+        # 壁の id と補完根拠のドア id を混ぜず、後者は inferred に残す。
+        walls = g.merge_intervals(walls + [g.Interval(iv.start, iv.end) for iv in inferred])
+    openings = g.complement_intervals(walls, length_px, normalized=True)
+    doors = door_intervals_on_edge(a, b, door_segments, walls, settings.tolerance_px, raw_doors)
+
+    wall_len_m = g.total_length(walls) * mpp
+    opening_len_m = g.total_length(openings) * mpp  # 区間の内訳と必ず一致させる
+    door_len_m = g.total_length(doors) * mpp
+    gross = wall_len_m * settings.ceiling_height_m
+    door_area = door_len_m * settings.door_height_m
+
+    return dict(
+        index=index,
+        canonical_edge_id=canonical_edge_ids[0] if canonical_edge_ids and len(canonical_edge_ids) == 1 else None,
+        canonical_edge_ids=canonical_edge_ids or [],
+        inferred_wall_intervals=[_interval_out(a, b, iv, mpp, length_px) for iv in inferred],
+        start=dict(x=a[0], y=a[1]),
+        end=dict(x=b[0], y=b[1]),
+        length_px=length_px,
+        length_m=length_px * mpp,
+        wall_intervals=[_interval_out(a, b, iv, mpp, length_px) for iv in walls],
+        opening_intervals=[_interval_out(a, b, iv, mpp, length_px) for iv in openings],
+        door_intervals=[_interval_out(a, b, iv, mpp, length_px) for iv in doors],
+        wall_length_m=wall_len_m,
+        opening_length_m=opening_len_m,
+        door_length_m=door_len_m,
+        wall_area_gross_m2=gross,
+        door_area_m2=door_area,
+        wall_area_m2=gross - door_area,
+    )
+
+
+def analyze_room(
+    room: Contour,
+    wall_segments: SegmentSource,
+    door_segments: SegmentSource,
+    settings: AnalysisSettings,
+    display_name: str,
+    holes: Optional[List[List[Vertex]]] = None,
+    label_point: Optional[Vertex] = None,
+    canonical_edges: Optional[Dict[Tuple[int, str, int], List[int]]] = None,
+    contour_index: Optional[int] = None,
+) -> RoomResult:
+    """外周と穴の全辺を解析し、部屋単位の床面積・周長・壁面積に集計する。"""
+    mpp = settings.meters_per_px
+    pts: List[g.Point] = [(v.x, v.y) for v in room.vertices]
+    holes = holes or []
+    rings = [pts] + [[(v.x, v.y) for v in hole] for hole in holes]
+    area_px2 = g.polygon_area(pts) - sum(g.polygon_area(ring) for ring in rings[1:])
+    perim_px = sum(g.polygon_perimeter(ring) for ring in rings)
+
+    edges: List[dict] = []
+    offset = 0
+    for ring_index, ring in enumerate(rings):
+        ring_edges = [(a, ring[(i + 1) % len(ring)]) for i, a in enumerate(ring)]
+        # 壁と扉で検索枠は同じ。浮動小数点の padding も一度だけ計算する。
+        bounds = ([SegmentIndex._bounds(a, b, settings.tolerance_px) for a, b in ring_edges]
+                  if len(ring) <= 64 and (isinstance(wall_segments, SegmentIndex)
+                                         or isinstance(door_segments, SegmentIndex)) else None)
+        # 大きな輪郭では候補リストを全辺分保持せず、従来の逐次検索を使う。
+        wall_candidates = (wall_segments.near_many(ring_edges, settings.tolerance_px, bounds=bounds)
+                           if isinstance(wall_segments, SegmentIndex) and len(ring) <= 64 else None)
+        door_candidates = (door_segments.near_many(ring_edges, settings.tolerance_px, bounds=bounds)
+                           if isinstance(door_segments, SegmentIndex) and len(ring) <= 64 else None)
+        for i, a in enumerate(ring):
+            b = ring[(i + 1) % len(ring)]
+            if g.distance(a, b) <= g.EPS_PX:
+                continue
+            boundary_kind = "outer" if ring_index == 0 else "hole"
+            canonical_ids = ((canonical_edges or {}).get((contour_index, boundary_kind, offset + i))
+                             if contour_index is not None else None)
+            edge = _analyze_edge_data(offset + i, a, b,
+                                wall_candidates[i] if wall_candidates is not None else wall_segments,
+                                door_candidates[i] if door_candidates is not None else door_segments,
+                                settings, canonical_ids)
+            edge["boundary_kind"] = boundary_kind
+            edges.append(edge)
+        offset += len(ring)
+
+    wall_len = sum(e["wall_length_m"] for e in edges)
+    opening_len = sum(e["opening_length_m"] for e in edges)
+    door_len = sum(e["door_length_m"] for e in edges)
+    gross = sum(e["wall_area_gross_m2"] for e in edges)
+    door_area = sum(e["door_area_m2"] for e in edges)
+    door_ids = {i for e in edges for iv in e["door_intervals"] for i in iv["ids"]}
+
+    return RoomResult(
+        id=room.id,
+        name=display_name,
+        room_name=room.room_name,
+        color=room.color,
+        vertices=list(room.vertices),
+        holes=holes,
+        label_point=label_point,
+        floor_area_px2=area_px2,
+        floor_area_m2=area_px2 * mpp * mpp,
+        perimeter_px=perim_px,
+        perimeter_m=perim_px * mpp,
+        source_area_px2=room.area,
+        source_perimeter_px=room.perimeter,
+        wall_length_m=wall_len,
+        opening_length_m=opening_len,
+        door_length_m=door_len,
+        door_count=len(door_ids),
+        wall_area_gross_m2=gross,
+        door_area_m2=door_area,
+        wall_area_m2=gross - door_area,
+        edges=edges,
+    )
+
+
+def _extract_segments(
+    kind: str, contours: List[Contour], mpp: float, warnings: List[Warning]
+) -> Tuple[List[Tuple[int, g.Segment]], List[SegmentOut]]:
+    """線分輪郭 (壁/ドア) を幾何計算用の (id, 線分) と描画用の SegmentOut に変換する。"""
+    segments: List[Tuple[int, g.Segment]] = []
+    outs: List[SegmentOut] = []
+    for c in contours:
+        seg = _segment_of(c)
+        if seg is None:
+            warnings.append(Warning(code="ignored_contour", contour_id=c.id, message=f"{kind} id={c.id}: 頂点が 2 点未満のため無視しました"))
+            continue
+        if len(c.vertices) > 2:
+            warnings.append(Warning(code="invalid_shape", contour_id=c.id, message=f"{kind} id={c.id}: 頂点が {len(c.vertices)} 点あるため、始点と終点を結ぶ線分として扱います"))
+        length_px = g.distance(*seg)
+        if length_px <= g.EPS_PX:
+            warnings.append(Warning(code="ignored_contour", contour_id=c.id, message=f"{kind} id={c.id}: 長さ 0 のため無視しました"))
+            continue
+        segments.append((c.id, seg))
+        outs.append(
+            SegmentOut(
+                id=c.id,
+                kind=kind,
+                start=dict(x=seg[0][0], y=seg[0][1]),
+                end=dict(x=seg[1][0], y=seg[1][1]),
+                length_px=length_px,
+                length_m=length_px * mpp,
+                color=c.color,
+            )
+        )
+    return segments, outs
+
+
+def _wall_and_door_warnings(room_results, wall_segments, doors_out) -> List[Warning]:
+    """壁の不足と未対応ドアを通知する。数値や部屋名は変更しない。"""
+    warnings: List[Warning] = []
+    # 数値は変更せず、未入力・対応失敗・低い対応率を区別して知らせる。
+    # 開放空間の可能性があるため、20% 未満はエラーではなく確認用の目安。
+    if room_results and not wall_segments:
+        warnings.append(Warning(code="missing_wall_data", message="有効な壁線がありません。壁面積 0 は壁がないことを確認した値ではありません。壁データを追加するか、床面積のみの結果として利用してください。"))
+    else:
+        for r in room_results:
+            wall_px = sum(iv.length_px for e in r.edges for iv in e.wall_intervals)
+            coverage = wall_px / r.perimeter_px
+            if wall_px <= g.EPS_PX:
+                warnings.append(Warning(code="no_room_walls", contour_id=r.id, message=f"部屋 '{r.name}': 輪郭に対応する壁が見つかりません（対応率 0%）。壁線の位置・ラベル・許容誤差を確認してください。壁面積は要確認です。"))
+            elif coverage < 0.2:
+                warnings.append(Warning(code="low_wall_coverage", contour_id=r.id, message=f"部屋 '{r.name}': 輪郭のうち壁として検出された長さが {coverage:.1%} です（確認目安 20% 未満）。開放空間でなければ、壁データの欠落・位置ずれ・許容誤差を確認してください。"))
+
+    # ドアがどの部屋の壁にも乗っていない場合は警告 (控除されない)
+    used_door_ids = {i for r in room_results for e in r.edges for iv in e.door_intervals for i in iv.ids}
+    for d in doors_out:
+        if d.id not in used_door_ids:
+            warnings.append(Warning(code="unmatched_door", contour_id=d.id, message=f"ドア id={d.id}: どの部屋の壁にも対応付けられませんでした (控除されていません)"))
+
+    return warnings
+
+
+def _room_overlaps(polygons, room_results, mpp, warnings, *, geometry_only):
+    """交差領域と和集合を求める。部屋別面積は変更せず、重複情報を返す。
+
+    ペアの面積を合計すると三重以上の重複を過大計上するため、全体面積は和集合で求める。
+    キャッシュ用の計算では、実寸を含む警告文は換算時まで作らない。
+    """
+    overlaps = []
+    overlap_indices = []
+    # 同じ GEOS の判定を配列で呼び出し、ペアごとの Python ラッパーを省く。
+    # 入力・出力の順序は overlap_pairs の i,j 順をそのまま維持する。
+    candidates = list(overlap_pairs(polygons))
+    hits = intersects([polygons[i] for i, _ in candidates],
+                      [polygons[j] for _, j in candidates])
+    pairs = [pair for pair, hit in zip(candidates, hits) if hit]
+    shared_regions = intersection([polygons[i] for i, _ in pairs],
+                                  [polygons[j] for _, j in pairs])
+    accepted = [(pair, shared, float(area))
+                for pair, shared, area in zip(pairs, shared_regions, polygon_areas(shared_regions))
+                if not float(area) <= g.EPS_PX]
+    regions = polygon_regions_many([shared for _, shared, _ in accepted])
+    for ((i, j), shared, shared_area), region in zip(accepted, regions):
+        overlap_indices.append((i, j))
+        overlaps.append(OverlapResult(room_ids=[room_results[i].id, room_results[j].id],
+            area_m2=shared_area * mpp * mpp, regions=region))
+        if not geometry_only:
+            for a, b in [(i, j), (j, i)]:
+                warnings.append(Warning(code="room_overlap", contour_id=room_results[a].id,
+                    message=f"部屋 '{room_results[a].name}' と '{room_results[b].name}' の床領域が {shared_area * mpp * mpp:.4f} m² 重複しています。部屋別面積は自動で削減していません。"))
+    union_area = unary_union(polygons).area * mpp * mpp if polygons else 0.0
+    return overlaps, overlap_indices, union_area
+
+
+def _analyze_core(mask: MaskFile, settings: Optional[AnalysisSettings] = None, *, geometry_only=False,
+                  geometry_processing: Optional[GeometryProcessing] = None,
+                  canonical_edges: Optional[Dict[Tuple[int, str, int], List[int]]] = None):
+    """分類 → 有効な部屋の解析 → 警告 → 重複判定 → 全体集計の順に実行する。"""
+    settings = settings or AnalysisSettings()
+    if settings.geometry_mode == "regularized_shared" and geometry_processing is None:
+        from .regularization import regularize_mask
+        active_mask, processing, edge_lookup = regularize_mask(mask, settings.boundary_reference)
+        return _analyze_core(active_mask, settings, geometry_only=geometry_only,
+                             geometry_processing=processing, canonical_edges=edge_lookup)
+    mpp = settings.meters_per_px
+    warnings: List[Warning] = []
+
+    seen_ids: Dict[int, int] = {}
+    for c in mask.contours:
+        seen_ids[c.id] = seen_ids.get(c.id, 0) + 1
+    for cid, n in seen_ids.items():
+        if n > 1:
+            warnings.append(Warning(code="duplicate_id", contour_id=cid, message=f"輪郭 id={cid} が {n} 回出現しています (id は一意である前提です)"))
+
+    rooms, walls, doors = classify(mask.contours, warnings)
+    contour_indices = {id(contour): index for index, contour in enumerate(mask.contours)}
+
+    wall_segments, walls_out = _extract_segments("wall", walls, mpp, warnings)
+    door_segments, doors_out = _extract_segments("door", doors, mpp, warnings)
+    wall_index, door_index = SegmentIndex(wall_segments), SegmentIndex(door_segments)
+
+    room_results: List[RoomResult] = []
+    polygons = []
+    prepared_rooms = simple_room_polygons(rooms)
+    for room in rooms:
+        if len(room.vertices) < 3:
+            warnings.append(Warning(code="ignored_contour", contour_id=room.id, message=f"部屋 id={room.id}: 頂点が 3 点未満のため無視しました"))
+            continue
+        pts = [(v.x, v.y) for v in room.vertices]
+        if g.polygon_area(pts) <= g.EPS_PX:
+            warnings.append(Warning(code="ignored_contour", contour_id=room.id, message=f"部屋 id={room.id}: 面積が 0 (一直線または全点一致) のため無視しました"))
+            continue
+        if g.is_self_intersecting(pts):
+            warnings.append(Warning(code="ignored_contour", contour_id=room.id, message=f"部屋 id={room.id}: 輪郭が自己交差しているため無視しました (面積を正しく定義できません)"))
+            continue
+        try:
+            prepared = prepared_rooms.get(id(room))
+            if prepared is None:
+                polygon, holes = room_polygon(room)
+            else:
+                polygon, (x, y) = prepared
+                holes = []
+        except (ValueError, GEOSException) as exc:
+            warnings.append(Warning(code="invalid_shape", contour_id=room.id, message=f"部屋 id={room.id}: {exc}。この部屋を集計から除外しました"))
+            continue
+        if room.room_name:
+            display = room.room_name
+        else:
+            display = f"未命名 #{room.id}"
+            warnings.append(Warning(code="unnamed_room", contour_id=room.id, message=f"部屋 id={room.id}: room_name がありません。'{display}' として扱います"))
+        if prepared is None:
+            point = polygon.representative_point()
+            x, y = point.x, point.y
+        result = analyze_room(room, wall_index, door_index, settings, display, holes,
+                              Vertex(x=x, y=y), canonical_edges,
+                              contour_indices[id(room)])
+        polygons.append(polygon)
+        if any(e.inferred_wall_intervals for e in result.edges):
+            warnings.append(Warning(code="inferred_door_wall", contour_id=room.id,
+                message=f"部屋 '{display}': 両側の壁とドア線から扉開口の壁区間を補完し、扉上部を計上しました。位置と高さを確認してください。"))
+        if result.source_area_px2 is not None and abs(result.source_area_px2 - result.floor_area_px2) > 1.0:
+            warnings.append(Warning(
+                code="data_mismatch",
+                contour_id=room.id,
+                message=(
+                    f"部屋 '{display}': JSON 記載の面積 ({result.source_area_px2:.1f} px²) と"
+                    f"頂点から再計算した面積 ({result.floor_area_px2:.1f} px²) が一致しません"
+                ),
+            ))
+        room_results.append(result)
+
+    warnings.extend(_wall_and_door_warnings(room_results, wall_segments, doors_out))
+    if geometry_processing is not None:
+        if geometry_processing.applied_mode == "regularized_shared":
+            warnings.append(Warning(code="geometry_regularized", message=(
+                f"方向・共有境界の補正を適用しました。最大頂点移動量 "
+                f"{geometry_processing.max_displacement_px:.3f} px、共有境界 "
+                f"{geometry_processing.graph.shared_edge_count if geometry_processing.graph else 0} 本です。")))
+        elif geometry_processing.applied_mode == "raw_fallback":
+            warnings.append(Warning(code="regularization_skipped", message=(
+                "方向・共有境界の補正を安全に適用できないため、入力どおりの輪郭で計算しました。")))
+
+    # 重複する部屋名にはサフィックスを付けて区別できるようにする
+    name_counts: Dict[str, int] = {}
+    for r in room_results:
+        name_counts[r.name] = name_counts.get(r.name, 0) + 1
+    seen: Dict[str, int] = {}
+    for r in room_results:
+        if name_counts[r.name] > 1:
+            seen[r.name] = seen.get(r.name, 0) + 1
+            r.name = f"{r.name} ({seen[r.name]})"
+
+    overlaps, overlap_indices, union_area = _room_overlaps(
+        polygons, room_results, 1.0 if geometry_only else mpp, warnings, geometry_only=geometry_only
+    )
+    total_area = sum(r.floor_area_m2 for r in room_results)
+
+    response = AnalyzeResponse(
+        overlaps=overlaps,
+        geometry_processing=geometry_processing,
+        image=ImageInfo(
+            width=mask.image_width,
+            height=mask.image_height,
+            mime_type=mask.image_data.mime_type if mask.image_data else None,
+            has_image=bool(mask.image_data and mask.image_data.base64),
+        ),
+        timestamp=mask.timestamp,
+        settings=settings,
+        summary=Summary(
+            room_count=len(room_results),
+            wall_count=len(walls_out),
+            door_count=len(doors_out),
+            total_floor_area_m2=total_area,
+            union_floor_area_m2=union_area,
+            overlap_floor_area_m2=max(0.0, total_area-union_area) if overlaps else 0.0,
+            total_wall_area_m2=sum(r.wall_area_m2 for r in room_results),
+        ),
+        rooms=room_results,
+        walls=walls_out,
+        doors=doors_out,
+        warnings=warnings,
+    )
+    return (response, overlap_indices) if geometry_only else response
+
+
+def analyze_uncached(mask: MaskFile, settings: Optional[AnalysisSettings] = None) -> AnalyzeResponse:
+    """キャッシュを経由しない計算。比較検証・診断の基準として残す。"""
+    return _analyze_core(mask, settings)
+
+
+def _compute_geometry(mask: MaskFile, settings: AnalysisSettings) -> dict:
+    """初回の実寸とキャッシュ用幾何結果を一度に計算する。
+
+    warm は *_px を元にすべての長さ・部屋面積を上書きするため、初回の実寸を
+    そのまま保存できる。px² フィールドのない重複・和集合だけは単位縮尺で保持。
+    """
+    response, pairs = _analyze_core(mask, settings, geometry_only=True)
+    return {"response": response, "pairs": pairs}
+
+
+def analyze(mask: MaskFile, settings: Optional[AnalysisSettings] = None) -> AnalyzeResponse:
+    """API から使う解析入口。幾何結果を再利用し、今回の縮尺・高さで換算する。"""
+    from .analysis_cache import get_geometry, materialize
+
+    settings = settings or AnalysisSettings()
+    geometry_key = ":".join((float(settings.tolerance_px).hex(), settings.geometry_mode,
+                             settings.boundary_reference, "manhattan_shared_v1"))
+    return materialize(get_geometry(mask, geometry_key, _compute_geometry, mask, settings), mask, settings)
+
+
+def clear_geometry_cache():
+    from .analysis_cache import cache
+    cache.clear()

@@ -1,0 +1,128 @@
+{
+  "image_width": 150,
+  "image_height": 120,
+  "contours": [
+    {
+      "id": 1,
+      "vertices": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 100,
+          "y": 0
+        },
+        {
+          "x": 100,
+          "y": 100
+        },
+        {
+          "x": 0,
+          "y": 100
+        }
+      ],
+      "color": "#60a5fa",
+      "room_name": "Room A",
+      "label_id": 1,
+      "holes": [
+        [
+          {
+            "x": 20,
+            "y": 20
+          },
+          {
+            "x": 40,
+            "y": 20
+          },
+          {
+            "x": 40,
+            "y": 40
+          },
+          {
+            "x": 20,
+            "y": 40
+          }
+        ]
+      ]
+    },
+    {
+      "id": 2,
+      "vertices": [
+        {
+          "x": 80,
+          "y": 0
+        },
+        {
+          "x": 120,
+          "y": 0
+        },
+        {
+          "x": 120,
+          "y": 40
+        },
+        {
+          "x": 80,
+          "y": 40
+        }
+      ],
+      "color": "#4ade80",
+      "room_name": "Room B",
+      "label_id": 1
+    },
+    {
+      "id": 10,
+      "vertices": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 30,
+          "y": 0
+        }
+      ],
+      "color": "#FF0000",
+      "room_name": null,
+      "label_id": 2,
+      "isLine": true,
+      "lineWidth": 5
+    },
+    {
+      "id": 11,
+      "vertices": [
+        {
+          "x": 70,
+          "y": 0
+        },
+        {
+          "x": 100,
+          "y": 0
+        }
+      ],
+      "color": "#FF0000",
+      "room_name": null,
+      "label_id": 2,
+      "isLine": true,
+      "lineWidth": 5
+    },
+    {
+      "id": 20,
+      "vertices": [
+        {
+          "x": 30,
+          "y": 0
+        },
+        {
+          "x": 70,
+          "y": 0
+        }
+      ],
+      "color": "#FF0000",
+      "room_name": null,
+      "label_id": 3,
+      "isLine": true,
+      "lineWidth": 5
+    }
+  ]
+}

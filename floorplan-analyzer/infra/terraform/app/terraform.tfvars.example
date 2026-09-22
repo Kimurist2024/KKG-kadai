@@ -1,0 +1,9 @@
+aws_region        = "ap-northeast-1"
+project_name      = "floorplan-analyzer"
+github_repository = "YOUR_OWNER/YOUR_REPOSITORY"
+github_environment = "production"
+# Reuse the account-wide provider if it already exists:
+# github_oidc_provider_arn = "arn:aws:iam::123456789012:oidc-provider/token.actions.githubusercontent.com"
+certificate_arn                = "arn:aws:acm:ap-northeast-1:123456789012:certificate/REPLACE_ME"
+frontend_image = "123456789012.dkr.ecr.ap-northeast-1.amazonaws.com/floorplan-analyzer-frontend:0000000000000000000000000000000000000000"
+backend_image  = "123456789012.dkr.ecr.ap-northeast-1.amazonaws.com/floorplan-analyzer-backend:0000000000000000000000000000000000000000"

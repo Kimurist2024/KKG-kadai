@@ -1,0 +1,90 @@
+name: Deploy to AWS
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: aws-production
+  cancel-in-progress: false
+jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+  deploy:
+    needs: checks
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: ${{ vars.DEPLOY_ENVIRONMENT || 'production' }}
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
+      ECS_SERVICE: ${{ vars.ECS_SERVICE }}
+      ECR_FRONTEND: ${{ vars.ECR_FRONTEND }}
+      ECR_BACKEND: ${{ vars.ECR_BACKEND }}
+      APP_URL: ${{ vars.APP_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate environment configuration
+        env:
+          DEPLOY_ROLE: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+        run: |
+          set -euo pipefail
+          for name in AWS_REGION ECS_CLUSTER ECS_SERVICE ECR_FRONTEND ECR_BACKEND APP_URL DEPLOY_ROLE; do
+            test -n "${!name}" || { echo "Missing GitHub variable: $name"; exit 1; }
+          done
+          [[ "$APP_URL" == https://* ]] || { echo 'APP_URL must use HTTPS'; exit 1; }
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: github-${{ github.run_id }}
+      - uses: aws-actions/amazon-ecr-login@v2
+      - uses: docker/setup-buildx-action@v3
+      - name: Check existing immutable images for this commit
+        id: images
+        run: |
+          set -euo pipefail
+          for component in frontend backend; do
+            if [ "$component" = frontend ]; then uri="$ECR_FRONTEND"; else uri="$ECR_BACKEND"; fi
+            if aws ecr describe-images --repository-name "${uri#*/}" --image-ids "imageTag=$GITHUB_SHA" > /dev/null 2> image-error.txt; then
+              echo "$component=true" >> "$GITHUB_OUTPUT"
+            elif grep -q ImageNotFoundException image-error.txt; then
+              echo "$component=false" >> "$GITHUB_OUTPUT"
+            else
+              cat image-error.txt >&2
+              exit 1
+            fi
+          done
+      - uses: docker/build-push-action@v6
+        if: steps.images.outputs.frontend != 'true'
+        with:
+          context: floorplan-analyzer/frontend
+          platforms: linux/amd64
+          push: true
+          tags: ${{ vars.ECR_FRONTEND }}:${{ github.sha }}
+      - uses: docker/build-push-action@v6
+        if: steps.images.outputs.backend != 'true'
+        with:
+          context: floorplan-analyzer/backend
+          platforms: linux/amd64
+          push: true
+          tags: ${{ vars.ECR_BACKEND }}:${{ github.sha }}
+      - name: Register and roll out the new task revision
+        run: |
+          set -euo pipefail
+          current=$(aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" --query 'services[0].taskDefinition' --output text)
+          test "$current" != None
+          aws ecs describe-task-definition --task-definition "$current" --query taskDefinition > current-task.json
+          jq --arg front "$ECR_FRONTEND:$GITHUB_SHA" --arg back "$ECR_BACKEND:$GITHUB_SHA" '
+            del(.taskDefinitionArn,.revision,.status,.requiresAttributes,.compatibilities,.registeredAt,.registeredBy,.deregisteredAt)
+            | .containerDefinitions |= map(if .name == "frontend" then .image = $front elif .name == "backend" then .image = $back else . end)
+          ' current-task.json > next-task.json
+          next=$(aws ecs register-task-definition --cli-input-json file://next-task.json --query 'taskDefinition.taskDefinitionArn' --output text)
+          aws ecs update-service --cluster "$ECS_CLUSTER" --service "$ECS_SERVICE" --task-definition "$next" > /dev/null
+          aws ecs wait services-stable --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE"
+          actual=$(aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" --query 'services[0].taskDefinition' --output text)
+          test "$actual" = "$next" || { echo 'Deployment rolled back to another task revision'; exit 1; }
+          curl --fail --silent --show-error --retry 5 --retry-delay 3 --max-time 20 "$APP_URL/api/health" | jq -e '.status == "ok"'
+          echo "Deployed $GITHUB_SHA ($next)" >> "$GITHUB_STEP_SUMMARY"
