@@ -27,7 +27,7 @@ MAIN_NOTE_HEAD = "> `main` ブランチには説明資料だけを置いてい�
 
 # zip に入れないもの。理由を必ず書く。
 EXCLUDE = {
-    # 第三者が公開している図面の原本。再配布はせず、README 7章の URL で示す（抽出した画像とテキストは残す）
+    # 第三者が公開している図面の原本。再配布はしない（URL は docs/validation/REPORT.md に記載。抽出した画像とテキストは残す）
     "floorplan-analyzer/docs/validation/sources/ur_s2.pdf",
     "floorplan-analyzer/docs/validation/sources/mini_homes.pdf",
     # 課題として配布されたデータ。同じものが floorplan-analyzer/sample/ に入っている
