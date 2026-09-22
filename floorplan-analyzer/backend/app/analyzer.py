@@ -537,7 +537,7 @@ def _analyze_core(mask: MaskFile, settings: Optional[AnalysisSettings] = None, *
     )
     if not geometry_only:
         from .door_openings import opening_geometry, apply_openings
-        apply_openings(response, opening_geometry(response.rooms), settings)
+        apply_openings(response, opening_geometry(response.rooms, response.doors), settings)
     return (response, overlap_indices) if geometry_only else response
 
 
@@ -556,7 +556,7 @@ def _compute_geometry(mask: MaskFile, settings: AnalysisSettings) -> dict:
     response, pairs = _analyze_core(mask, settings, geometry_only=True)
     from .door_openings import opening_geometry
     return {"response": response, "pairs": pairs,
-            "door_openings": opening_geometry(response.rooms)}
+            "door_openings": opening_geometry(response.rooms, response.doors)}
 
 
 def analyze(mask: MaskFile, settings: Optional[AnalysisSettings] = None) -> AnalyzeResponse:

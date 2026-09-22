@@ -1,4 +1,5 @@
 """ドア開口部の床の配分契約。幾何・API・cold/warm の不変条件。"""
+import hashlib
 import json
 
 import pytest
@@ -6,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from app import analyzer
 from app.analysis_cache import cache
+from app.door_openings import opening_geometry
 from app.main import app
 from app.schemas import AnalysisSettings, MaskFile
 from ..factories import make_mask, room, rect, wall, door, unit_settings
@@ -23,6 +25,117 @@ def shared_mask(*, equal=False, split=False, third=False, duplicate_id=False):
         wall(10, (100, 0), (100, 100)),
         door(20, (100, 20), (100, 80)),
     ])
+
+
+def opening_mask(*doors):
+    return make_mask([
+        room(1, rect(0, 0, 200, 200)),
+        room(2, rect(200, 0, 300, 200)),
+        wall(10, (200, 0), (200, 200)),
+        *doors,
+    ])
+
+
+def analyze_opening(mask, path):
+    if path == 'uncached':
+        return analyzer.analyze_uncached(mask)
+    analyzer.clear_geometry_cache()
+    result = analyzer.analyze(mask)
+    return analyzer.analyze(mask) if path == 'warm' else result
+
+
+@pytest.mark.parametrize('path', ['cold', 'warm', 'uncached'])
+def test_adjacent_doors_preserve_union_floor_adjustment(path):
+    single = analyze_opening(opening_mask(door(20, (200, 40), (200, 160))), path)
+    split = analyze_opening(opening_mask(
+        door(20, (200, 40), (200, 100)),
+        door(21, (200, 100), (200, 160))), path)
+    for expected, actual in zip(single.rooms, split.rooms):
+        intervals = [iv for edge in actual.edges for iv in edge.door_intervals]
+        assert len(intervals) == 1
+        assert set(intervals[0].ids) == {20, 21}
+        assert intervals[0].length_px == 120
+        assert actual.door_opening_adjustment_m2 == pytest.approx(
+            expected.door_opening_adjustment_m2, rel=0, abs=1e-9)
+        assert len(actual.door_opening_transfers) == 2
+        assert sum(t.width_m for t in actual.door_opening_transfers) == pytest.approx(
+            expected.door_opening_transfers[0].width_m, rel=0, abs=1e-9)
+        assert_bits(expected.wall_area_m2, actual.wall_area_m2)
+    assert split.summary.total_floor_area_m2 == pytest.approx(
+        single.summary.total_floor_area_m2, rel=0, abs=1e-9)
+
+
+@pytest.mark.parametrize('path', ['cold', 'warm', 'uncached'])
+def test_duplicate_doors_preserve_union_floor_adjustment(path):
+    single = analyze_opening(opening_mask(door(20, (200, 40), (200, 160))), path)
+    duplicate = analyze_opening(opening_mask(
+        door(20, (200, 40), (200, 160)),
+        door(21, (200, 40), (200, 160))), path)
+    for expected, actual in zip(single.rooms, duplicate.rooms):
+        assert actual.door_opening_adjustment_m2 == pytest.approx(
+            expected.door_opening_adjustment_m2, rel=0, abs=1e-9)
+        assert len(actual.door_opening_transfers) == 2
+        assert sum(t.width_m for t in actual.door_opening_transfers) == pytest.approx(
+            expected.door_opening_transfers[0].width_m, rel=0, abs=1e-9)
+
+
+def test_opening_geometry_weights_by_original_door_lengths():
+    response = analyzer.analyze(opening_mask(
+        door(20, (200, 40), (200, 70)),
+        door(21, (200, 70), (200, 160))))
+    # 区間幅は線分長の合計と異なっても、元のドア長30:90で配分する。
+    for room in response.rooms:
+        for edge in room.edges:
+            for interval in edge.door_intervals:
+                interval.length_px = 100.1
+                interval.ids.reverse()
+    weighted = opening_geometry(response.rooms, response.doors)
+    equal = opening_geometry(response.rooms)
+    for index in range(2):
+        assert list(weighted[index]) == [20, 21]
+        assert weighted[index][20][1] == pytest.approx(100.1 / 4)
+        assert weighted[index][21][1] == pytest.approx(100.1 * 3 / 4)
+        assert sum(value[1] for value in weighted[index].values()) == pytest.approx(100.1, rel=0, abs=1e-9)
+        assert [value[1] for value in equal[index].values()] == [100.1 / 2] * 2
+
+
+@pytest.mark.parametrize('with_doors', [False, True])
+def test_opening_geometry_last_id_receives_remainder(with_doors):
+    response = analyzer.analyze(opening_mask(*[
+        door(id_, (200, 40), (200, 160)) for id_ in (22, 20, 21)]))
+    for room in response.rooms:
+        for edge in room.edges:
+            for interval in edge.door_intervals:
+                interval.length_px = .1
+    geometry = (opening_geometry(response.rooms, response.doors) if with_doors
+                else opening_geometry(response.rooms))
+    for openings in geometry:
+        widths = [value[1] for value in openings.values()]
+        assert list(openings) == [20, 21, 22]
+        assert sum(widths) == pytest.approx(.1, rel=0, abs=1e-9)
+        assert_bits(.1 - sum(widths[:-1]), widths[-1])
+        assert widths[-1] != widths[0]
+
+
+def test_single_id_width_preserves_float_bits():
+    response = analyzer.analyze(shared_mask())
+    response.doors[0].length_px = 3.0
+    for room in response.rooms:
+        for edge in room.edges:
+            for interval in edge.door_intervals:
+                interval.length_px = .1  # .1 * 3 / 3 は .1 とビットが異なる。
+    for geometry in (opening_geometry(response.rooms),
+                     opening_geometry(response.rooms, response.doors)):
+        for openings in geometry:
+            assert_bits(.1, openings[20][1])
+
+
+def test_sample_default_rooms_and_summary_match_before_union_fix(sample_json):
+    response = analyzer.analyze(MaskFile.model_validate(sample_json))
+    # 修正前の既定出力を固定。JSONはfloatを丸めず往復でき、全項目を比較する。
+    payload = response.model_dump_json(include={'rooms', 'summary'}).encode()
+    assert hashlib.sha256(payload).hexdigest() == (
+        '4c427bb7fd2c1f9b11b7cf99ada802f0f497dcb64fd7ca0d662947de3e684539')
 
 
 def test_sample_contract_and_geometry_unchanged(sample_json):
