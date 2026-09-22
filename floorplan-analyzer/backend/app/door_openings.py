@@ -2,19 +2,35 @@
 from .schemas import AnalyzeResponse, DoorOpeningTransfer
 
 
-def opening_geometry(rooms):
+def opening_geometry(rooms, doors=None):
     """部屋ごとに door_id -> (相手の index, 共通幅 px, 符号) を保持する。
 
     部屋 id の重複があっても別の部屋として数え、複数辺の区間幅を合算する。
+    併合区間の幅は ids 全体で一度だけ数える。複数 id には response.doors の
+    length_px に比例して配分し、doors を省略した既定の呼び出しでは等分する。
+    id 昇順の最後に残差を割り当て、単一 id の幅には配分の演算を加えない。
     向きは補正前の px² だけから決め、縮尺・奥行きには依存しない。
     """
+    lengths = {door.id: door.length_px for door in doors} if doors is not None else None
     widths = {}
     for index, room in enumerate(rooms):
         for edge in room.edges:
             for interval in edge.door_intervals:
-                for door_id in interval.ids:
+                ids = sorted(interval.ids)
+                if len(ids) > 1:
+                    total = sum(lengths[door_id] for door_id in ids) if lengths is not None else len(ids)
+                    allocated = 0.0
+                for position, door_id in enumerate(ids):
+                    if len(ids) == 1:
+                        width = interval.length_px
+                    elif position == len(ids) - 1:
+                        width = interval.length_px - allocated
+                    else:
+                        weight = lengths[door_id] if lengths is not None else 1
+                        width = interval.length_px * weight / total
+                        allocated += width
                     per_room = widths.setdefault(door_id, {})
-                    per_room[index] = per_room.get(index, 0.0) + interval.length_px
+                    per_room[index] = per_room.get(index, 0.0) + width
     result = [{} for _ in rooms]
     for door_id in sorted(widths):
         per_room = widths[door_id]
