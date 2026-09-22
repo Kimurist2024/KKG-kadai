@@ -286,7 +286,10 @@ def analyze_room(
         holes=holes,
         label_point=label_point,
         floor_area_px2=area_px2,
+        floor_area_raw_m2=area_px2 * mpp * mpp,
         floor_area_m2=area_px2 * mpp * mpp,
+        door_opening_adjustment_m2=0.0,
+        door_opening_transfers=[],
         perimeter_px=perim_px,
         perimeter_m=perim_px * mpp,
         source_area_px2=room.area,
@@ -510,6 +513,7 @@ def _analyze_core(mask: MaskFile, settings: Optional[AnalysisSettings] = None, *
             wall_count=len(walls_out),
             door_count=len(doors_out),
             total_floor_area_m2=total_area,
+            door_opening_adjusted_room_count=0,
             union_floor_area_m2=union_area,
             overlap_floor_area_m2=max(0.0, total_area-union_area) if overlaps else 0.0,
             total_wall_area_m2=sum(r.wall_area_m2 for r in room_results),
@@ -519,6 +523,9 @@ def _analyze_core(mask: MaskFile, settings: Optional[AnalysisSettings] = None, *
         doors=doors_out,
         warnings=warnings,
     )
+    if not geometry_only:
+        from .door_openings import opening_geometry, apply_openings
+        apply_openings(response, opening_geometry(response.rooms), settings)
     return (response, overlap_indices) if geometry_only else response
 
 
@@ -534,7 +541,9 @@ def _compute_geometry(mask: MaskFile, settings: AnalysisSettings) -> dict:
     そのまま保存できる。px² フィールドのない重複・和集合だけは単位縮尺で保持。
     """
     response, pairs = _analyze_core(mask, settings, geometry_only=True)
-    return {"response": response, "pairs": pairs}
+    from .door_openings import opening_geometry
+    return {"response": response, "pairs": pairs,
+            "door_openings": opening_geometry(response.rooms)}
 
 
 def analyze(mask: MaskFile, settings: Optional[AnalysisSettings] = None) -> AnalyzeResponse:

@@ -6,9 +6,10 @@ from app.schemas import MaskFile, AnalysisSettings
 from benchmarks.baseline.analyzer import analyze as old_analyze
 from benchmarks.baseline.schemas import MaskFile as OldMask, AnalysisSettings as OldSettings
 from benchmarks.performance import fixtures, settings_cases, compare as compare_tolerant
+from .legacy_response import without_openings
 
 def compare(expected, actual):
-    stats = compare_tolerant(expected, actual)
+    stats = compare_tolerant(expected, without_openings(actual))
     assert stats['different_numeric_fields'] == 0, stats
 
 
@@ -18,9 +19,9 @@ def test_complete_response_matches_baseline(name, data, case, values):
     expected = old_analyze(OldMask.model_validate(data), OldSettings(**values)).model_dump(mode='json')
     mask = MaskFile.model_validate(data)
     analyzer.clear_geometry_cache()
-    compare(expected, analyzer.analyze(mask, AnalysisSettings(**values)).model_dump(mode='json'))
-    analyzer.analyze(mask, AnalysisSettings())
-    compare(expected, analyzer.analyze(mask, AnalysisSettings(**values)).model_dump(mode='json'))
+    compare(expected, analyzer.analyze(mask, AnalysisSettings(**values, door_opening_depth_m=0)).model_dump(mode='json'))
+    analyzer.analyze(mask, AnalysisSettings(door_opening_depth_m=0))
+    compare(expected, analyzer.analyze(mask, AnalysisSettings(**values, door_opening_depth_m=0)).model_dump(mode='json'))
 
 @pytest.mark.parametrize('mutation', ['holes-outside', 'holes-overlap', 'bowtie', 'duplicate-id', 'no-walls', 'line-3-points', 'metadata'])
 def test_unusual_inputs_match_baseline(mutation):
@@ -47,5 +48,5 @@ def test_unusual_inputs_match_baseline(mutation):
     expected = old_analyze(OldMask.model_validate(data)).model_dump(mode='json')
     mask = MaskFile.model_validate(data)
     analyzer.clear_geometry_cache()
-    compare(expected, analyzer.analyze(mask).model_dump(mode='json'))
-    compare(expected, analyzer.analyze(mask).model_dump(mode='json'))
+    compare(expected, analyzer.analyze(mask, AnalysisSettings(door_opening_depth_m=0)).model_dump(mode='json'))
+    compare(expected, analyzer.analyze(mask, AnalysisSettings(door_opening_depth_m=0)).model_dump(mode='json'))

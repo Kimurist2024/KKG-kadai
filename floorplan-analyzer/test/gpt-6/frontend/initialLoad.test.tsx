@@ -36,7 +36,7 @@ test.each(["/", "/?start=upload", "/?room=3"])("opening %s shows the chooser wit
   // 初期画面の文字は必要最低限: 見出し・一言の説明・ボタン 2 つ・折りたたみ・計算条件のチップだけ
   expect(screen.getByText("部屋ごとの床面積・周長・壁面積を求めます")).toBeTruthy();
   expect(Array.from(main.querySelectorAll(".conditions .cond-chip"), (chip) => chip.textContent)).toEqual([
-    "天井高 2.4 m", "ドア高 2.0 m", "スケール 96.7 px ＝ 1.365 m",
+    "天井高 2.4 m", "ドア高 2.0 m", "スケール 96.7 px ＝ 1.365 m", "ドア開口部の床 0.126 m （逆算した仮定）",
   ]);
   for (const selector of [".landing-points", ".formula-list", ".conditions-note", ".dropzone-hint", "footer", "header p"]) {
     expect(main.querySelector(selector)).toBeNull();

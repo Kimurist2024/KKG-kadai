@@ -13,6 +13,7 @@ from app.schemas import AnalysisSettings, MaskFile
 from benchmarks.baseline import analyzer as baseline, topology as old_topology
 from benchmarks.baseline.schemas import MaskFile as OldMask, AnalysisSettings as OldSettings
 from .test_cold_exact import assert_bits
+from .legacy_response import without_openings
 from ..factories import room, wall, door, rect, vertices
 
 
@@ -53,14 +54,14 @@ def test_mixed_batch_and_fallback_match_frozen_bits(angle, tolerance):
     settings = dict(tolerance_px=tolerance, scale_m=2.345, scale_px=123.4)
     expected = baseline.analyze(OldMask.model_validate(data), OldSettings(**settings))
     mask = MaskFile.model_validate(data)
-    for actual in (analyzer.analyze_uncached(mask, AnalysisSettings(**settings)),
-                   analyzer.analyze(mask, AnalysisSettings(**settings)),
-                   analyzer.analyze(mask, AnalysisSettings(**settings))):
-        assert_bits(expected.model_dump(mode='json'), actual.model_dump(mode='json'))
+    for actual in (analyzer.analyze_uncached(mask, AnalysisSettings(**settings, door_opening_depth_m=0)),
+                   analyzer.analyze(mask, AnalysisSettings(**settings, door_opening_depth_m=0)),
+                   analyzer.analyze(mask, AnalysisSettings(**settings, door_opening_depth_m=0))):
+        assert_bits(expected.model_dump(mode='json'), without_openings(actual.model_dump(mode='json')))
     # Uncached uses the original explicit/default field selection as well.
-    actual = analyzer.analyze_uncached(mask, AnalysisSettings(**settings))
+    actual = analyzer.analyze_uncached(mask, AnalysisSettings(**settings, door_opening_depth_m=0))
     assert_bits(expected.model_dump(mode='json', exclude_unset=True),
-                actual.model_dump(mode='json', exclude_unset=True))
+                without_openings(actual.model_dump(mode='json', exclude_unset=True)))
 
 
 @pytest.mark.parametrize('failure', [ValueError, GEOSException])
@@ -70,7 +71,7 @@ def test_batch_construction_failure_uses_scalar_warnings(monkeypatch, failure):
     def fail(*args, **kwargs):
         raise failure('forced batch failure')
     monkeypatch.setattr(topology, 'linearrings', fail)
-    assert_bits(expected, analyzer.analyze(MaskFile.model_validate(data)).model_dump(mode='json'))
+    assert_bits(expected, without_openings(analyzer.analyze(MaskFile.model_validate(data), AnalysisSettings(door_opening_depth_m=0)).model_dump(mode='json')))
 
 
 def test_simple_batch_shape_and_representative_point_bits():
@@ -103,10 +104,10 @@ def test_invalid_outer_uses_scalar_fallback_in_original_order(monkeypatch):
         return scalar(room)
     monkeypatch.setattr(analyzer, 'room_polygon', record)
     data = mixed_data()
-    actual = analyzer.analyze_uncached(MaskFile.model_validate(data))
+    actual = analyzer.analyze_uncached(MaskFile.model_validate(data), AnalysisSettings(door_opening_depth_m=0))
     assert calls == [2, 3, 5, 8]
     assert_bits(baseline.analyze(OldMask.model_validate(data)).model_dump(mode='json'),
-                actual.model_dump(mode='json'))
+                without_openings(actual.model_dump(mode='json')))
 
 
 def test_bulk_models_preserve_nested_fields_set():
@@ -117,6 +118,8 @@ def test_bulk_models_preserve_nested_fields_set():
             # 凍結 baseline には共有境界フィールドがまだない。変更前の現行実装は
             # この二つを常に明示設定する（値が空なら serializer が省略する）。
             added = {'canonical_edge_id', 'canonical_edge_ids'} if type(actual).__name__ == 'EdgeResult' else set()
+            if type(actual).__name__ == 'RoomResult':
+                added |= {'floor_area_raw_m2', 'door_opening_adjustment_m2', 'door_opening_transfers'}
             assert expected.model_fields_set | added == actual.model_fields_set
             for key in expected.__dict__:
                 compare_fields(getattr(expected, key), getattr(actual, key))
@@ -126,7 +129,7 @@ def test_bulk_models_preserve_nested_fields_set():
                 compare_fields(left, right)
     data = mixed_data(.13)
     expected = baseline.analyze(OldMask.model_validate(data))
-    actual = analyzer.analyze_uncached(MaskFile.model_validate(data))
+    actual = analyzer.analyze_uncached(MaskFile.model_validate(data), AnalysisSettings(door_opening_depth_m=0))
     for key in ('rooms', 'walls', 'doors', 'overlaps', 'warnings'):
         compare_fields(getattr(expected, key), getattr(actual, key))
     args = (0, (0., 0.), (100., 0.), [(1, ((0., 0.), (100., 0.)))], [])
@@ -160,8 +163,8 @@ def test_api_mixed_input_full_response_bits_and_order(route):
     with TestClient(app) as client:
         for _ in range(2):  # cold and warm
             if route == '/api/analyze':
-                response = client.post(route, files={'file': ('mask.json', json.dumps(data), 'application/json')})
+                response = client.post(route, params={'door_opening_depth_m': 0}, files={'file': ('mask.json', json.dumps(data), 'application/json')})
             else:
-                response = client.post(route, json=data)
+                response = client.post(route, params={'door_opening_depth_m': 0}, json=data)
             assert response.status_code == 200, response.text
-            assert_bits(expected, response.json())
+            assert_bits(expected, without_openings(response.json()))

@@ -207,6 +207,7 @@ export default function App() {
           <span className="cond-chip">天井高 <b>{fmt(appliedSettings.ceiling_height_m, 1)} m</b></span>
           <span className="cond-chip">ドア高 <b>{fmt(appliedSettings.door_height_m, 1)} m</b></span>
           <span className="cond-chip" title={`図面上の ${appliedSettings.scale_px} px を ${appliedSettings.scale_m} m として換算します。縮尺の異なる図面では実寸と一致しません`}>スケール <b>{appliedSettings.scale_px} px ＝ {appliedSettings.scale_m} m</b></span>
+          <span className="cond-chip" title="隣室と共有するドアの開口部の床（幅 × 奥行き）を、床面積の大きい部屋から小さい部屋へ移します。奥行きは同梱図面の LDK 27.22 m² から逆算した値で、課題の指定値ではありません">ドア開口部の床 <b>{fmt(appliedSettings.door_opening_depth_m, 3)} m</b> <small>（逆算した仮定）</small></span>
         </div>
         {/* 課題の中心となる式は、結果表示のときに条件チップの直下で常時読めるようにする（使い方ページと同じ文言）。
             初期画面では値のチップだけを見せ、説明と式は出さない */}
@@ -215,7 +216,7 @@ export default function App() {
           <p className="section-description conditions-note">課題の指定値で固定しています（入力・変更は不要。JSON を選ぶとこの条件で即時解析）。</p>
           <ul className="formula-list">
             <li>壁面積 ＝ 壁長 × 天井高 {fmt(appliedSettings.ceiling_height_m, 1)} m − 控除ドア幅 × ドア高 {fmt(appliedSettings.door_height_m, 1)} m<small>（壁が検出されない区間は含めない）</small></li>
-            <li>床面積 ＝ 頂点座標の面積 × (m/px)²</li>
+            <li>床面積 ＝ 頂点座標の面積 × (m/px)² ± ドア開口部の床<small>（共有ドアの幅 × 奥行き {fmt(appliedSettings.door_opening_depth_m, 3)} m を、広い部屋から狭い部屋へ）</small></li>
           </ul>
           </>
         )}

@@ -16,7 +16,7 @@ type SortKey = "id" | "name" | "floor_area_m2" | "perimeter_m" | "wall_length_m"
 
 const COLUMNS: { key: SortKey; label: string; unit: string; numeric: boolean; optional: boolean; title?: string }[] = [
   { key: "name", label: "部屋", unit: "", numeric: false, optional: false },
-  { key: "floor_area_m2", label: "床面積", unit: "m²", numeric: true, optional: false, title: "頂点座標から算出した床面積" },
+  { key: "floor_area_m2", label: "床面積", unit: "m²", numeric: true, optional: false, title: "頂点座標から算出した床面積に、ドア開口部の床の受け渡し（隣室と共有するドアの幅 × 奥行き）を加えた値" },
   { key: "perimeter_m", label: "周長", unit: "m", numeric: true, optional: true },
   { key: "wall_length_m", label: "壁長", unit: "m", numeric: true, optional: true, title: "周長のうち壁が存在する長さ" },
   { key: "opening_length_m", label: "壁なし長", unit: "m", numeric: true, optional: true, title: "周長のうち壁線分が検出されなかった長さ (壁面積に含めない)" },

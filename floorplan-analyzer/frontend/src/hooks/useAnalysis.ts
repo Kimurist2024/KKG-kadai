@@ -76,14 +76,14 @@ export function useAnalysis() {
         analyzeFile(file, settings, operation.signal),
       ]);
       if (!operation.isCurrent()) return;
-      const { ceiling_height_m, door_height_m, scale_px, scale_m, tolerance_px } = result.settings;
+      const { ceiling_height_m, door_height_m, scale_px, scale_m, tolerance_px, door_opening_depth_m } = result.settings;
       setSnapshot((prev) => ({
         file,
         isSample,
         imageUrl: imageUrlPromise ? imageUrl : prev?.imageUrl ?? null,
         result,
         settings: {
-          ceiling_height_m, door_height_m, scale_px, scale_m, tolerance_px,
+          ceiling_height_m, door_height_m, scale_px, scale_m, tolerance_px, door_opening_depth_m,
           geometry_mode: result.settings.geometry_mode ?? settings.geometry_mode,
           boundary_reference: result.settings.boundary_reference ?? settings.boundary_reference,
         }, // サーバーが実際に適用した値

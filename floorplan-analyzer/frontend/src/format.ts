@@ -16,7 +16,10 @@ export const fmtPt = (v: Vertex): string => `(${v.x.toFixed(0)}, ${v.y.toFixed(0
 
 /** 床面積の算出根拠 (シューレース公式 → スケール換算) */
 export function floorAreaFormula(r: RoomResult, mpp: number): string {
-  return `${r.holes?.length ? "穴を除いた面積 " : ""}${fmt(r.floor_area_px2, 1)} px² × (${mpp.toFixed(5)} m/px)² = ${fmt(r.floor_area_m2)} m²`;
+  const raw = `${r.holes?.length ? "穴を除いた面積 " : ""}${fmt(r.floor_area_px2, 1)} px² × (${mpp.toFixed(5)} m/px)² = ${fmt(r.floor_area_raw_m2)} m²`;
+  const adj = r.door_opening_adjustment_m2;
+  if (Math.abs(adj) < 0.0005) return raw;
+  return `${raw} ${adj < 0 ? "−" : "＋"} ドア開口部の床 ${fmt(Math.abs(adj))} m² = ${fmt(r.floor_area_m2)} m²`;
 }
 
 export function perimeterFormula(r: RoomResult, mpp: number): string {
@@ -40,10 +43,12 @@ export function roomWallFormula(r: RoomResult, ceiling: number, door: number): s
 
 /** 表を CSV (UTF-8 BOM 付き, Excel で開ける) にする */
 export function roomsToCsv(res: AnalyzeResponse): string {
-  const header = ["部屋名", "床面積[m2]", "周長[m]", "壁長[m]", "開口長[m]", "ドア長[m]", "ドア数", "壁面積(控除前)[m2]", "ドア控除[m2]", "壁面積[m2]", "壁面積の注意事項", "解析の注意事項"];
+  const header = ["部屋名", "床面積[m2]", "頂点からの床面積[m2]", "ドア開口部の床の増減[m2]", "周長[m]", "壁長[m]", "開口長[m]", "ドア長[m]", "ドア数", "壁面積(控除前)[m2]", "ドア控除[m2]", "壁面積[m2]", "壁面積の注意事項", "解析の注意事項"];
   const rows = res.rooms.map((r) => [
     r.name,
     r.floor_area_m2.toFixed(3),
+    r.floor_area_raw_m2.toFixed(3),
+    r.door_opening_adjustment_m2.toFixed(3),
     r.perimeter_m.toFixed(3),
     r.wall_length_m.toFixed(3),
     r.opening_length_m.toFixed(3),
@@ -58,13 +63,13 @@ export function roomsToCsv(res: AnalyzeResponse): string {
   rows.push([
     "合計",
     res.summary.total_floor_area_m2.toFixed(3),
-    "", "", "", "", "", "", "",
+    "", "", "", "", "", "", "", "", "",
     res.summary.total_wall_area_m2.toFixed(3),
     res.warnings.some(isWallWarning) ? "要確認の壁面積を含みます" : "",
     res.warnings.filter((w) => ["inferred_door_wall", "room_overlap"].includes(w.code)).map((w) => w.message).join(" / "),
   ]);
   if ((res.summary.overlap_floor_area_m2 ?? 0) > 0) {
-    rows.push(["重複を除いた床面積", res.summary.union_floor_area_m2!.toFixed(3), "", "", "", "", "", "", "", "", "", "部屋別の帰属は未確定"]);
+    rows.push(["重複を除いた床面積", res.summary.union_floor_area_m2!.toFixed(3), "", "", "", "", "", "", "", "", "", "", "", "部屋別の帰属は未確定"]);
   }
   // 外部由来の文字列 (部屋名) が表計算ソフトで数式として評価されないようにする
   const safeText = (s: string) => (/^[\s\u0000-\u001f]*[=+\-@]/.test(s) ? "'" + s : s);

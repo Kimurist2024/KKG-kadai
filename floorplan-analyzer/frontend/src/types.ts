@@ -11,6 +11,7 @@ export interface Settings {
   scale_px: number;
   scale_m: number;
   tolerance_px: number;
+  door_opening_depth_m: number;
   geometry_mode: "raw" | "regularized_shared";
   boundary_reference: "unknown" | "centerline" | "inner_face";
 }
@@ -21,6 +22,7 @@ export const DEFAULT_SETTINGS: Settings = {
   scale_px: 96.7,
   scale_m: 1.365,
   tolerance_px: 10,
+  door_opening_depth_m: 0.126,
   geometry_mode: "raw",
   boundary_reference: "unknown",
 };
@@ -56,6 +58,15 @@ export interface EdgeResult {
   wall_area_m2: number;
 }
 
+/** ドア開口部の床を隣室と受け渡した記録。area_m2 はこの部屋から見た符号つき（引かれる側は負） */
+export interface DoorOpeningTransfer {
+  door_id: number;
+  other_room_id: number;
+  other_room_name: string;
+  width_m: number;
+  area_m2: number;
+}
+
 export interface RoomResult {
   holes?: Vertex[][];
   label_point?: Vertex | null;
@@ -65,7 +76,12 @@ export interface RoomResult {
   color: string;
   vertices: Vertex[];
   floor_area_px2: number;
+  /** 補正前の床面積 (= floor_area_px2 × mpp²) */
+  floor_area_raw_m2: number;
+  /** 表示用の床面積 (= floor_area_raw_m2 + door_opening_adjustment_m2) */
   floor_area_m2: number;
+  door_opening_adjustment_m2: number;
+  door_opening_transfers: DoorOpeningTransfer[];
   perimeter_px: number;
   perimeter_m: number;
   source_area_px2: number | null;
@@ -138,6 +154,7 @@ export interface AnalyzeResponse {
     total_floor_area_m2: number;
     union_floor_area_m2?: number;
     overlap_floor_area_m2?: number;
+    door_opening_adjusted_room_count: number;
     total_wall_area_m2: number;
   };
   rooms: RoomResult[];

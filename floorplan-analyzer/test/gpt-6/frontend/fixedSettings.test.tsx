@@ -34,7 +34,7 @@ test("uploads analyze immediately using the fixed assignment values and raw geom
     await act(() => result.current.loadFile(drawing));
     expect(analyzeFile).toHaveBeenLastCalledWith(drawing, {
       ceiling_height_m: 2.4, door_height_m: 2, scale_px: 96.7, scale_m: 1.365,
-      tolerance_px: 10, geometry_mode: "raw", boundary_reference: "unknown",
+      tolerance_px: 10, door_opening_depth_m: 0.126, geometry_mode: "raw", boundary_reference: "unknown",
     }, expect.any(AbortSignal));
     expect(result.current.file).toBe(drawing);
   }

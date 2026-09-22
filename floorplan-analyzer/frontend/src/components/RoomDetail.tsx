@@ -99,8 +99,15 @@ function RoomDetail({ result, room, originalRoomName, hoverEdge, selectedEdge, o
         <div className="metric">
           <div className="metric-label">床面積</div>
           <div className="metric-value">{fmt(room.floor_area_m2)} <small>m²</small></div>
-          <div className="metric-formula" title="頂点座標からシューレース公式で算出">{floorAreaFormula(room, mpp)}</div>
+          <div className="metric-formula" title="頂点座標からシューレース公式で算出し、ドア開口部の床の受け渡しを加える">{floorAreaFormula(room, mpp)}</div>
           <div className="muted small">1 px ＝ {s.scale_m} m ÷ {s.scale_px} px ＝ {mpp.toFixed(5)} m（課題指定の縮尺）</div>
+          {room.door_opening_transfers.length > 0 && (
+            <ul className="muted small door-transfers" aria-label="ドア開口部の床の受け渡し">
+              {room.door_opening_transfers.map((t) => (
+                <li key={t.door_id}>ドア id{t.door_id}（幅 {fmt(t.width_m)} m × 奥行き {fmt(s.door_opening_depth_m, 3)} m）: {t.area_m2 < 0 ? `${t.other_room_name} へ ${fmt(-t.area_m2, 3)} m²` : `${t.other_room_name} から ${fmt(t.area_m2, 3)} m²`}</li>
+              ))}
+            </ul>
+          )}
         </div>
         <div className="metric">
           <div className="metric-label">周長</div>

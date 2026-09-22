@@ -14,6 +14,8 @@ from app.spatial import SegmentIndex
 from benchmarks.baseline import analyzer as baseline
 from benchmarks.baseline.schemas import AnalysisSettings as OldSettings, MaskFile as OldMask
 from benchmarks.performance import fixtures, settings_cases
+from .legacy_response import without_openings
+from app.door_openings import opening_geometry
 
 
 def assert_bits(expected, actual):
@@ -36,17 +38,17 @@ def assert_bits(expected, actual):
 def test_all_fixtures_bits_cold_warm_and_uncached(name, data):
     mask, old_mask = MaskFile.model_validate(data), OldMask.model_validate(data)
     for _, values in settings_cases():
-        settings = AnalysisSettings(**values)
+        settings = AnalysisSettings(**values, door_opening_depth_m=0)
         expected = baseline.analyze(old_mask, OldSettings(**values)).model_dump(mode='json')
         analyzer.clear_geometry_cache()
-        assert_bits(expected, analyzer.analyze(mask, settings).model_dump(mode='json'))
-        assert_bits(expected, analyzer.analyze_uncached(mask, settings).model_dump(mode='json'))
+        assert_bits(expected, without_openings(analyzer.analyze(mask, settings).model_dump(mode='json')))
+        assert_bits(expected, without_openings(analyzer.analyze_uncached(mask, settings).model_dump(mode='json')))
         # Start the cache at a different scale/height, not just default settings.
         analyzer.clear_geometry_cache()
         analyzer.analyze(mask, AnalysisSettings(scale_m=2.345, scale_px=123.4,
-                         ceiling_height_m=3.1, door_height_m=0,
+                         ceiling_height_m=3.1, door_height_m=0, door_opening_depth_m=0,
                          tolerance_px=settings.tolerance_px))
-        assert_bits(expected, analyzer.analyze(mask, settings).model_dump(mode='json'))
+        assert_bits(expected, without_openings(analyzer.analyze(mask, settings).model_dump(mode='json')))
 
 
 @pytest.mark.parametrize('mode', ['raw', 'regularized_shared'])
@@ -60,7 +62,8 @@ def test_cold_serialization_matches_dictionary_materialization(sample_json, mode
     unit = AnalysisSettings(geometry_mode=mode, scale_m=1, scale_px=1,
                             ceiling_height_m=1, door_height_m=0)
     response, pairs = analyzer._analyze_core(mask, unit, geometry_only=True)
-    expected = materialize({'response': response.model_dump(mode='json'), 'pairs': pairs}, mask, settings)
+    expected = materialize({'response': response.model_dump(mode='json'), 'pairs': pairs,
+                            'door_openings': opening_geometry(response.rooms)}, mask, settings)
     actual = analyzer.analyze(mask, settings)
     for options in ({}, {'exclude_unset': True}, {'exclude_defaults': True},
                     {'exclude_none': True}, {'exclude': {'image', 'settings'}},
@@ -129,6 +132,6 @@ def test_edge_fast_paths_match_frozen_pipeline():
                          (rng.uniform(-.1, 1.1) * length, 0.))) for i in range(rng.randrange(8))]
         walls, doors = segments[:len(segments)//2], segments[len(segments)//2:]
         values = dict(tolerance_px=tolerance, scale_m=2.345, scale_px=123.4)
-        actual = analyzer.analyze_edge(0, a, b, walls, doors, AnalysisSettings(**values))
+        actual = analyzer.analyze_edge(0, a, b, walls, doors, AnalysisSettings(**values, door_opening_depth_m=0))
         expected = baseline.analyze_edge(0, a, b, walls, doors, OldSettings(**values))
         assert_bits(expected.model_dump(mode='json'), actual.model_dump(mode='json'))
