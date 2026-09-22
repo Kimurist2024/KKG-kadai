@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="640" viewBox="0 0 1000 640" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="656" viewBox="0 0 1000 656" role="img" aria-labelledby="title desc">
   <title id="title">ドア開口部の床を隣室へ移す補正</title>
   <desc id="desc">採用した仮定の模式図。壁の厚みの中にあるドア開口部の床（幅w×奥行きd）を、床面積の大きい部屋から小さい部屋へ移す。奥行き15cmの見立てではLD＋Kが27.16平方メートル、図面の27.22平方メートルから逆算すると奥行きは0.126メートルで、この逆算値を既定値にしている。</desc>
   <defs>
@@ -6,7 +6,7 @@
     <marker id="arrow-o" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#ce6b16"/></marker>
     <marker id="arrow-w" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#fff"/></marker>
   </defs>
-  <rect width="1000" height="640" rx="16" fill="#fff"/>
+  <rect width="1000" height="656" rx="16" fill="#fff"/>
   <g font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic',sans-serif" fill="#172c48">
     <text x="40" y="46" font-size="27" font-weight="700">ドア開口部の床を隣室へ移す補正（採用した仮定）</text>
     <text x="40" y="76" font-size="16" fill="#475569">壁の厚みの中にある開口部の床を、床面積の大きい部屋から小さい部屋へ移す ／ 位置関係は説明用の模式図</text>
@@ -50,21 +50,23 @@
     <text x="650" y="356" font-size="20" font-weight="700" fill="#9a4a0b">既定値 d ＝ 0.126m（逆算値）</text>
 
     <!-- 下段 左 -->
-    <rect x="40" y="404" width="450" height="180" rx="12" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/>
+    <rect x="40" y="404" width="450" height="196" rx="12" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/>
     <text x="60" y="438" font-size="20" font-weight="700">① 奥行き15cmの見立て</text>
     <text x="60" y="469" font-size="16">壁の隙間20cm − ドアの厚み5cm ＝ 15cm</text>
     <text x="60" y="495" font-size="16">LDのドア3か所：幅の合計2.45m</text>
     <text x="60" y="521" font-size="16">移す床 2.45m × 0.15m ≈ 0.37m²</text>
-    <text x="60" y="560" font-size="18" font-weight="700">LD＋K：27.53 → 27.16m²（図面との差 −0.06m²）</text>
+    <text x="60" y="556" font-size="18" font-weight="700">LD＋K：27.53 → 27.16m²</text>
+    <text x="60" y="582" font-size="15">図面の27.22m²との差 −0.06m²</text>
 
     <!-- 下段 右 -->
-    <rect x="510" y="404" width="450" height="180" rx="12" fill="#fff8ec" stroke="#ce6b16" stroke-width="2"/>
+    <rect x="510" y="404" width="450" height="196" rx="12" fill="#fff8ec" stroke="#ce6b16" stroke-width="2"/>
     <text x="530" y="438" font-size="20" font-weight="700">② 図面の値から逆算（採用）</text>
     <text x="530" y="469" font-size="16">27.5287 − 27.22 ＝ 0.3087m²</text>
     <text x="530" y="495" font-size="16">0.3087m² ÷ 2.4495m ≈ 0.126m</text>
     <text x="530" y="521" font-size="16">この奥行きを既定値にして再計算</text>
-    <text x="530" y="560" font-size="18" font-weight="700" fill="#9a4a0b">LD＋K：27.53 → 27.22m²（図面と一致）</text>
+    <text x="530" y="556" font-size="18" font-weight="700" fill="#9a4a0b">LD＋K：27.53 → 27.22m²</text>
+    <text x="530" y="582" font-size="15" fill="#9a4a0b">図面の27.22m²と一致</text>
 
-    <text x="40" y="618" font-size="14" fill="#475569">0.126mは図面の27.22m²からの逆算値で、確かめられているのはLD＋Kの1件。輪郭の座標は入力のまま使い、床面積の数値だけを補正する。</text>
+    <text x="40" y="634" font-size="14" fill="#475569">0.126mは図面の27.22m²からの逆算値で、確かめられているのはLD＋Kの1件。輪郭の座標は入力のまま使い、床面積の数値だけを補正する。</text>
   </g>
 </svg>
