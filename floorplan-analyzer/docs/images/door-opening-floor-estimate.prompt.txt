@@ -1,0 +1,38 @@
+Use case: infographic-diagram
+Latest revision prompt (2026-09-22, built-in image generation; supersedes the original geometry):
+Edit the supplied Japanese infographic. Preserve ALL numerical cards, bottom notices, title, colors and typography. Change ONLY the upper-left plan illustration to depict the user's intended spatial relation: the LD floor contour extends through the doorway and protrudes BEYOND the far face of the wall into the neighboring room, rather than an orange patch sitting between and touching wall jambs.
+
+Exact geometry: two horizontal thick gray wall blocks left and right with an opening in the middle, LD below, 隣室 above. Orange rectangular excess floor patch lies ENTIRELY ABOVE the far/top wall face, aligned with the opening, not between the gray blocks, and its left/right sides do not touch the gray walls. The bottom edge of the orange patch aligns with the top (far) wall face. Thin orange dashed LD contour starts along the lower/near wall faces on both sides, turns up through the opening, extends beyond the top/far wall face to wrap around the patch, and returns through the opening. Make this stepped protrusion visually obvious. A thin gray dashed horizontal reference line across the opening at the far wall face labelled 「壁の奥側の面」. Dimension w spans patch width. Dimension d spans ONLY orange protruding depth ABOVE the far wall face. Label orange region 「奥へ張り出した床」. Place a short arrow from orange patch toward 隣室 with label 「LDから隣室へ」. Caption under upper-left drawing: 「輪郭が壁より奥へ出る場合の仮説」. Labels LD and 隣室 remain legible with no overlap. You may reorganize the top-left panel internally to fit this accurate geometry; keep upper-right formula box and lower half unchanged. Orange patch must clearly protrude beyond both gray walls' far/top edge. No actual traced-plan claim, no changes to formula numbers.
+
+Asset type: Japanese README explanatory PNG, opaque white background, landscape 1536x1024.
+Primary request: Explain a HYPOTHETICAL door-opening floor-area allocation, clearly separate from the app's actual calculation.
+Clean precise educational illustration with large Japanese sans-serif labels, navy text, teal rooms, orange allocation strip. Tight useful layout, no excessive whitespace.
+
+Title exact: 「ドア開口部の床を、どちらの部屋に含めるか」
+Subtitle exact: 「LD＋Kの面積差を考えるための仮定による試算」
+
+Upper half: top-down conceptual doorway between upper room labelled 「隣室」 and lower room labelled 「LD」. Thick horizontal gray wall blocks on left and right separated by one opening. In opening, orange rectangular floor strip labelled 「割り当てを変える床」. Dimension horizontal across opening labelled 「開口幅 w」 and vertical along strip labelled 「奥行き d」. Arrow from strip toward upper neighboring room and annotation 「LDから隣室へ」. Clearly show floor area strip w × d, not a vertical wall face, no swing arc or actual floorplan. Side callout exact 「移す面積 = w × d」 and 「LDは減少 ／ 隣室は増加」 and 「内部の配分変更なので、全室合計は同じ」. Small caption 「位置関係は説明用の模式図」.
+
+Lower half two side-by-side clearly boxed scenarios:
+Left box heading 「① 奥行き15cmを仮定」
+Text lines exact:
+「壁の隙間20cm − ドア厚5cm」
+「= 奥行き15cm（仮定）」
+「LDの3開口：幅の合計 約2.45m」
+「移す床面積：約0.367m²」
+Large bold result 「LD＋K：27.53 → 27.16m²」
+Small comparison 「図面27.22m²との差：約−0.06m²」
+Right box heading 「② 図面の値から逆算」
+Text exact:
+「27.5287 − 27.22 ≈ 0.3087m²」
+「0.3087 ÷ 2.4495 ≈ 0.126m」
+Large bold result 「必要な奥行き：約12.6cm」
+Small important label 「図面の面積に合わせた逆算値」
+
+Full width bottom notice exact: 「20cm・5cmは仮定、12.6cmは逆算値。実測での確認が必要です。」
+Second bottom line exact: 「現行アプリの床面積は、入力された輪郭から計算しています。」
+
+Constraints: all text crisp accurate Japanese, mathematical units correct. Hypothesis not validated correction. Two independent scenarios not sequential correction steps. No claim measured thickness, no 2m door height, no wall-area subtraction diagram, no logos.
+
+Final edit prompt (built-in image generation):
+Edit this infographic with only two precise fixes; keep all other text, numbers, colors and layout unchanged. 1. Top plan diagram: the right gray wall currently begins far to the right of the orange strip leaving an unexplained teal gap. Extend the right gray wall LEFT until its left vertical edge exactly touches the right edge of the orange strip, so opening width w exactly equals full space between gray walls. Move the vertical depth d dimension and its label rightward inside/on top of the extended right gray wall as needed for legibility; keep dimension endpoints at strip top and bottom. 2. Remove the stray dark 7-like glyph below the text 図面27.22m² and above/on the bottom border of the lower-left card. Preserve the correct comparison text 図面27.22m²との差：約−0.06m². No other changes.
