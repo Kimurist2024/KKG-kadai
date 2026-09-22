@@ -12,6 +12,7 @@
 | `make_submission_zip.py` | 提出用の zip（リポジトリ直下の `floorplan-analyzer-submission.zip` と `.sha256`）を作る。git で管理しているファイルだけを入れ、第三者の図面 PDF 2 件と、`sample/` に同じものがある配布データ 2 件は除く（課題文の PDF は入れる）。README は GitHub への絶対リンクを相対パスに直し、`main` ブランチ向けの注意書きを外して入れる。リンク切れ・秘密情報の疑い・25 MB 超のどれかがあれば失敗する |
 | `compare_algorithms.py` | 同じ入力で複数のアルゴリズムの組み合わせ（`backend/app/strategies/` の profile）を交互に走らせ、既定との出力の一致（bit 単位）と所要時間を 1 つの表にする。`--input` を複数指定でき、`--json` で生の値も残す。出力が一致しない profile があれば終了コード 1 |
 | `measure_index_choice.py` | `compare_algorithms.py` の薄いラッパー。候補検索を外接長方形の走査（`scan_only`）と STRtree（`tree_only`）で入れ替えて比べる（結果ファイルの形式は従来どおり） |
+| `measure_candidate_share.py` | 同梱 JSON で、解析時間のうち線分の候補検索（索引の構築と辺ごとの問い合わせ）が占める割合を測る。`backend/.venv/bin/python scripts/measure_candidate_share.py [回数] [出力 JSON]`。README 4章の「候補検索は解析時間の約 7%」の根拠。 |
 | `measure_sample_speed.py` | 同梱 JSON だけを対象に、変更前の凍結実装と現行の解析時間を交互に計測する |
 
 ```bash
