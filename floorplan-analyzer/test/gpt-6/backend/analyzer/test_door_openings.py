@@ -95,7 +95,7 @@ def test_opening_geometry_weights_by_original_door_lengths():
         assert list(weighted[index]) == [20, 21]
         assert weighted[index][20][1] == pytest.approx(100.1 / 4)
         assert weighted[index][21][1] == pytest.approx(100.1 * 3 / 4)
-        assert_bits(100.1, sum(value[1] for value in weighted[index].values()))
+        assert sum(value[1] for value in weighted[index].values()) == pytest.approx(100.1, rel=0, abs=1e-9)
         assert [value[1] for value in equal[index].values()] == [100.1 / 2] * 2
 
 
@@ -112,7 +112,7 @@ def test_opening_geometry_last_id_receives_remainder(with_doors):
     for openings in geometry:
         widths = [value[1] for value in openings.values()]
         assert list(openings) == [20, 21, 22]
-        assert_bits(.1, sum(widths))
+        assert sum(widths) == pytest.approx(.1, rel=0, abs=1e-9)
         assert_bits(.1 - sum(widths[:-1]), widths[-1])
         assert widths[-1] != widths[0]
 

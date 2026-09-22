@@ -8,7 +8,8 @@ def opening_geometry(rooms, doors=None):
     部屋 id の重複があっても別の部屋として数え、複数辺の区間幅を合算する。
     併合区間の幅は ids 全体で一度だけ数える。複数 id には response.doors の
     length_px に比例して配分し、doors を省略した既定の呼び出しでは等分する。
-    id 昇順の最後に残差を割り当て、単一 id の幅には配分の演算を加えない。
+    id 昇順の最後に残差を割り当て（合計は区間の幅に丸め誤差の範囲で一致）、
+    単一 id の幅には配分の演算を加えない。
     向きは補正前の px² だけから決め、縮尺・奥行きには依存しない。
     """
     lengths = {door.id: door.length_px for door in doors} if doors is not None else None
