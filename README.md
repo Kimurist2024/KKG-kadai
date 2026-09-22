@@ -131,7 +131,7 @@ Python 3.12 と Node.js 22 を推奨します（Node.js は20.9以上）。`floo
 
 同梱データには、隣り合う部屋の輪郭どうしが重なっている箇所が9か所あります（合計0.18m²で、床面積合計の約0.4%）。部屋別の床面積は入力どおりに表示し、合計には重複を除いた床面積（48.58m²）を併記して、図面には紫の斜線で示しました。
 
-検証は、同梱サンプル・境界条件・変更前後の比較をpytestとVitestで行いました。公開図面を使った精度の確認は [外部図面での検証](https://github.com/Kimurist2024/KKG-kadai/blob/feature/kimura/floorplan-analyzer/docs/validation/REPORT.md) にまとめています。
+検証は、同梱サンプル・境界条件・変更前後の比較をpytestとVitestで行いました。
 
 ### 採用した補正：ドア開口部の床を隣室へ移す
 
@@ -208,8 +208,3 @@ flowchart TD
 
 - [pydantic_core.to_json](https://docs.pydantic.dev/latest/api/pydantic_core/#pydantic_core.to_json)：Pydantic の JSON 書き出し関数の仕様。キャッシュの書き出しに使いました。
 - [OpenAI 公式 AGENTS.md ガイド](https://learn.chatgpt.com/docs/agent-configuration/agents-md)：Codex 向けの指示ファイルの書き方の仕様。開発ハーネスの設定に使いました。
-
-### 検証に使った外部図面
-
-- [UR 都市機構 S2 建築図 ver1.1](https://www.ur-net.go.jp/rd_portal/UR-BIM/jni4dd0000001wmv-att/03_kenchikuzu_S2_ver1.1.pdf)：1階の用途別色分図。L字を含む 8 区画を、同梱データ以外の図面での計算精度の検証に使いました。
-- [Countryside Kenora / Candlewood Homes Mini Homes](https://b9f0a121-a2f4-4be4-a8a0-ebf384c417bf.filesusr.com/ugd/0dcb7e_6ad37e587a4b47f7baebde4c7abafb32.pdf)：寸法つきの小規模住宅（2寝室）の平面図。同じ検証に使いました。
