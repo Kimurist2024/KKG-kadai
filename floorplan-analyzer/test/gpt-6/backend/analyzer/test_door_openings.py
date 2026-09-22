@@ -1,6 +1,6 @@
 """ドア開口部の床の配分契約。幾何・API・cold/warm の不変条件。"""
-import hashlib
 import json
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -130,12 +130,29 @@ def test_single_id_width_preserves_float_bits():
             assert_bits(.1, openings[20][1])
 
 
-def test_sample_default_rooms_and_summary_match_before_union_fix(sample_json):
-    response = analyzer.analyze(MaskFile.model_validate(sample_json))
-    # 修正前の既定出力を固定。JSONはfloatを丸めず往復でき、全項目を比較する。
-    payload = response.model_dump_json(include={'rooms', 'summary'}).encode()
-    assert hashlib.sha256(payload).hexdigest() == (
-        '4c427bb7fd2c1f9b11b7cf99ada802f0f497dcb64fd7ca0d662947de3e684539')
+def test_sample_default_rooms_and_summary_match_fixture(sample_json):
+    """環境（GEOS の版）による末尾桁の差は許容し、値の同一性を確かめる。"""
+    response = analyzer.analyze(MaskFile.model_validate(sample_json)).model_dump(mode='json')
+    fixture_path = Path(__file__).resolve().parents[2] / 'frontend/fixtures/sample-result.json'
+    expected = json.loads(fixture_path.read_text(encoding='utf-8'))
+
+    def assert_matches(actual, expected, path):
+        assert type(actual) is type(expected), path
+        if isinstance(expected, dict):
+            assert actual.keys() == expected.keys(), path
+            for key in expected:
+                assert_matches(actual[key], expected[key], f'{path}.{key}')
+        elif isinstance(expected, list):
+            assert len(actual) == len(expected), path
+            for index, (actual_item, expected_item) in enumerate(zip(actual, expected)):
+                assert_matches(actual_item, expected_item, f'{path}[{index}]')
+        elif isinstance(expected, float):
+            assert actual == pytest.approx(expected, rel=1e-9, abs=1e-9), path
+        else:
+            assert actual == expected, path
+
+    for key in ('rooms', 'summary'):
+        assert_matches(response[key], expected[key], key)
 
 
 def test_sample_contract_and_geometry_unchanged(sample_json):
