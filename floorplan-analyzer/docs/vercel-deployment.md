@@ -1,6 +1,20 @@
 # Vercel デプロイ記録
 
-## 最新: 2026-09-21（feature/kimura 7a71b23、Shapely の一括呼び出しによる高速化を反映）
+## 最新: 2026-09-22（feature/kimura 211d1e9、ドア開口部の床の補正とアルゴリズムの差し替えの仕組みを反映）
+
+- 公開 URL: https://floorplan-analyzer-taupe.vercel.app（別名 https://floorplan-analyzer-kimu4.vercel.app）
+- Deployment: `dpl_3B9DUd2eR2wwMNN85U2eJxBwXtxH`（READY / production）。`npx vercel@59 inspect floorplan-analyzer-mhmx9gw2s-kimu4.vercel.app --scope kimu4` で target が production、status が Ready、Aliases に上の公開 URL 2 件が含まれることを確認
+- 固有 URL: https://floorplan-analyzer-mhmx9gw2s-kimu4.vercel.app（Deployment Protection のため直接アクセスはログインが必要。公開 URL は不要）
+- 実行: `floorplan-analyzer/` で `npx vercel@59 deploy --prod --scope kimu4 --yes`。作業ツリーは feature/kimura の 211d1e9 で未コミットの変更なし
+- HTTP での確認（computer use は不使用。ブラウザでの画面操作は未確認）:
+  - `/` 200 で、初期画面の文言（「JSON をドロップして面積を計算」「サンプルで試す」）を含む。`/guide` 200
+  - `/api/health` は `{"status":"ok"}`
+  - `/api/analyze` に同梱サンプルを multipart 送信して 200（往復約 1.3 秒。コールドスタートを含む）。応答の `settings.door_opening_depth_m` は 0.126、LD の床面積は 21.27 → 20.97 m²、LD＋K は 27.22 m²、床面積合計 48.75 m²、壁面積合計 155.54 m²、補正のある部屋 9
+- 公開環境とローカル（macOS arm64 / Python 3.9）の応答を全フィールド比較: 構造・文字列・ID・警告文・配列順の相違は 0 件。数値 1,760 個（補正のフィールドが増えた分、前回の 1,705 個より多い）のうち 26 個が末尾の桁だけ異なり、最大の相対差は 4.01e-14。小数第 3 位で丸めると差は 0 個（前回までと同じ。実行環境の違いによるもの）
+- 含まれる変更（前回 7a71b23 以降でアプリに影響するもの）: ドア開口部の床を隣室へ移す補正（#102。既定の奥行き 0.126m、画面に条件のチップと内訳、CSV に列を追加）、アルゴリズムの方式を名前つきで差し替える仕組み（#104。既定の出力は変更前と bit 単位で同じ）
+- README 冒頭のスクリーンショット 2 枚も、この版の画面で撮り直した（撮り方は 2026-09-21 と同じ。開発サーバーの `?sample=1` と `?sample=1&room=1` をヘッドレスの Chrome で描画し、下の余白と開発用マークを切り落とした）
+
+## 2026-09-21 の記録（feature/kimura 7a71b23、Shapely の一括呼び出しによる高速化を反映）
 
 - 公開 URL: https://floorplan-analyzer-taupe.vercel.app（別名 https://floorplan-analyzer-kimu4.vercel.app）
 - Deployment: `dpl_7i5Pr1D8FSoNTjYJh3AvxfxKHnWt`（READY / production）。`npx vercel@59 inspect floorplan-analyzer-q9k2ku272-kimu4.vercel.app --scope kimu4` で target が production、status が Ready、Aliases に上の公開 URL 2 件が含まれることを確認
